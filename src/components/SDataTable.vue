@@ -26,9 +26,9 @@ function initTable() {
       perPageSelect: [5, 10, 25, 50],
       labels: {
         placeholder: "Cari...",
-        perPage: "data", // Teks dipersingkat agar muat rapi di dropdown kecil
+        perPage: "data",
         noRows: "Tidak ada data ditemukan",
-        info: "Menampilkan {start} - {end} dari {rows}", // Format lebih ringkas
+        info: "Menampilkan {start} - {end} dari {rows}",
       }
     })
   }
@@ -56,111 +56,109 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Reset font global wrapper */
+.s-datatable-wrapper :deep(.datatable-wrapper),
 .s-datatable-wrapper :deep(.dataTable-wrapper) {
   font-family: var(--font-plus-jakarta);
-  font-size: 14px;
 }
 
-/* Mengatur jarak (Gap) bagian atas */
+.s-datatable-wrapper :deep(.datatable-top),
 .s-datatable-wrapper :deep(.dataTable-top) {
-  padding: 0 0 12px 0; /* Hapus padding atas, kurangi padding bawah */
-  margin: 0;
+  padding: 0 0 8px 0 !important;
+  margin: 0 !important;
 }
 
-/* Tabel Header yang berbeda warna */
+.s-datatable-wrapper :deep(.datatable-table thead th),
 .s-datatable-wrapper :deep(.dataTable-table thead th) {
-  background-color: #F8FAFC; /* Abu-abu sangat muda (Slate-50) */
-  color: var(--color-neutral-600);
+  background-color: #F1F5F9 !important;
+  color: #64748B !important;
   font-family: var(--font-be-vietnam);
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 700 !important;
+  font-size: 12px !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--color-general-border);
-  border-top: 1px solid var(--color-general-border);
+  padding: 10px 16px !important;
+  border: none !important;
+  border-bottom: 2px solid #E2E8F0 !important;
 }
 
-/* Tabel Body */
+.s-datatable-wrapper :deep(.datatable-table tbody td),
 .s-datatable-wrapper :deep(.dataTable-table tbody td) {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--color-general-border);
-  color: var(--color-general-black);
-  vertical-align: middle;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  color: var(--color-general-black) !important;
+  font-size: 14px !important;
 }
 
-/* Styling Dropdown (Select) agar kecil dan abu-abu */
+.s-datatable-wrapper :deep(.datatable-dropdown),
 .s-datatable-wrapper :deep(.dataTable-dropdown) {
   float: left;
 }
 
+.s-datatable-wrapper :deep(.datatable-dropdown label),
 .s-datatable-wrapper :deep(.dataTable-dropdown label) {
+  color: #94A3B8 !important;
+  font-size: 12px !important;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: var(--color-neutral-400); /* Warna teks label abu-abu */
 }
 
+.s-datatable-wrapper :deep(.datatable-dropdown select),
 .s-datatable-wrapper :deep(.dataTable-dropdown select) {
-  padding: 4px 28px 4px 8px;
-  font-size: 12px;
-  border: 1px solid var(--color-general-border);
-  border-radius: 6px;
-  color: var(--color-neutral-500);
-  background-color: white;
+  padding: 2px 24px 2px 8px !important;
+  font-size: 12px !important;
+  color: #64748B !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 4px !important;
+  background-color: white !important;
   cursor: pointer;
   outline: none;
-  font-family: var(--font-plus-jakarta);
 }
 
-.s-datatable-wrapper :deep(.dataTable-dropdown select:hover) {
-  border-color: var(--color-neutral-400);
-}
-
-/* Styling Info Teks (Menampilkan x dari y) */
+.s-datatable-wrapper :deep(.datatable-bottom),
 .s-datatable-wrapper :deep(.dataTable-bottom) {
-  padding: 16px 0 0 0;
+  padding: 16px 0 0 0 !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+.s-datatable-wrapper :deep(.datatable-info),
 .s-datatable-wrapper :deep(.dataTable-info) {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-neutral-400); /* Warna abu-abu */
+  margin: 0 !important;
+  font-size: 12px !important;
+  color: #94A3B8 !important;
 }
 
-/* Pagination Styling */
+.s-datatable-wrapper :deep(.datatable-pagination ul),
 .s-datatable-wrapper :deep(.dataTable-pagination ul) {
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   display: flex;
   gap: 4px;
 }
 
+.s-datatable-wrapper :deep(.datatable-pagination a),
 .s-datatable-wrapper :deep(.dataTable-pagination a) {
-  border: none;
-  background: transparent;
-  color: var(--color-neutral-500);
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 6px;
+  border: none !important;
+  background: transparent !important;
+  color: #64748B !important;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+  border-radius: 4px !important;
   cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s;
 }
 
+.s-datatable-wrapper :deep(.datatable-pagination a:hover),
 .s-datatable-wrapper :deep(.dataTable-pagination a:hover) {
-  background-color: var(--color-neutral-100);
-  color: var(--color-general-black);
+  background-color: #F1F5F9 !important;
+  color: var(--color-general-black) !important;
 }
 
+.s-datatable-wrapper :deep(.datatable-pagination .active a),
 .s-datatable-wrapper :deep(.dataTable-pagination .active a) {
-  background-color: var(--color-blue-600);
-  color: white;
-  font-weight: 600;
+  background-color: var(--color-blue-600) !important;
+  color: white !important;
+  font-weight: 600 !important;
 }
 </style>

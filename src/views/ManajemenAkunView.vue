@@ -44,7 +44,6 @@ function formatDate(dateString: string) {
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-// Konversi data JSON ke format array 2D yang dibutuhkan oleh simple-datatables
 const siswaTableData = computed(() => 
   siswaList.value.map(s => [s.nama_lengkap, s.nisn || '-', s.kelas || '-', formatDate(s.date_joined)])
 )
@@ -273,7 +272,7 @@ onMounted(fetchDaftar)
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
   gap: 12px;
   flex-wrap: wrap;
 }
