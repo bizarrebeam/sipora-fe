@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{
   label: string
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'light'
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
 }>()
@@ -106,5 +106,20 @@ defineEmits<{
 }
 .s-button--ghost:active:not(:disabled) {
   background: var(--color-blue-100, #BEBFDE);
+}
+
+/* ---- Variant: Light ---- */
+.s-button--light {
+  background: var(--color-general-white, #FFF);
+  border: 1px solid var(--color-general-border, #D9D9D9);
+}
+.s-button--light .s-button__label {
+  color: var(--color-general-black, #333); /* Warna teks dikembalikan ke gelap */
+}
+.s-button--light:hover:not(:disabled) {
+  background: var(--color-general-frame, #F8FAFC);
+}
+.s-button--light:active:not(:disabled) {
+  background: var(--color-general-border, #D9D9D9);
 }
 </style>

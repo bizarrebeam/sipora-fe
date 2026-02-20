@@ -2,8 +2,7 @@
 import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import SModal from '@/components/SModal.vue'
-import SButton from '@/components/SButton.vue'
+import SDialog from '@/components/SDialog.vue'
 import SiporaLogo from '@/assets/sipora-logo-light.svg'
 
 const auth = useAuthStore()
@@ -39,23 +38,28 @@ async function confirmLogout() {
 <template>
   <nav class="navbar">
     <div class="navbar-inner">
-      <!-- Logo -->
       <RouterLink to="/" class="navbar-logo" @click="closeMobile">
         <img :src="SiporaLogo" alt="SIPORA" class="navbar-logo-img" />
       </RouterLink>
 
-      <!-- Desktop Nav Links -->
       <div class="navbar-links">
         <RouterLink to="/" class="nav-link">Beranda</RouterLink>
         <RouterLink v-if="isAdmin" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
       </div>
 
-      <!-- Desktop Auth Area -->
       <div class="navbar-auth">
         <template v-if="isLoggedIn">
           <RouterLink to="/profil" class="auth-user-link">
-            <span class="auth-name">{{ namaDepan }}</span>
-            <span class="auth-badge">{{ roleBadge }}</span>
+            <div class="auth-user-info">
+              <span class="auth-name">{{ namaDepan }}</span>
+              <span class="auth-badge">{{ roleBadge }}</span>
+            </div>
+            <div class="auth-user-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
           </RouterLink>
           <button class="auth-btn auth-btn--logout" @click="openLogoutModal">Logout</button>
         </template>
@@ -65,7 +69,6 @@ async function confirmLogout() {
         </template>
       </div>
 
-      <!-- Mobile Hamburger -->
       <button
         class="hamburger"
         :class="{ 'hamburger--active': mobileMenuOpen }"
@@ -78,7 +81,6 @@ async function confirmLogout() {
       </button>
     </div>
 
-    <!-- Mobile Menu -->
     <div class="mobile-menu-wrapper" :class="{ 'mobile-menu-wrapper--open': mobileMenuOpen }">
       <div class="mobile-menu">
         <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
@@ -86,8 +88,10 @@ async function confirmLogout() {
         <div class="mobile-divider"></div>
         <template v-if="isLoggedIn">
           <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">
-            <span class="mobile-user-name">{{ namaDepan }}</span>
-            <span class="mobile-badge">{{ roleBadge }}</span>
+            <div class="mobile-user-info">
+              <span class="mobile-user-name">{{ namaDepan }}</span>
+              <span class="mobile-badge">{{ roleBadge }}</span>
+            </div>
           </RouterLink>
           <RouterLink to="/profil" class="mobile-link" @click="closeMobile">Manajemen Profil</RouterLink>
           <button class="mobile-link mobile-link--logout" @click="openLogoutModal">Logout</button>
@@ -100,14 +104,18 @@ async function confirmLogout() {
     </div>
   </nav>
 
-  <!-- Logout Confirmation Modal -->
-  <SModal :visible="showLogoutModal" title="Konfirmasi Logout" @close="showLogoutModal = false">
-    <p>Yakin ingin keluar dari SIPORA?</p>
-    <template #actions>
-      <SButton label="Batal" variant="secondary" @click="showLogoutModal = false" />
-      <SButton label="Ya, keluar" variant="primary" @click="confirmLogout" />
-    </template>
-  </SModal>
+  <SDialog
+    :visible="showLogoutModal"
+    variant="danger"
+    title="Konfirmasi Keluar"
+    message="Apakah Anda yakin ingin keluar dari sistem SIPORA?"
+    confirmLabel="Ya, Keluar"
+    cancelLabel="Batal"
+    @update:visible="showLogoutModal = $event"
+    @close="showLogoutModal = false"
+    @cancel="showLogoutModal = false"
+    @confirm="confirmLogout"
+  />
 </template>
 
 <style scoped>
@@ -124,9 +132,9 @@ async function confirmLogout() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 48px;
   height: 64px;
 }
 
@@ -148,6 +156,8 @@ async function confirmLogout() {
   display: flex;
   align-items: center;
   gap: 32px;
+  margin-left: auto;
+  margin-right: 32px;
 }
 
 .nav-link {
@@ -191,7 +201,7 @@ async function confirmLogout() {
 .auth-user-link {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   text-decoration: none;
   padding: 6px 12px;
   border-radius: 8px;
@@ -202,17 +212,26 @@ async function confirmLogout() {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.auth-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  gap: 2px;
+}
+
 .auth-name {
   color: white;
   font-family: var(--font-plus-jakarta);
   font-weight: 600;
   font-size: 14px;
+  line-height: 1.2;
 }
 
 .auth-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  padding: 2px 8px;
   background: rgba(255, 255, 255, 0.2);
   color: var(--color-blue-50);
   font-family: var(--font-be-vietnam);
@@ -220,6 +239,19 @@ async function confirmLogout() {
   font-size: 11px;
   border-radius: 100px;
   letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.auth-user-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .auth-btn {
@@ -373,9 +405,16 @@ async function confirmLogout() {
 .mobile-user-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 10px 0;
   text-decoration: none;
+}
+
+.mobile-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .mobile-user-name {

@@ -4,7 +4,7 @@ import { apiAuthGet, apiAuthPost } from '@/services/api'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
-import SModal from '@/components/SModal.vue'
+import SDialog from '@/components/SDialog.vue'
 import SDataTable from '@/components/SDataTable.vue'
 import { toast } from 'vue-sonner'
 
@@ -28,7 +28,7 @@ const guruBkTotal = ref(0)
 const search = ref('')
 const loading = ref(false)
 
-const showCreateModal = ref(false)
+const showCreateDialog = ref(false)
 const createType = ref<'guru' | 'guru_bk'>('guru')
 const createNuptk = ref('')
 const createNama = ref('')
@@ -74,13 +74,13 @@ async function fetchDaftar() {
   }
 }
 
-function openCreateModal(type: 'guru' | 'guru_bk') {
+function openCreateDialog(type: 'guru' | 'guru_bk') {
   createType.value = type
   createNuptk.value = ''
   createNama.value = ''
   createMapel.value = ''
   createPassword.value = ''
-  showCreateModal.value = true
+  showCreateDialog.value = true
 }
 
 async function handleCreate() {
@@ -114,7 +114,7 @@ async function handleCreate() {
     }
     await apiAuthPost('akun/admin/buat/', payload)
     toast.success(`Akun ${createType.value === 'guru' ? 'Guru' : 'Guru BK'} berhasil dibuat.`)
-    showCreateModal.value = false
+    showCreateDialog.value = false
     await fetchDaftar()
   } catch (err: any) {
     toast.error(err.message || 'Gagal membuat akun.')
@@ -174,7 +174,7 @@ onMounted(fetchDaftar)
               <h3 class="section-title">Guru</h3>
               <span class="section-count">{{ guruTotal }} akun terdaftar</span>
             </div>
-            <SButton label="+ Buat Akun Guru" variant="primary" @click="openCreateModal('guru')" />
+            <SButton label="+ Buat Akun Guru" variant="primary" @click="openCreateDialog('guru')" />
           </div>
           <div v-if="guruList.length" class="table-wrapper">
             <SDataTable 
@@ -191,7 +191,7 @@ onMounted(fetchDaftar)
               <h3 class="section-title">Guru BK</h3>
               <span class="section-count">{{ guruBkTotal }} akun terdaftar</span>
             </div>
-            <SButton label="+ Buat Akun Guru BK" variant="primary" @click="openCreateModal('guru_bk')" />
+            <SButton label="+ Buat Akun Guru BK" variant="primary" @click="openCreateDialog('guru_bk')" />
           </div>
           <div v-if="guruBkList.length" class="table-wrapper">
             <SDataTable 
@@ -204,7 +204,13 @@ onMounted(fetchDaftar)
       </template>
     </div>
 
-    <SModal :visible="showCreateModal" :title="createTitle" @close="showCreateModal = false">
+    <SDialog 
+      :visible="showCreateDialog" 
+      variant="primary" 
+      :title="createTitle" 
+      @update:visible="showCreateDialog = $event"
+      @close="showCreateDialog = false"
+    >
       <div class="create-form">
         <div class="nuptk-field">
           <STextField
@@ -225,11 +231,12 @@ onMounted(fetchDaftar)
         </div>
         <STextField label="Password" placeholder="Min. 6 karakter" variant="text" v-model="createPassword" :required="true" input-type="password" />
       </div>
+
       <template #actions>
-        <SButton label="Batal" variant="secondary" @click="showCreateModal = false" />
+        <SButton label="Batal" variant="secondary" @click="showCreateDialog = false" />
         <SButton :label="createLoading ? 'Membuat...' : 'Buat Akun'" variant="primary" :disabled="createLoading" @click="handleCreate" />
       </template>
-    </SModal>
+    </SDialog>
   </div>
 </template>
 
@@ -304,6 +311,8 @@ onMounted(fetchDaftar)
   display: flex;
   flex-direction: column;
   gap: 14px;
+  width: 100%;
+  text-align: left;
 }
 
 .nuptk-field {
