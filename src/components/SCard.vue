@@ -16,7 +16,7 @@ defineProps<{
   display: flex;
   padding: 32px;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 24px;
   border-radius: 16px;
   border: 1px solid var(--color-general-border, #D9D9D9);

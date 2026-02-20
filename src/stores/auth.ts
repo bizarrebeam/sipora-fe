@@ -1,13 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { apiPost, apiAuthGet, apiAuthPost } from '@/services/api'
+import { apiPost, apiAuthGet, apiAuthPost, apiAuthPut } from '@/services/api'
 import { useLoadingStore } from '@/stores/loading'
 
 interface User {
+  id?: number
   role: string
   nama_lengkap: string
-  nisn?: string
+  nisn?: string | null
+  nuptk?: string | null
   username?: string
+  kelas?: string | null
+  mata_pelajaran?: string | null
+  tahun_ajaran?: string
+  semester?: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -26,6 +32,22 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.removeItem('user')
     }
   }
+
+  const namaDepan = computed(() => {
+    if (!user.value?.nama_lengkap) return ''
+    return user.value.nama_lengkap.split(' ')[0]
+  })
+
+  const roleBadge = computed(() => {
+    if (!user.value) return ''
+    const map: Record<string, string> = {
+      siswa: 'Siswa',
+      guru: 'Guru',
+      guru_bk: 'Guru BK',
+      kemahasiswaan: 'Kemahasiswaan',
+    }
+    return map[user.value.role] || user.value.role
+  })
 
   function setTokens(access: string, refresh: string) {
     accessToken.value = access
@@ -54,18 +76,31 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const data = await apiPost('akun/login/', { identifier, password })
       setTokens(data.access, data.refresh)
-      setUser({ role: data.role, nama_lengkap: data.nama_lengkap })
+      setUser({
+        role: data.role,
+        nama_lengkap: data.nama_lengkap,
+        nisn: data.nisn,
+        nuptk: data.nuptk,
+        kelas: data.kelas,
+        mata_pelajaran: data.mata_pelajaran,
+      })
       return data
     } finally {
       loader.hide()
     }
   }
 
-  async function register(nisn: string, nama_lengkap: string, password: string, konfirmasi_password: string) {
+  async function registerSiswa(
+    nisn: string,
+    nama_lengkap: string,
+    kelas: string,
+    password: string,
+    konfirmasi_password: string,
+  ) {
     const loader = useLoadingStore()
     loader.show('Mendaftarkan akun...')
     try {
-      await apiPost('akun/register/', { nisn, nama_lengkap, password, konfirmasi_password })
+      await apiPost('akun/register/', { nisn, nama_lengkap, kelas, password, konfirmasi_password })
     } finally {
       loader.hide()
     }
@@ -100,15 +135,41 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function editProfil(payload: { kelas?: string; mata_pelajaran?: string }) {
+    const loader = useLoadingStore()
+    loader.show('Menyimpan perubahan...')
+    try {
+      const data = await apiAuthPut('akun/me/edit/', payload)
+      setUser(data)
+      return data
+    } finally {
+      loader.hide()
+    }
+  }
+
+  async function ubahPassword(password_lama: string, password_baru: string) {
+    const loader = useLoadingStore()
+    loader.show('Mengubah password...')
+    try {
+      await apiAuthPut('akun/me/password/', { password_lama, password_baru })
+    } finally {
+      loader.hide()
+    }
+  }
+
   return {
     accessToken,
     refreshToken,
     user,
     isAuthenticated,
+    namaDepan,
+    roleBadge,
     login,
-    register,
+    registerSiswa,
     logout,
     fetchProfile,
-    clearAuth
+    editProfil,
+    ubahPassword,
+    clearAuth,
   }
 })

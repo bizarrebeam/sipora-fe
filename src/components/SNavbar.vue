@@ -2,14 +2,19 @@
 import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import SModal from '@/components/SModal.vue'
+import SButton from '@/components/SButton.vue'
 import SiporaLogo from '@/assets/sipora-logo-light.svg'
 
 const auth = useAuthStore()
 const router = useRouter()
 const mobileMenuOpen = ref(false)
+const showLogoutModal = ref(false)
 
 const isLoggedIn = computed(() => auth.isAuthenticated)
-const userName = computed(() => auth.user?.nama_lengkap ?? '')
+const namaDepan = computed(() => auth.namaDepan)
+const roleBadge = computed(() => auth.roleBadge)
+const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 
 function toggleMobile() {
   mobileMenuOpen.value = !mobileMenuOpen.value
@@ -19,9 +24,14 @@ function closeMobile() {
   mobileMenuOpen.value = false
 }
 
-async function handleLogout() {
-  await auth.logout()
+function openLogoutModal() {
+  showLogoutModal.value = true
   closeMobile()
+}
+
+async function confirmLogout() {
+  showLogoutModal.value = false
+  await auth.logout()
   router.push('/login')
 }
 </script>
@@ -37,13 +47,17 @@ async function handleLogout() {
       <!-- Desktop Nav Links -->
       <div class="navbar-links">
         <RouterLink to="/" class="nav-link">Beranda</RouterLink>
+        <RouterLink v-if="isAdmin" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
       </div>
 
       <!-- Desktop Auth Area -->
       <div class="navbar-auth">
         <template v-if="isLoggedIn">
-          <span class="auth-name">{{ userName }}</span>
-          <button class="auth-btn auth-btn--logout" @click="handleLogout">Logout</button>
+          <RouterLink to="/profil" class="auth-user-link">
+            <span class="auth-name">{{ namaDepan }}</span>
+            <span class="auth-badge">{{ roleBadge }}</span>
+          </RouterLink>
+          <button class="auth-btn auth-btn--logout" @click="openLogoutModal">Logout</button>
         </template>
         <template v-else>
           <RouterLink to="/login" class="auth-btn auth-btn--login">Login</RouterLink>
@@ -64,14 +78,19 @@ async function handleLogout() {
       </button>
     </div>
 
-    <!-- Mobile Menu (CSS grid-row animation for smooth height) -->
+    <!-- Mobile Menu -->
     <div class="mobile-menu-wrapper" :class="{ 'mobile-menu-wrapper--open': mobileMenuOpen }">
       <div class="mobile-menu">
         <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
+        <RouterLink v-if="isAdmin" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
         <div class="mobile-divider"></div>
         <template v-if="isLoggedIn">
-          <span class="mobile-user">{{ userName }}</span>
-          <button class="mobile-link mobile-link--logout" @click="handleLogout">Logout</button>
+          <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">
+            <span class="mobile-user-name">{{ namaDepan }}</span>
+            <span class="mobile-badge">{{ roleBadge }}</span>
+          </RouterLink>
+          <RouterLink to="/profil" class="mobile-link" @click="closeMobile">Manajemen Profil</RouterLink>
+          <button class="mobile-link mobile-link--logout" @click="openLogoutModal">Logout</button>
         </template>
         <template v-else>
           <RouterLink to="/login" class="mobile-link" @click="closeMobile">Login</RouterLink>
@@ -80,6 +99,15 @@ async function handleLogout() {
       </div>
     </div>
   </nav>
+
+  <!-- Logout Confirmation Modal -->
+  <SModal :visible="showLogoutModal" title="Konfirmasi Logout" @close="showLogoutModal = false">
+    <p>Yakin ingin keluar dari SIPORA?</p>
+    <template #actions>
+      <SButton label="Batal" variant="secondary" @click="showLogoutModal = false" />
+      <SButton label="Ya, keluar" variant="primary" @click="confirmLogout" />
+    </template>
+  </SModal>
 </template>
 
 <style scoped>
@@ -160,12 +188,38 @@ async function handleLogout() {
   gap: 12px;
 }
 
+.auth-user-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.auth-user-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .auth-name {
-  color: var(--color-blue-100);
+  color: white;
   font-family: var(--font-plus-jakarta);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 14px;
-  margin-right: 4px;
+}
+
+.auth-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--color-blue-50);
+  font-family: var(--font-be-vietnam);
+  font-weight: 600;
+  font-size: 11px;
+  border-radius: 100px;
+  letter-spacing: 0.3px;
 }
 
 .auth-btn {
@@ -261,7 +315,7 @@ async function handleLogout() {
   transform: translateY(-7.5px) rotate(-45deg);
 }
 
-/* ── Mobile Menu (grid-row trick for smooth height animation) ── */
+/* ── Mobile Menu ── */
 .mobile-menu-wrapper {
   display: none;
   grid-template-rows: 0fr;
@@ -316,12 +370,31 @@ async function handleLogout() {
   color: var(--color-blue-200);
 }
 
-.mobile-user {
-  color: var(--color-blue-100);
+.mobile-user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  text-decoration: none;
+}
+
+.mobile-user-name {
+  color: white;
   font-family: var(--font-plus-jakarta);
-  font-weight: 500;
-  font-size: 14px;
-  padding: 8px 0;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.mobile-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--color-blue-50);
+  font-family: var(--font-be-vietnam);
+  font-weight: 600;
+  font-size: 11px;
+  border-radius: 100px;
 }
 
 .mobile-divider {

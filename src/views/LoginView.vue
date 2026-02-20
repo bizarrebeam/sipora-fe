@@ -17,7 +17,7 @@ const loading = ref(false)
 async function handleLogin() {
   errorMsg.value = ''
   if (!identifier.value || !password.value) {
-    errorMsg.value = 'Harap isi NISN dan password.'
+    errorMsg.value = 'Harap isi semua field.'
     return
   }
   loading.value = true
@@ -52,7 +52,7 @@ async function handleLogin() {
         <div class="nisn-field">
           <STextField
             label="NISN"
-            placeholder="Masukkan 10 digit NISN"
+            placeholder="Masukkan NISN"
             variant="text"
             v-model="identifier"
             :required="true"
@@ -62,7 +62,7 @@ async function handleLogin() {
             target="_blank"
             rel="noopener noreferrer"
             class="nisn-help"
-          >Cek NISN-mu di sini!</a>
+          >Cek NISN</a>
         </div>
         <STextField
           label="Password"
