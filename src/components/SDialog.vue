@@ -88,12 +88,21 @@ function cancel() {
 
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .dialog-fade-enter-from,
 .dialog-fade-leave-to {
   opacity: 0;
+}
+
+.dialog-fade-enter-active .dialog-box,
+.dialog-fade-leave-active .dialog-box {
+  transition: transform 0.2s ease;
+}
+
+.dialog-fade-enter-from .dialog-box,
+.dialog-fade-leave-to .dialog-box {
   transform: scale(0.95);
 }
 

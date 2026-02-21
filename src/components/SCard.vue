@@ -1,25 +1,16 @@
 <script setup lang="ts">
 defineProps<{
-  /** Custom padding override, default is '32px' */
+  /** Custom padding override, default is 32px ('p-8') */
   padding?: string
 }>()
 </script>
 
 <template>
-  <div class="s-card" :style="padding ? { padding } : undefined">
+  <div
+    class="flex flex-col items-stretch gap-6 rounded-2xl border border-general-border bg-white"
+    :class="{ 'p-8': !padding }"
+    :style="padding ? { padding } : undefined"
+  >
     <slot />
   </div>
 </template>
-
-<style scoped>
-.s-card {
-  display: flex;
-  padding: 32px;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 24px;
-  border-radius: 16px;
-  border: 1px solid var(--color-general-border, #D9D9D9);
-  background: var(--color-general-white, #FFF);
-}
-</style>

@@ -32,7 +32,7 @@ const showCreateDialog = ref(false)
 const createType = ref<'guru' | 'guru_bk'>('guru')
 const createNuptk = ref('')
 const createNama = ref('')
-const createMapel = ref('')
+const createMapels = ref<string[]>([''])
 const createPassword = ref('')
 const createLoading = ref(false)
 
@@ -78,7 +78,7 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
   createType.value = type
   createNuptk.value = ''
   createNama.value = ''
-  createMapel.value = ''
+  createMapels.value = ['']
   createPassword.value = ''
   showCreateDialog.value = true
 }
@@ -92,9 +92,12 @@ async function handleCreate() {
     toast.error('NUPTK harus terdiri dari 16 digit angka.')
     return
   }
-  if (createType.value === 'guru' && !createMapel.value) {
-    toast.error('Mata pelajaran wajib diisi untuk guru.')
-    return
+  if (createType.value === 'guru') {
+    const validMapels = createMapels.value.filter(m => m.trim().length > 0)
+    if (validMapels.length === 0) {
+      toast.error('Mata pelajaran wajib diisi untuk guru.')
+      return
+    }
   }
   if (createPassword.value.length < 6) {
     toast.error('Password minimal 6 karakter.')
@@ -110,7 +113,8 @@ async function handleCreate() {
       password: createPassword.value,
     }
     if (createType.value === 'guru') {
-      payload.mata_pelajaran = createMapel.value
+      const validMapels = createMapels.value.filter(m => m.trim().length > 0)
+      payload.mata_pelajaran = validMapels.join(', ')
     }
     await apiAuthPost('akun/admin/buat/', payload)
     toast.success(`Akun ${createType.value === 'guru' ? 'Guru' : 'Guru BK'} berhasil dibuat.`)
@@ -127,6 +131,14 @@ let searchTimeout: ReturnType<typeof setTimeout>
 function onSearchInput() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => fetchDaftar(), 400)
+}
+
+function addMapel() {
+  createMapels.value.push('')
+}
+
+function removeMapel(index: number) {
+  createMapels.value.splice(index, 1)
 }
 
 onMounted(fetchDaftar)
@@ -223,7 +235,31 @@ onMounted(fetchDaftar)
           <a href="https://gtk.belajar.kemendikdasmen.go.id/akun/ptk" target="_blank" rel="noopener noreferrer" class="nuptk-help">Cek NUPTK</a>
         </div>
         <STextField label="Nama Lengkap" placeholder="Masukkan nama lengkap" variant="text" v-model="createNama" :required="true" />
-        <STextField v-if="createType === 'guru'" label="Mata Pelajaran" placeholder="cth: Matematika" variant="text" v-model="createMapel" :required="true" />
+        
+        <template v-if="createType === 'guru'">
+          <div class="flex flex-col gap-3">
+            <div class="s-textfield__label-row">
+              <label class="s-textfield__label">Mata Pelajaran <span class="text-general-red font-['Space_Grotesk'] text-[12px]">*</span></label>
+            </div>
+            <div v-for="(mapel, index) in createMapels" :key="index" class="flex items-end gap-3 w-full">
+              <div class="flex-1">
+                <STextField 
+                  placeholder="Ketik di sini (cth: Matematika)" 
+                  variant="text" 
+                  v-model="createMapels[index]" 
+                />
+              </div>
+              <button v-if="createMapels.length > 1" type="button" @click="removeMapel(index)" class="flex items-center justify-center shrink-0 w-11 h-11 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              </button>
+            </div>
+            <button type="button" @click="addMapel" class="flex items-center gap-2 text-blue-500 hover:text-blue-700 body-b8 font-bold mt-1 self-start">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Tambah mata pelajaran
+            </button>
+          </div>
+        </template>
+
         <div v-if="createType === 'guru_bk'" class="auto-mapel">
           <span class="auto-label">Jabatan:</span>
           <span class="auto-value">Bimbingan Konseling</span>

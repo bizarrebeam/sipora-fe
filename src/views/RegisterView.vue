@@ -56,7 +56,7 @@ async function handleRegister() {
   loading.value = true
   try {
     await auth.registerSiswa(nisn.value, namaLengkap.value, kelas.value, password.value, konfirmasiPassword.value)
-    await auth.login(nisn.value, password.value)
+    await auth.login(nisn.value, password.value, ['siswa'])
     router.push('/')
   } catch (err: any) {
     errorMsg.value = err.message || 'Pendaftaran gagal. Silakan coba lagi.'
@@ -72,7 +72,8 @@ async function handleRegister() {
       <!-- Header -->
       <div class="register-header">
         <img :src="SiporaLogo" alt="SIPORA" class="register-logo" />
-        <p class="register-tagline">Buat akun siswa untuk membantu SMP Desa Putera menjadi lebih baik.</p>
+        <p class="register-tagline mb-0">Punya cerita, keluhan, atau saran tentang sekolah?</p>
+        <p class="register-tagline">Buat akun untuk kirim laporan atau minta konsultasi dengan lebih mudah.</p>
         <span class="semester-badge">{{ semesterInfo }}</span>
       </div>
 
@@ -84,29 +85,35 @@ async function handleRegister() {
 
       <!-- Form -->
       <form @submit.prevent="handleRegister" class="register-form">
-        <div class="nisn-field">
-          <STextField
-            label="NISN"
-            placeholder="Masukkan 10 digit NISN"
-            variant="text"
-            v-model="nisn"
-            :required="true"
-          />
-          <a
-            href="https://nisn.data.kemdikbud.go.id/index.php/Cindex/formcaribynama/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="nisn-help"
-          >Lupa NISN?</a>
+        <!-- Row 1 -->
+        <div class="form-row">
+          <div class="nisn-field form-col">
+            <STextField
+              label="NISN"
+              placeholder="Masukkan 10 digit NISN"
+              variant="text"
+              v-model="nisn"
+              :required="true"
+            />
+            <a
+              href="https://nisn.data.kemdikbud.go.id/index.php/Cindex/formcaribynama/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="nisn-help"
+            >Lupa NISN?</a>
+          </div>
+          <div class="form-col">
+            <STextField
+              label="Nama Lengkap"
+              placeholder="Masukkan nama lengkap"
+              variant="text"
+              v-model="namaLengkap"
+              :required="true"
+            />
+          </div>
         </div>
-        <STextField
-          label="Nama Lengkap"
-          placeholder="Masukkan nama lengkap"
-          variant="text"
-          v-model="namaLengkap"
-          :required="true"
-        />
 
+        <!-- Row 2 -->
         <!-- Kelas Select -->
         <div class="kelas-field">
           <div class="s-textfield__label-row">
@@ -119,27 +126,36 @@ async function handleRegister() {
           </select>
         </div>
 
-        <STextField
-          label="Password"
-          placeholder="Min. 6 karakter"
-          variant="text"
-          v-model="password"
-          :required="true"
-          input-type="password"
-        />
-        <STextField
-          label="Konfirmasi Password"
-          placeholder="Ulangi password"
-          variant="text"
-          v-model="konfirmasiPassword"
-          :required="true"
-          input-type="password"
-        />
+        <!-- Row 3 -->
+        <div class="form-row">
+          <div class="form-col">
+            <STextField
+              label="Password"
+              placeholder="Min. 6 karakter"
+              variant="text"
+              v-model="password"
+              :required="true"
+              input-type="password"
+            />
+          </div>
+          <div class="form-col">
+            <STextField
+              label="Konfirmasi Password"
+              placeholder="Ulangi password"
+              variant="text"
+              v-model="konfirmasiPassword"
+              :required="true"
+              input-type="password"
+            />
+          </div>
+        </div>
+
         <SButton
           :label="loading ? 'Memproses...' : 'Daftar Akun'"
           variant="primary"
           type="submit"
           :disabled="loading"
+          class="register-btn"
         />
       </form>
 
@@ -166,10 +182,10 @@ async function handleRegister() {
 
 .register-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 900px;
   background: white;
   border-radius: 20px;
-  padding: 28px 24px;
+  padding: 32px 24px;
   box-shadow:
     0 4px 24px rgba(42, 44, 135, 0.08),
     0 1px 4px rgba(0, 0, 0, 0.04);
@@ -238,12 +254,22 @@ async function handleRegister() {
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
-.register-form :deep(.s-button) {
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-col {
+  flex: 1;
+}
+
+.register-btn {
   width: 100%;
-  margin-top: 4px;
+  margin-top: 16px;
 }
 
 /* ── NISN field wrapper ── */
@@ -353,17 +379,22 @@ async function handleRegister() {
 }
 
 /* ── Responsive ── */
-@media (min-width: 480px) {
+@media (min-width: 768px) {
   .register-card {
-    padding: 36px 32px;
+    padding: 52px 32px;
   }
 
-  .register-logo {
-    height: 48px;
+  .form-row {
+    flex-direction: row;
+    gap: 32px;
   }
 
   .register-form {
-    gap: 16px;
+    gap: 32px;
+  }
+
+  .register-btn {
+    margin-top: 0;
   }
 }
 </style>

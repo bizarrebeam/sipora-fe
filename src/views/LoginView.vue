@@ -22,7 +22,7 @@ async function handleLogin() {
   }
   loading.value = true
   try {
-    await auth.login(identifier.value, password.value)
+    await auth.login(identifier.value, password.value, ['siswa'])
     router.push('/')
   } catch (err: any) {
     errorMsg.value = err.message || 'Login gagal. Periksa kredensial Anda.'
@@ -38,7 +38,8 @@ async function handleLogin() {
       <!-- Header with logo -->
       <div class="login-header">
         <img :src="SiporaLogo" alt="SIPORA" class="login-logo" />
-        <p class="login-tagline">Segera laporkan kendalamu di SMP Desa Putera!</p>
+        <p class="login-tagline mb-0">Suara kamu penting.</p>
+        <p class="login-tagline">Masuk ke akunmu untuk mengirim laporan atau mengecek status laporan sebelumnya.</p>
       </div>
 
       <!-- Error -->

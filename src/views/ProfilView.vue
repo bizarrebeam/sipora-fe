@@ -29,8 +29,19 @@ const semesterInfo = computed(() => {
 
 // Edit profile
 const editKelas = ref('')
-const editMapel = ref('')
+const mapels = ref<string[]>([])
 const editLoading = ref(false)
+
+function addMapel() {
+  mapels.value.push('')
+}
+
+function removeMapel(index: number) {
+  mapels.value.splice(index, 1)
+  if (mapels.value.length === 0) {
+    mapels.value.push('')
+  }
+}
 
 // Change password
 const passwordLama = ref('')
@@ -41,7 +52,12 @@ onMounted(async () => {
   try {
     await auth.fetchProfile()
     if (user.value?.kelas) editKelas.value = user.value.kelas
-    if (user.value?.mata_pelajaran) editMapel.value = user.value.mata_pelajaran
+    if (user.value?.mata_pelajaran) {
+      mapels.value = user.value.mata_pelajaran.split(',').map((m: string) => m.trim()).filter((m: string) => m.length > 0)
+    }
+    if (mapels.value.length === 0) {
+      mapels.value.push('')
+    }
   } catch {
     // Profile could fail if token expired
   }
@@ -74,7 +90,7 @@ async function handleEditProfil() {
   try {
     const payload: Record<string, string> = {}
     if (isSiswa.value) payload.kelas = editKelas.value
-    if (isGuru.value) payload.mata_pelajaran = editMapel.value
+    if (isGuru.value) payload.mata_pelajaran = mapels.value.map(m => m.trim()).filter(m => m.length > 0).join(', ')
     await auth.editProfil(payload)
     // Re-fetch to update user data
     await auth.fetchProfile()
@@ -144,6 +160,10 @@ async function handleUbahPassword() {
             <span class="info-label">Mata Pelajaran</span>
             <span class="info-value">{{ user?.mata_pelajaran || '-' }}</span>
           </div>
+          <div class="info-item">
+            <span class="info-label">Terdaftar Pada</span>
+            <span class="info-value">{{ user?.date_joined ? new Date(user.date_joined).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'}) : '-' }}</span>
+          </div>
         </div>
       </SCard>
 
@@ -164,12 +184,24 @@ async function handleUbahPassword() {
 
         <!-- Guru: mapel text -->
         <div v-if="isGuru" class="edit-field">
-          <STextField
-            label="Mata Pelajaran"
-            placeholder="cth: Matematika, Wali Kelas 9A"
-            variant="text"
-            v-model="editMapel"
-          />
+          <div class="s-textfield__label-row">
+            <label class="s-textfield__label">Mata Pelajaran</label>
+          </div>
+          <div class="flex flex-col gap-3 mt-2">
+            <div v-for="(mapel, index) in mapels" :key="index" class="flex items-center gap-2">
+              <STextField
+                placeholder="cth: Matematika"
+                variant="text"
+                v-model="mapels[index]"
+              />
+              <button v-if="mapels.length > 1" type="button" @click="removeMapel(index)" class="flex size-11 shrink-0 items-center justify-center rounded-lg border border-general-red text-general-red hover:bg-red-50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <button type="button" @click="addMapel" class="text-blue-500 hover:text-blue-600 font-['Plus_Jakarta_Sans'] font-semibold text-sm text-left self-start mt-1">
+              + Tambah mata pelajaran
+            </button>
+          </div>
         </div>
 
         <div class="edit-actions">

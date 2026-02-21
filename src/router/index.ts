@@ -4,6 +4,8 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfilView from '../views/ProfilView.vue'
 import ManajemenAkunView from '../views/ManajemenAkunView.vue'
+import LoginGuruView from '../views/LoginGuruView.vue'
+import LoginAdminView from '../views/LoginAdminView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +26,18 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView,
+      meta: { guest: true },
+    },
+    {
+      path: '/login-ptk',
+      name: 'loginPtk',
+      component: LoginGuruView,
+      meta: { guest: true },
+    },
+    {
+      path: '/login-admin-sys',
+      name: 'loginAdmin',
+      component: LoginAdminView,
       meta: { guest: true },
     },
     {

@@ -1,7 +1,9 @@
 <script setup lang="ts">
-defineProps<{
-  label: string
-  variant?: 'primary' | 'secondary' | 'ghost' | 'light'
+import { computed } from 'vue'
+
+const props = defineProps<{
+  label?: string
+  variant?: 'primary' | 'secondary' | 'ghost' | 'tertiary'
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
 }>()
@@ -9,117 +11,34 @@ defineProps<{
 defineEmits<{
   (e: 'click', event: MouseEvent): void
 }>()
+
+const baseClasses = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-4 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed subheading-s7'
+
+const variantClasses = computed(() => {
+  switch (props.variant) {
+    case 'secondary':
+      return 'bg-blue-50 text-blue-800 hover:bg-blue-100 active:bg-blue-200'
+    case 'ghost':
+      return 'bg-transparent border border-blue-600 text-blue-600 hover:bg-blue-50 active:bg-blue-100'
+    case 'tertiary':
+      return 'bg-transparent border border-transparent text-general-black hover:border-general-black active:bg-neutral-50'
+    case 'primary':
+    default:
+      return 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700'
+  }
+})
 </script>
 
 <template>
   <button
-    class="s-button"
-    :class="[`s-button--${variant || 'primary'}`]"
+    :class="[baseClasses, variantClasses]"
     :type="type || 'button'"
     :disabled="disabled"
     @click="$emit('click', $event)"
   >
-    <span class="s-button__icon">
-      <slot name="icon" />
-    </span>
-    <span class="s-button__label">{{ label }}</span>
+    <slot name="left-icon" />
+    <span v-if="label">{{ label }}</span>
+    <slot />
+    <slot name="right-icon" />
   </button>
 </template>
-
-<style scoped>
-.s-button {
-  display: inline-flex;
-  padding: 16px 20px;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.s-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.s-button__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  aspect-ratio: 1/1;
-}
-
-.s-button__icon:empty {
-  display: none;
-}
-
-.s-button__label {
-  font-family: 'Be Vietnam Pro', sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 24px;
-}
-
-/* ---- Variant: Primary ---- */
-.s-button--primary {
-  background: var(--color-blue-500, #2E3094);
-}
-.s-button--primary .s-button__label {
-  color: var(--color-general-white, #FFF);
-}
-.s-button--primary:hover:not(:disabled) {
-  background: var(--color-blue-600, #2A2C87);
-}
-.s-button--primary:active:not(:disabled) {
-  background: var(--color-blue-700, #212269);
-}
-
-/* ---- Variant: Secondary ---- */
-.s-button--secondary {
-  background: var(--color-blue-50, #EAEAF4);
-}
-.s-button--secondary .s-button__label {
-  color: var(--color-blue-600, #2A2C87);
-}
-.s-button--secondary:hover:not(:disabled) {
-  background: var(--color-blue-100, #BEBFDE);
-}
-.s-button--secondary:active:not(:disabled) {
-  background: var(--color-blue-200, #9FA0CE);
-}
-
-/* ---- Variant: Ghost ---- */
-.s-button--ghost {
-  background: transparent;
-  border: 1px solid var(--color-blue-600, #2A2C87);
-}
-.s-button--ghost .s-button__label {
-  color: var(--color-blue-600, #2A2C87);
-}
-.s-button--ghost:hover:not(:disabled) {
-  background: var(--color-blue-50, #EAEAF4);
-}
-.s-button--ghost:active:not(:disabled) {
-  background: var(--color-blue-100, #BEBFDE);
-}
-
-/* ---- Variant: Light ---- */
-.s-button--light {
-  background: var(--color-general-white, #FFF);
-  border: 1px solid var(--color-general-border, #D9D9D9);
-}
-.s-button--light .s-button__label {
-  color: var(--color-general-black, #333); /* Warna teks dikembalikan ke gelap */
-}
-.s-button--light:hover:not(:disabled) {
-  background: var(--color-general-frame, #F8FAFC);
-}
-.s-button--light:active:not(:disabled) {
-  background: var(--color-general-border, #D9D9D9);
-}
-</style>

@@ -6,6 +6,10 @@ import STextField from '@/components/STextField.vue'
 import SCard from '@/components/SCard.vue'
 import SChip from '@/components/SChip.vue'
 import SButton from '@/components/SButton.vue'
+import SToggle from '@/components/SToggle.vue'
+import SPagination from '@/components/SPagination.vue'
+import SAlert from '@/components/SAlert.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
 import SiporaLogo from '@/assets/sipora-logo.svg'
 
 const auth = useAuthStore()
@@ -13,6 +17,10 @@ const isLoggedIn = computed(() => auth.isAuthenticated)
 
 const dropdownValue = ref('Typed')
 const textValue = ref('')
+const toggleValue = ref(false)
+const currentPage = ref(1)
+const selectedDate = ref<Date | null>(null)
+const selectedDateTime = ref<Date | null>(null)
 </script>
 
 <template>
@@ -318,6 +326,89 @@ const textValue = ref('')
               <SButton label="Primary" variant="primary" :disabled="true" />
               <SButton label="Secondary" variant="secondary" :disabled="true" />
               <SButton label="Ghost" variant="ghost" :disabled="true" />
+            </div>
+          </div>
+        </div>
+
+        <!-- --- Toggle --- -->
+        <div class="mb-10">
+          <h3 class="subheading-s6 text-blue-500 mb-4">Toggle</h3>
+          <div class="bg-general-white p-8 rounded-2xl border border-general-border flex gap-8">
+            <div class="flex flex-col gap-2">
+              <p class="body-b8 text-neutral-500">Default (v-model)</p>
+              <SToggle v-model="toggleValue" />
+              <span class="body-b8 text-general-black">State: {{ toggleValue ? 'On' : 'Off' }}</span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <p class="body-b8 text-neutral-500">Disabled (Off)</p>
+              <SToggle :modelValue="false" :disabled="true" />
+            </div>
+            <div class="flex flex-col gap-2">
+              <p class="body-b8 text-neutral-500">Disabled (On)</p>
+              <SToggle :modelValue="true" :disabled="true" />
+            </div>
+          </div>
+        </div>
+
+        <!-- --- Pagination --- -->
+        <div class="mb-10">
+          <h3 class="subheading-s6 text-blue-500 mb-4">Pagination</h3>
+          <div class="bg-general-white p-8 rounded-2xl border border-general-border">
+            <p class="body-b8 text-neutral-500 mb-4">10 Pages Total</p>
+            <SPagination v-model="currentPage" :totalPages="10" />
+            <p class="mt-4 body-b8 text-general-black">Current Page: {{ currentPage }}</p>
+          </div>
+        </div>
+
+        <!-- --- Alert --- -->
+        <div class="mb-10">
+          <h3 class="subheading-s6 text-blue-500 mb-4">Alert</h3>
+          <div class="bg-general-white p-8 rounded-2xl border border-general-border flex flex-col gap-8 items-start">
+            <div>
+              <p class="body-b8 text-neutral-500 mb-2">Default Variant</p>
+              <SAlert 
+                type="default" 
+                title="Berhasil!" 
+                description="Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum"
+                primaryButtonText="Register"
+                secondaryButtonText="Register"
+              />
+            </div>
+            <div>
+              <p class="body-b8 text-neutral-500 mb-2">Warning Variant</p>
+              <SAlert 
+                type="warning" 
+                title="Gagal!" 
+                description="Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum"
+                primaryButtonText="Register"
+                secondaryButtonText="Register"
+              />
+            </div>
+            <div>
+              <p class="body-b8 text-neutral-500 mb-2">No-Header Variant</p>
+              <SAlert 
+                type="no-header" 
+                description="Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum"
+                primaryButtonText="Register"
+                secondaryButtonText="Register"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- --- Date Picker --- -->
+        <div class="mb-10">
+          <h3 class="subheading-s6 text-blue-500 mb-4">Date Picker</h3>
+          <div class="bg-general-white p-8 rounded-2xl border border-general-border flex flex-col gap-8 items-start">
+            <div>
+              <p class="body-b8 text-neutral-500 mb-2">Date Only</p>
+              <SDatePicker v-model="selectedDate" :time="false" />
+              <p class="mt-2 body-b8 text-general-black">Selected: {{ selectedDate ? selectedDate.toLocaleDateString() : 'None' }}</p>
+            </div>
+            <div>
+              <p class="body-b8 text-neutral-500 mb-2">Date & Time</p>
+              <SDatePicker v-model="selectedDateTime" :time="true" />
+              <p class="mt-2 body-b8 text-general-black">Selected: {{ selectedDateTime ? selectedDateTime.toLocaleString() : 'None' }}</p>
             </div>
           </div>
         </div>

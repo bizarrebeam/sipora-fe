@@ -14,6 +14,7 @@ interface User {
   mata_pelajaran?: string | null
   tahun_ajaran?: string
   semester?: string
+  date_joined?: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -70,11 +71,16 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user')
   }
 
-  async function login(identifier: string, password: string) {
+  async function login(identifier: string, password: string, allowedRoles?: string[]) {
     const loader = useLoadingStore()
     loader.show('Sedang masuk...')
     try {
       const data = await apiPost('akun/login/', { identifier, password })
+      
+      if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(data.role)) {
+        throw new Error('Akun Anda tidak memiliki akses ke portal ini.')
+      }
+
       setTokens(data.access, data.refresh)
       setUser({
         role: data.role,
