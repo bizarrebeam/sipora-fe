@@ -45,6 +45,7 @@ async function confirmLogout() {
       <div class="navbar-links">
         <RouterLink to="/" class="nav-link">Beranda</RouterLink>
         <RouterLink v-if="isAdmin" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
+        <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
       </div>
 
       <div class="navbar-auth">
@@ -85,6 +86,7 @@ async function confirmLogout() {
       <div class="mobile-menu">
         <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
         <RouterLink v-if="isAdmin" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
+        <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
         <div class="mobile-divider"></div>
         <template v-if="isLoggedIn">
           <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">

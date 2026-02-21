@@ -5,7 +5,7 @@ import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
 import SDialog from '@/components/SDialog.vue'
-import SDataTable from '@/components/SDataTable.vue'
+import STable from '@/components/STable.vue'
 import { toast } from 'vue-sonner'
 
 interface AkunItem {
@@ -38,23 +38,85 @@ const createLoading = ref(false)
 
 const createTitle = computed(() => createType.value === 'guru' ? 'Buat Akun Guru' : 'Buat Akun Guru BK')
 
+const pagination = ref({
+  siswa: { page: 1, pageSize: 20 },
+  guru: { page: 1, pageSize: 20 },
+  guruBk: { page: 1, pageSize: 20 }
+})
+
+const sortState = ref({
+  siswa: { key: '', order: 'desc' as 'asc' | 'desc' },
+  guru: { key: '', order: 'desc' as 'asc' | 'desc' },
+  guruBk: { key: '', order: 'desc' as 'asc' | 'desc' }
+})
+
+const siswaColumns = [
+  { key: 'nama_lengkap', label: 'Nama', sortable: true },
+  { key: 'nisn', label: 'NISN', sortable: true },
+  { key: 'kelas', label: 'Kelas', sortable: true },
+  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true }
+]
+
+const guruColumns = [
+  { key: 'nama_lengkap', label: 'Nama', sortable: true },
+  { key: 'nuptk', label: 'NUPTK', sortable: true },
+  { key: 'mata_pelajaran', label: 'Mata Pelajaran', sortable: true },
+  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true }
+]
+
+const guruBkColumns = [
+  { key: 'nama_lengkap', label: 'Nama', sortable: true },
+  { key: 'nuptk', label: 'NUPTK', sortable: true },
+  { key: 'mata_pelajaran', label: 'Jabatan', sortable: false },
+  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true }
+]
+
 function formatDate(dateString: string) {
   if (!dateString) return '-'
   const d = new Date(dateString)
   return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-const siswaTableData = computed(() => 
-  siswaList.value.map(s => [s.nama_lengkap, s.nisn || '-', s.kelas || '-', formatDate(s.date_joined)])
-)
+function handleSort(type: 'siswa' | 'guru' | 'guruBk', key: string) {
+  const current = sortState.value[type]
+  if (current.key === key) {
+    current.order = current.order === 'asc' ? 'desc' : 'asc'
+  } else {
+    current.key = key
+    current.order = 'asc'
+  }
+}
 
-const guruTableData = computed(() => 
-  guruList.value.map(g => [g.nama_lengkap, g.nuptk || '-', g.mata_pelajaran || '-', formatDate(g.date_joined)])
-)
+function getSortedList(list: AkunItem[], type: 'siswa' | 'guru' | 'guruBk') {
+  const { key, order } = sortState.value[type]
+  if (!key) return list
+  return [...list].sort((a: any, b: any) => {
+    let valA = a[key]
+    let valB = b[key]
+    if (valA < valB) return order === 'asc' ? -1 : 1
+    if (valA > valB) return order === 'asc' ? 1 : -1
+    return 0
+  })
+}
 
-const guruBkTableData = computed(() => 
-  guruBkList.value.map(bk => [bk.nama_lengkap, bk.nuptk || '-', bk.mata_pelajaran || 'Bimbingan Konseling', formatDate(bk.date_joined)])
-)
+const siswaSorted = computed(() => getSortedList(siswaList.value, 'siswa'))
+const guruSorted = computed(() => getSortedList(guruList.value, 'guru'))
+const guruBkSorted = computed(() => getSortedList(guruBkList.value, 'guruBk'))
+
+const paginatedSiswaList = computed(() => {
+  const start = (pagination.value.siswa.page - 1) * pagination.value.siswa.pageSize
+  return siswaSorted.value.slice(start, start + pagination.value.siswa.pageSize)
+})
+
+const paginatedGuruList = computed(() => {
+  const start = (pagination.value.guru.page - 1) * pagination.value.guru.pageSize
+  return guruSorted.value.slice(start, start + pagination.value.guru.pageSize)
+})
+
+const paginatedGuruBkList = computed(() => {
+  const start = (pagination.value.guruBk.page - 1) * pagination.value.guruBk.pageSize
+  return guruBkSorted.value.slice(start, start + pagination.value.guruBk.pageSize)
+})
 
 async function fetchDaftar() {
   loading.value = true
@@ -171,13 +233,29 @@ onMounted(fetchDaftar)
               <span class="section-count">{{ siswaTotal }} akun terdaftar</span>
             </div>
           </div>
-          <div v-if="siswaList.length" class="table-wrapper">
-            <SDataTable 
-              :headers="['Nama', 'NISN', 'Kelas', 'Terdaftar Pada']" 
-              :data="siswaTableData" 
-            />
+          <div class="table-wrapper">
+            <STable
+              :columns="siswaColumns"
+              :data="paginatedSiswaList"
+              :total-data="siswaTotal"
+              v-model:current-page="pagination.siswa.page"
+              v-model:page-size="pagination.siswa.pageSize"
+              :sort-key="sortState.siswa.key"
+              :sort-order="sortState.siswa.order"
+              @sort="(k) => handleSort('siswa', k)"
+              empty-message="Belum ada siswa yang terdaftar."
+            >
+              <template #body-cell-nisn="{ row }">
+                {{ row.nisn || '-' }}
+              </template>
+              <template #body-cell-kelas="{ row }">
+                {{ row.kelas || '-' }}
+              </template>
+              <template #body-cell-date_joined="{ row }">
+                {{ formatDate(row.date_joined) }}
+              </template>
+            </STable>
           </div>
-          <p v-else class="empty-msg">Belum ada siswa yang terdaftar.</p>
         </SCard>
 
         <SCard class="section-card">
@@ -188,13 +266,29 @@ onMounted(fetchDaftar)
             </div>
             <SButton label="+ Buat Akun Guru" variant="primary" @click="openCreateDialog('guru')" />
           </div>
-          <div v-if="guruList.length" class="table-wrapper">
-            <SDataTable 
-              :headers="['Nama', 'NUPTK', 'Mata Pelajaran', 'Terdaftar Pada']" 
-              :data="guruTableData" 
-            />
+          <div class="table-wrapper">
+            <STable
+              :columns="guruColumns"
+              :data="paginatedGuruList"
+              :total-data="guruTotal"
+              v-model:current-page="pagination.guru.page"
+              v-model:page-size="pagination.guru.pageSize"
+              :sort-key="sortState.guru.key"
+              :sort-order="sortState.guru.order"
+              @sort="(k) => handleSort('guru', k)"
+              empty-message="Belum ada guru yang terdaftar."
+            >
+              <template #body-cell-nuptk="{ row }">
+                {{ row.nuptk || '-' }}
+              </template>
+              <template #body-cell-mata_pelajaran="{ row }">
+                {{ row.mata_pelajaran || '-' }}
+              </template>
+              <template #body-cell-date_joined="{ row }">
+                {{ formatDate(row.date_joined) }}
+              </template>
+            </STable>
           </div>
-          <p v-else class="empty-msg">Belum ada guru yang terdaftar.</p>
         </SCard>
 
         <SCard class="section-card">
@@ -205,13 +299,29 @@ onMounted(fetchDaftar)
             </div>
             <SButton label="+ Buat Akun Guru BK" variant="primary" @click="openCreateDialog('guru_bk')" />
           </div>
-          <div v-if="guruBkList.length" class="table-wrapper">
-            <SDataTable 
-              :headers="['Nama', 'NUPTK', 'Jabatan', 'Terdaftar Pada']" 
-              :data="guruBkTableData" 
-            />
+          <div class="table-wrapper">
+            <STable
+              :columns="guruBkColumns"
+              :data="paginatedGuruBkList"
+              :total-data="guruBkTotal"
+              v-model:current-page="pagination.guruBk.page"
+              v-model:page-size="pagination.guruBk.pageSize"
+              :sort-key="sortState.guruBk.key"
+              :sort-order="sortState.guruBk.order"
+              @sort="(k) => handleSort('guruBk', k)"
+              empty-message="Belum ada guru BK yang terdaftar."
+            >
+              <template #body-cell-nuptk="{ row }">
+                {{ row.nuptk || '-' }}
+              </template>
+              <template #body-cell-mata_pelajaran="{ row }">
+                {{ row.mata_pelajaran || 'Bimbingan Konseling' }}
+              </template>
+              <template #body-cell-date_joined="{ row }">
+                {{ formatDate(row.date_joined) }}
+              </template>
+            </STable>
           </div>
-          <p v-else class="empty-msg">Belum ada guru BK yang terdaftar.</p>
         </SCard>
       </template>
     </div>

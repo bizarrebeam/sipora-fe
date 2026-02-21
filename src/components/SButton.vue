@@ -12,7 +12,7 @@ defineEmits<{
   (e: 'click', event: MouseEvent): void
 }>()
 
-const baseClasses = 'inline-flex items-center justify-center gap-2 rounded-lg px-5 py-4 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed subheading-s7'
+const baseClasses = 'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 sm:px-5 sm:py-4 text-sm sm:text-base transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-semibold'
 
 const variantClasses = computed(() => {
   switch (props.variant) {

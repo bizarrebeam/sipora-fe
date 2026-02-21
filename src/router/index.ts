@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import ProfilView from '../views/ProfilView.vue'
 import ManajemenAkunView from '../views/ManajemenAkunView.vue'
+import LogAktivitasView from '../views/LogAktivitasView.vue'
 import LoginGuruView from '../views/LoginGuruView.vue'
 import LoginAdminView from '../views/LoginAdminView.vue'
 
@@ -50,6 +51,12 @@ const router = createRouter({
       path: '/manajemen-akun',
       name: 'manajemenAkun',
       component: ManajemenAkunView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/log-aktivitas',
+      name: 'logAktivitas',
+      component: LogAktivitasView,
       meta: { requiresAuth: true },
     },
   ],

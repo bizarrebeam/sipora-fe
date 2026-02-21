@@ -185,7 +185,7 @@ async function handleRegister() {
   max-width: 900px;
   background: white;
   border-radius: 20px;
-  padding: 32px 24px;
+  padding: 24px 16px;
   box-shadow:
     0 4px 24px rgba(42, 44, 135, 0.08),
     0 1px 4px rgba(0, 0, 0, 0.04);
@@ -326,19 +326,26 @@ async function handleRegister() {
 
 .kelas-select {
   display: flex;
-  padding: 12px 16px;
+  padding: 10px 12px;
   align-self: stretch;
   border-radius: 8px;
   border: 1px solid var(--color-general-border, #D9D9D9);
   background: var(--color-general-white, #FFF);
   color: var(--color-general-black, #333);
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 24px;
   cursor: pointer;
   transition: border-color 0.2s ease;
   appearance: auto;
+}
+
+@media (min-width: 640px) {
+  .kelas-select {
+    padding: 12px 16px;
+    font-size: 16px;
+  }
 }
 
 .kelas-select:hover {

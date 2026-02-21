@@ -35,12 +35,12 @@ const iconVisible = computed(() => {
     <button
       v-if="variant === 'dropdown'"
       type="button"
-      class="flex w-full items-center justify-between rounded-lg border border-general-border bg-white px-4 py-3 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+      class="flex w-full items-center justify-between rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50 text-sm sm:text-base"
       :disabled="disabled"
       @click="$emit('click')"
     >
       <span
-        class="flex-1 text-left body-b7"
+        class="flex-1 text-left font-['Plus_Jakarta_Sans'] font-medium"
         :class="modelValue ? 'text-general-black' : 'text-neutral-300'"
       >
         {{ modelValue || placeholder || 'Ketik di sini...' }}
@@ -69,7 +69,7 @@ const iconVisible = computed(() => {
     <!-- Textarea variant -->
     <textarea
       v-else-if="variant === 'textarea'"
-      class="flex w-full min-h-[113px] items-start rounded-lg border border-general-border bg-white px-4 py-3 text-general-black body-b7 placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+      class="flex w-full min-h-[113px] items-start rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Plus_Jakarta_Sans'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
       :placeholder="placeholder || 'Ketik di sini...'"
       :value="modelValue"
       :disabled="disabled"
@@ -80,7 +80,7 @@ const iconVisible = computed(() => {
     <div v-else class="relative w-full">
       <input
         :type="inputType || 'text'"
-        class="flex w-full items-center rounded-lg border border-general-border bg-white px-4 py-3 text-general-black body-b7 placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+        class="flex w-full items-center rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Plus_Jakarta_Sans'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
         :class="{ 'pr-10': iconVisible }"
         :placeholder="placeholder || 'Ketik di sini...'"
         :value="modelValue"

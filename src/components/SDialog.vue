@@ -107,7 +107,9 @@ function cancel() {
 }
 
 .dialog-box {
-  width: 572px;
+  width: 90%;
+  max-width: 572px;
+  margin: 16px;
   border-radius: 16px;
   border: 1px solid var(--color-general-border, #D9D9D9);
   background: var(--color-general-white, #FFF);
@@ -115,7 +117,6 @@ function cancel() {
   display: flex;
   flex-direction: column;
   position: relative;
-  flex-shrink: 0;
 }
 
 .dialog-close {
@@ -137,11 +138,12 @@ function cancel() {
 .dialog-header {
   display: flex;
   width: 100%;
-  height: 91px;
-  padding: 28px 148px;
+  min-height: 80px;
+  height: auto;
+  padding: 20px 48px;
   align-items: center;
   justify-content: center;
-  gap: 71px;
+  gap: 16px;
   border-radius: 16px 16px 0 0;
   border-bottom: 1px solid var(--color-general-border, #D9D9D9);
 }
@@ -157,10 +159,10 @@ function cancel() {
 .dialog-header h5 {
   text-align: center;
   font-family: var(--font-be-vietnam);
-  font-size: 24px;
+  font-size: 20px;
   font-style: normal;
   font-weight: 800;
-  line-height: 32px;
+  line-height: 28px;
   margin: 0;
   flex: 1 0 0;
 }
@@ -177,7 +179,8 @@ function cancel() {
 }
 
 .body-plain {
-  height: 287px;
+  min-height: 240px;
+  height: auto;
   justify-content: center;
   align-items: center;
   gap: 36px;
@@ -192,14 +195,14 @@ function cancel() {
 }
 
 .dialog-message {
-  width: 508px;
+  width: 100%;
   color: var(--color-general-black, #333);
   text-align: center;
   font-family: var(--font-be-vietnam);
-  font-size: 20px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 600;
-  line-height: 28px;
+  line-height: 24px;
   margin: 0;
 }
 
@@ -213,14 +216,14 @@ function cancel() {
 
 .btn-dialog {
   display: flex;
-  padding: 16px 20px;
+  padding: 12px 16px;
   justify-content: center;
   align-items: center;
   gap: 8px;
   flex: 1 0 0;
   border-radius: 8px;
   font-family: var(--font-plus-jakarta);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
@@ -260,5 +263,20 @@ function cancel() {
   background: transparent;
   border: 1px solid var(--color-general-black, #333);
   color: var(--color-general-black, #333);
+}
+
+@media (min-width: 640px) {
+  .dialog-header h5 {
+    font-size: 24px;
+    line-height: 32px;
+  }
+  .dialog-message {
+    font-size: 20px;
+    line-height: 28px;
+  }
+  .btn-dialog {
+    padding: 16px 20px;
+    font-size: 16px;
+  }
 }
 </style>
