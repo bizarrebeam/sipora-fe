@@ -198,7 +198,7 @@ async function handleUbahPassword() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
-            <button type="button" @click="addMapel" class="text-blue-500 hover:text-blue-600 font-['Plus_Jakarta_Sans'] font-semibold text-sm text-left self-start mt-1">
+            <button type="button" @click="addMapel" class="text-blue-500 hover:text-blue-600 font-['Be_Vietnam_Pro'] font-semibold text-sm text-left self-start mt-1">
               + Tambah mata pelajaran
             </button>
           </div>
@@ -348,7 +348,7 @@ async function handleUbahPassword() {
 }
 
 .info-label {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 500;
   font-size: 12px;
   color: var(--color-neutral-400);
@@ -357,7 +357,7 @@ async function handleUbahPassword() {
 }
 
 .info-value {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 500;
   font-size: 15px;
   color: var(--color-general-black);
@@ -399,7 +399,7 @@ async function handleUbahPassword() {
   border: 1px solid var(--color-general-border, #D9D9D9);
   background: var(--color-general-white, #FFF);
   color: var(--color-general-black, #333);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;

@@ -118,7 +118,7 @@ const loading = useLoadingStore()
 
 /* ── Message ── */
 .loader-message {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 500;
   font-size: 15px;
   color: var(--color-blue-600);

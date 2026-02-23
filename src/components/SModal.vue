@@ -140,7 +140,7 @@ function close() {
   gap: 8px;
   flex: 1 0 0;
   border-radius: 8px;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 16px;
   font-weight: 600;
 }

@@ -109,7 +109,7 @@ async function handleLogin() {
 }
 
 .login-tagline {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 1.5;
@@ -132,7 +132,7 @@ async function handleLogin() {
   border: 1px solid #fecaca;
   border-radius: 8px;
   color: #dc2626;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   line-height: 1.4;
   margin-bottom: 16px;

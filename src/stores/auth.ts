@@ -18,11 +18,9 @@ interface User {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const accessToken = ref<string | null>(localStorage.getItem('access_token'))
-  const refreshToken = ref<string | null>(localStorage.getItem('refresh_token'))
   const user = ref<User | null>(null)
 
-  const isAuthenticated = computed(() => !!accessToken.value)
+  const isAuthenticated = computed(() => !!user.value)
 
   // Load user data from localStorage on init
   const storedUser = localStorage.getItem('user')
@@ -50,23 +48,14 @@ export const useAuthStore = defineStore('auth', () => {
     return map[user.value.role] || user.value.role
   })
 
-  function setTokens(access: string, refresh: string) {
-    accessToken.value = access
-    refreshToken.value = refresh
-    localStorage.setItem('access_token', access)
-    localStorage.setItem('refresh_token', refresh)
-  }
-
   function setUser(userData: User) {
     user.value = userData
     localStorage.setItem('user', JSON.stringify(userData))
   }
 
   function clearAuth() {
-    accessToken.value = null
-    refreshToken.value = null
     user.value = null
-    localStorage.removeItem('access_token')
+    localStorage.removeItem('access_token') // clean up old items
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
   }
@@ -81,7 +70,6 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Akun Anda tidak memiliki akses ke portal ini.')
       }
 
-      setTokens(data.access, data.refresh)
       setUser({
         role: data.role,
         nama_lengkap: data.nama_lengkap,
@@ -116,12 +104,9 @@ export const useAuthStore = defineStore('auth', () => {
     const loader = useLoadingStore()
     loader.show('Keluar dari akun...')
     try {
-      if (refreshToken.value) {
-        try {
-          await apiAuthPost('akun/logout/', { refresh: refreshToken.value })
-        } catch {
-          // Token may already be blacklisted or expired
-        }
+      try {
+        await apiAuthPost('akun/logout/', {})
+      } catch {
       }
       clearAuth()
     } finally {
@@ -164,8 +149,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   return {
-    accessToken,
-    refreshToken,
     user,
     isAuthenticated,
     namaDepan,

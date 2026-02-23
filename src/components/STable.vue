@@ -135,6 +135,6 @@ function onPageSizeChange(e: Event) {
 
 <style scoped>
 .font-display {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
 }
 </style>

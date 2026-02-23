@@ -58,7 +58,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .s-datatable-wrapper :deep(.datatable-wrapper),
 .s-datatable-wrapper :deep(.dataTable-wrapper) {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
 }
 
 .s-datatable-wrapper :deep(.datatable-top),

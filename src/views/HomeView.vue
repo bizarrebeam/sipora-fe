@@ -160,7 +160,7 @@ const selectedDateTime = ref<Date | null>(null)
 
         <!-- Body -->
         <div>
-          <p class="subheading-s7 text-neutral-500 mb-4">Body — Plus Jakarta Sans 400</p>
+          <p class="subheading-s7 text-neutral-500 mb-4">Body — Be Vietnam Pro 400</p>
           <div class="space-y-3 bg-general-white p-6 rounded-2xl border border-general-border">
             <p class="body-b1 text-general-black">B1 — 60px</p>
             <p class="body-b2 text-general-black">B2 — 48px</p>
@@ -445,7 +445,7 @@ const selectedDateTime = ref<Date | null>(null)
 }
 
 .landing-tagline {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 1.6;

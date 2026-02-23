@@ -164,7 +164,7 @@ async function confirmLogout() {
 
 .nav-link {
   color: var(--color-blue-50);
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 600;
   font-size: 16px;
   text-decoration: none;
@@ -224,7 +224,7 @@ async function confirmLogout() {
 
 .auth-name {
   color: white;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 600;
   font-size: 14px;
   line-height: 1.2;
@@ -260,7 +260,7 @@ async function confirmLogout() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 600;
   font-size: 14px;
   padding: 8px 20px;
@@ -297,7 +297,7 @@ async function confirmLogout() {
   background: transparent;
   color: var(--color-blue-100);
   border: 1.5px solid rgba(255, 255, 255, 0.3);
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 600;
   font-size: 14px;
   padding: 8px 20px;
@@ -384,7 +384,7 @@ async function confirmLogout() {
 .mobile-link {
   display: block;
   color: var(--color-blue-50);
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 600;
   font-size: 16px;
   text-decoration: none;
@@ -421,7 +421,7 @@ async function confirmLogout() {
 
 .mobile-user-name {
   color: white;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 600;
   font-size: 15px;
 }

@@ -414,7 +414,7 @@ onMounted(fetchDaftar)
   text-align: center;
   padding: 40px 0;
   color: var(--color-neutral-500);
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
 }
 
 .section-card {
@@ -439,7 +439,7 @@ onMounted(fetchDaftar)
 }
 
 .section-count {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 500;
   font-size: 13px;
   color: var(--color-neutral-400);
@@ -449,7 +449,7 @@ onMounted(fetchDaftar)
   text-align: center;
   padding: 20px 0;
   color: var(--color-neutral-400);
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 14px;
 }
 
@@ -469,7 +469,7 @@ onMounted(fetchDaftar)
   position: absolute;
   top: 0;
   right: 0;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   font-weight: 500;
   color: var(--color-blue-400);
@@ -490,7 +490,7 @@ onMounted(fetchDaftar)
   padding: 12px 16px;
   background: var(--color-general-frame);
   border-radius: 8px;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 14px;
 }
 

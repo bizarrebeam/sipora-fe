@@ -123,7 +123,7 @@ async function handleLogin() {
 }
 
 .login-tagline {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 400;
   font-size: 15px;
   line-height: 1.5;
@@ -146,7 +146,7 @@ async function handleLogin() {
   border: 1px solid #fecaca;
   border-radius: 8px;
   color: #dc2626;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   line-height: 1.4;
   margin-bottom: 16px;
@@ -178,7 +178,7 @@ async function handleLogin() {
   position: absolute;
   top: 0;
   right: 0;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   font-weight: 500;
   color: var(--color-blue-400);
@@ -202,7 +202,7 @@ async function handleLogin() {
 }
 
 .footer-text {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 13px;
   color: var(--color-neutral-500);
 }

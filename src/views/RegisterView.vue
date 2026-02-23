@@ -201,7 +201,7 @@ async function handleRegister() {
 }
 
 .register-tagline {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 400;
   font-size: 14px;
   line-height: 1.5;
@@ -239,7 +239,7 @@ async function handleRegister() {
   border: 1px solid #fecaca;
   border-radius: 8px;
   color: #dc2626;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   line-height: 1.4;
   margin-bottom: 16px;
@@ -281,7 +281,7 @@ async function handleRegister() {
   position: absolute;
   top: 0;
   right: 0;
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   font-weight: 500;
   color: var(--color-blue-400);
@@ -332,7 +332,7 @@ async function handleRegister() {
   border: 1px solid var(--color-general-border, #D9D9D9);
   background: var(--color-general-white, #FFF);
   color: var(--color-general-black, #333);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Be Vietnam Pro', sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 24px;
@@ -368,7 +368,7 @@ async function handleRegister() {
 }
 
 .footer-text {
-  font-family: var(--font-plus-jakarta);
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 13px;
   color: var(--color-neutral-500);
 }

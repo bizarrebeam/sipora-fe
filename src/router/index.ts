@@ -63,10 +63,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('access_token')
-  if (to.meta.requiresAuth && !token) {
+  const isUserLoggedIn = !!localStorage.getItem('user')
+  if (to.meta.requiresAuth && !isUserLoggedIn) {
     next('/login')
-  } else if (to.meta.guest && token) {
+  } else if (to.meta.guest && isUserLoggedIn) {
     next('/')
   } else {
     next()

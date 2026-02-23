@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
  */
 
 export async function getApiStatus() {
-  const response = await fetch(API_BASE_URL)
+  const response = await fetch(API_BASE_URL, { credentials: 'include' })
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
     throw new Error(json.message || 'Failed to connect to backend')
@@ -40,7 +40,7 @@ function parseError(json: any, status: number): string {
 }
 
 export async function apiGet(endpoint: string) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`)
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, { credentials: 'include' })
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
     throw new Error(parseError(json, response.status))
@@ -51,6 +51,7 @@ export async function apiGet(endpoint: string) {
 export async function apiPost(endpoint: string, payload: object) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
@@ -64,9 +65,8 @@ export async function apiPost(endpoint: string, payload: object) {
 
 // Authenticated GET request
 export async function apiAuthGet(endpoint: string) {
-  const token = localStorage.getItem('access_token')
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include',
   })
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
@@ -80,12 +80,11 @@ export async function apiAuthGet(endpoint: string) {
 
 // Authenticated POST request
 export async function apiAuthPost(endpoint: string, payload: object) {
-  const token = localStorage.getItem('access_token')
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(payload)
   })
@@ -101,12 +100,11 @@ export async function apiAuthPost(endpoint: string, payload: object) {
 
 // Authenticated PUT request
 export async function apiAuthPut(endpoint: string, payload: object) {
-  const token = localStorage.getItem('access_token')
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'PUT',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(payload)
   })

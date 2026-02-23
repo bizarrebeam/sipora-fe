@@ -6,7 +6,7 @@
      FONTS
      =========================== */
   --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-body: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
   /* ===========================
      COLORS — Blue (50–900)
@@ -210,7 +210,7 @@
 
 /* =============================================================================
    TYPOGRAPHY UTILITIES — Body (B1–B9)
-   B1–B2: Be Vietnam Pro | B3–B8: Plus Jakarta Sans | B9: Be Vietnam Pro
+   B1–B2: Be Vietnam Pro | B3–B8: Be Vietnam Pro | B9: Be Vietnam Pro
    Weight: 400
    ============================================================================= */
 
@@ -231,7 +231,7 @@
 }
 
 @utility body-b3 {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 36px;
   font-style: normal;
   font-weight: 400;
@@ -239,7 +239,7 @@
 }
 
 @utility body-b4 {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 28px;
   font-style: normal;
   font-weight: 400;
@@ -247,7 +247,7 @@
 }
 
 @utility body-b5 {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 24px;
   font-style: normal;
   font-weight: 400;
@@ -255,7 +255,7 @@
 }
 
 @utility body-b6 {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 20px;
   font-style: normal;
   font-weight: 400;
@@ -263,7 +263,7 @@
 }
 
 @utility body-b7 {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -271,7 +271,7 @@
 }
 
 @utility body-b8 {
-  font-family: "Plus Jakarta Sans", sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
