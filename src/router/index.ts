@@ -30,13 +30,13 @@ const router = createRouter({
       meta: { guest: true },
     },
     {
-      path: '/login-ptk',
+      path: '/internal/login-bk',
       name: 'loginPtk',
       component: LoginGuruView,
       meta: { guest: true },
     },
     {
-      path: '/login-admin-sys',
+      path: '/internal/login-admin',
       name: 'loginAdmin',
       component: LoginAdminView,
       meta: { guest: true },

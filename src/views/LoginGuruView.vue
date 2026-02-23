@@ -51,18 +51,12 @@ async function handleLogin() {
       <form @submit.prevent="handleLogin" class="login-form">
         <div class="nisn-field">
           <STextField
-            label="NUPTK"
-            placeholder="Masukkan 16 digit NUPTK"
+            label="Username / NUPTK"
+            placeholder="Masukkan username atau NUPTK"
             variant="text"
             v-model="identifier"
             :required="true"
           />
-          <a
-            href="https://gtk.belajar.kemendikdasmen.go.id/akun/ptk"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="nisn-help"
-          >Cek NUPTK</a>
         </div>
         <STextField
           label="Password"

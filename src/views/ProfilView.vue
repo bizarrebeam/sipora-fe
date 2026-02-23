@@ -48,6 +48,10 @@ const passwordLama = ref('')
 const passwordBaru = ref('')
 const passwordLoading = ref(false)
 
+const isPasswordBaruLengthValid = computed(() => passwordBaru.value.length >= 8)
+const isPasswordBaruAlphanumeric = computed(() => /[a-zA-Z]/.test(passwordBaru.value) && /[0-9]/.test(passwordBaru.value))
+const isPasswordBaruValid = computed(() => isPasswordBaruLengthValid.value && isPasswordBaruAlphanumeric.value)
+
 onMounted(async () => {
   try {
     await auth.fetchProfile()
@@ -107,8 +111,8 @@ async function handleUbahPassword() {
     toast.error('Harap isi semua field password.')
     return
   }
-  if (passwordBaru.value.length < 6) {
-    toast.error('Password baru minimal 6 karakter.')
+  if (!isPasswordBaruValid.value) {
+    toast.error('Password baru harus minimal 8 karakter dan kombinasi huruf serta angka.')
     return
   }
   passwordLoading.value = true
@@ -227,11 +231,23 @@ async function handleUbahPassword() {
           />
           <STextField
             label="Password Baru"
-            placeholder="Min. 6 karakter"
+            placeholder="Kombinasi huruf & angka"
             variant="text"
             v-model="passwordBaru"
             input-type="password"
           />
+          <div class="password-rules" v-if="passwordBaru.length > 0">
+            <div :class="['rule-item', isPasswordBaruLengthValid ? 'valid' : 'invalid']">
+              <svg v-if="isPasswordBaruLengthValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Minimal 8 karakter</span>
+            </div>
+            <div :class="['rule-item', isPasswordBaruAlphanumeric ? 'valid' : 'invalid']">
+              <svg v-if="isPasswordBaruAlphanumeric" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Terdapat kombinasi huruf dan angka</span>
+            </div>
+          </div>
           <div class="edit-actions">
             <SButton
               :label="passwordLoading ? 'Mengubah...' : 'Ubah Password'"
@@ -432,6 +448,32 @@ async function handleUbahPassword() {
   flex-direction: column;
   gap: 14px;
 }
+
+/* ── Password Rules ── */
+.password-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: -6px;
+  margin-bottom: 2px;
+  padding: 8px 12px;
+  background: var(--color-general-frame);
+  border-radius: 8px;
+  border: 1px solid var(--color-general-border);
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.rule-item.valid { color: #10B981; }
+.rule-item.invalid { color: #EF4444; }
 
 /* ── Responsive ── */
 @media (min-width: 480px) {

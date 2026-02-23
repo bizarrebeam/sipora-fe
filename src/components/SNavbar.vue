@@ -14,6 +14,7 @@ const isLoggedIn = computed(() => auth.isAuthenticated)
 const namaDepan = computed(() => auth.namaDepan)
 const roleBadge = computed(() => auth.roleBadge)
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
+const canManageAkun = computed(() => isAdmin.value || auth.user?.role === 'guru_bk')
 
 function toggleMobile() {
   mobileMenuOpen.value = !mobileMenuOpen.value
@@ -29,9 +30,17 @@ function openLogoutModal() {
 }
 
 async function confirmLogout() {
+  const role = auth.user?.role
   showLogoutModal.value = false
   await auth.logout()
-  router.push('/login')
+
+  if (role === 'kemahasiswaan' || role === 'admin' || role === 'admin_sistem') {
+    router.push('/internal/login-admin')
+  } else if (role === 'guru' || role === 'guru_bk') {
+    router.push('/internal/login-bk')
+  } else {
+    router.push('/login')
+  }
 }
 </script>
 
@@ -44,7 +53,7 @@ async function confirmLogout() {
 
       <div class="navbar-links">
         <RouterLink to="/" class="nav-link">Beranda</RouterLink>
-        <RouterLink v-if="isAdmin" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
+        <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
         <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
       </div>
 
@@ -85,7 +94,7 @@ async function confirmLogout() {
     <div class="mobile-menu-wrapper" :class="{ 'mobile-menu-wrapper--open': mobileMenuOpen }">
       <div class="mobile-menu">
         <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
-        <RouterLink v-if="isAdmin" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
+        <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
         <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
         <div class="mobile-divider"></div>
         <template v-if="isLoggedIn">

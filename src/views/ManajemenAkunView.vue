@@ -7,6 +7,7 @@ import STextField from '@/components/STextField.vue'
 import SDialog from '@/components/SDialog.vue'
 import STable from '@/components/STable.vue'
 import { toast } from 'vue-sonner'
+import { useAuthStore } from '@/stores/auth'
 
 interface AkunItem {
   id: string
@@ -27,6 +28,9 @@ const guruTotal = ref(0)
 const guruBkTotal = ref(0)
 const search = ref('')
 const loading = ref(false)
+
+const auth = useAuthStore()
+const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 
 const showCreateDialog = ref(false)
 const createType = ref<'guru' | 'guru_bk'>('guru')
@@ -258,7 +262,7 @@ onMounted(fetchDaftar)
           </div>
         </SCard>
 
-        <SCard class="section-card">
+        <SCard class="section-card" v-if="isKemahasiswaan">
           <div class="section-header">
             <div>
               <h3 class="section-title">Guru</h3>
@@ -291,7 +295,7 @@ onMounted(fetchDaftar)
           </div>
         </SCard>
 
-        <SCard class="section-card">
+        <SCard class="section-card" v-if="isKemahasiswaan">
           <div class="section-header">
             <div>
               <h3 class="section-title">Guru BK</h3>

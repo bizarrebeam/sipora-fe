@@ -17,6 +17,10 @@ const konfirmasiPassword = ref('')
 const errorMsg = ref('')
 const loading = ref(false)
 
+const isPasswordLengthValid = computed(() => password.value.length >= 8)
+const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(password.value) && /[0-9]/.test(password.value))
+const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
+
 const kelasOptions = ['7A', '7B', '8A', '8B', '9A', '9B']
 
 // Compute current semester info
@@ -48,8 +52,8 @@ async function handleRegister() {
     return
   }
 
-  if (password.value.length < 6) {
-    errorMsg.value = 'Password minimal 6 karakter.'
+  if (!isPasswordValid.value) {
+    errorMsg.value = 'Password harus minimal 8 karakter dan mengandung huruf serta angka.'
     return
   }
 
@@ -131,12 +135,24 @@ async function handleRegister() {
           <div class="form-col">
             <STextField
               label="Password"
-              placeholder="Min. 6 karakter"
+              placeholder="Kombinasi huruf & angka"
               variant="text"
               v-model="password"
               :required="true"
               input-type="password"
             />
+            <div class="password-rules" v-if="password.length > 0">
+              <div :class="['rule-item', isPasswordLengthValid ? 'valid' : 'invalid']">
+                <svg v-if="isPasswordLengthValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Minimal 8 karakter</span>
+              </div>
+              <div :class="['rule-item', isPasswordAlphanumeric ? 'valid' : 'invalid']">
+                <svg v-if="isPasswordAlphanumeric" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Terdapat kombinasi huruf dan angka</span>
+              </div>
+            </div>
           </div>
           <div class="form-col">
             <STextField
@@ -383,6 +399,36 @@ async function handleRegister() {
 .footer-link:hover {
   color: var(--color-blue-600);
   text-decoration: underline;
+}
+
+/* ── Password Rules ── */
+.password-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--color-general-frame);
+  border-radius: 8px;
+  border: 1px solid var(--color-general-border);
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.rule-item.valid {
+  color: #10B981; /* green-500 */
+}
+
+.rule-item.invalid {
+  color: #EF4444; /* red-500 */
 }
 
 /* ── Responsive ── */
