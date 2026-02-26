@@ -19,7 +19,7 @@ coverage
 !.vscode/extensions.json
 .idea
 *.suo
-*.ntvs*
+.ntvs
 *.njsproj
 *.sln
 *.sw?
@@ -33,10 +33,10 @@ coverage
 /cypress/screenshots/
 
 # Vitest
-__screenshots__/
+_screenshots_/
 
 # Vite
-*.timestamp-*-*.mjs
+.timestamp--*.mjs
 
 # Environments
 .env
