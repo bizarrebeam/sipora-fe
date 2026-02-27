@@ -7,6 +7,7 @@ import ManajemenAkunView from '../views/ManajemenAkunView.vue'
 import LogAktivitasView from '../views/LogAktivitasView.vue'
 import LoginGuruView from '../views/LoginGuruView.vue'
 import LoginAdminView from '../views/LoginAdminView.vue'
+import FAQView from '../views/FAQView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
