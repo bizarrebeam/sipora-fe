@@ -1,48 +1,67 @@
-# sipora-fe
+## Identitas Mahasiswa
+- **Nama** : Joanne Kenisa Adelina Limena  
+- **NPM**  : 2306275626  
 
-This template should help get you started developing with Vue 3 in Vite.
+---
+## Fitur yang Dikerjakan
+Berikut adalah daftar fitur dan backlog (PBI) yang saya kerjakan berdasarkan **Product Backlog Item (PBI)** pada dokumen Propenat :contentReference[oaicite:0]{index=0}.
 
-## Recommended IDE Setup
+---
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+### 1️⃣ Mengelola Laporan Kerusakan Fasilitas Sekolah
+#### PBI-17 — Membatalkan Laporan Kerusakan  
+**Backlog Title**: Membatalkan Laporan Kerusakan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan siswa atau guru sebagai pelapor untuk membatalkan laporan kerusakan fasilitas sekolah yang telah dikirimkan, selama laporan masih berada pada status *Menunggu Konfirmasi*. Sistem akan menampilkan modal konfirmasi sebelum laporan dibatalkan untuk menghindari kesalahan aksi.
 
-## Recommended Browser Setup
+---
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+#### PBI-18 — Melihat Daftar Laporan Kerusakan  
+**Backlog Title**: Melihat Daftar Laporan Kerusakan  
+**Deskripsi Singkat**:  
+Fitur ini menampilkan daftar laporan kerusakan fasilitas sekolah yang telah dikirimkan ke sistem. Kemahasiswaan dapat melihat seluruh laporan dari semua pelapor, sedangkan siswa dan guru hanya dapat melihat laporan milik mereka sendiri. Tampilan disajikan dalam bentuk tabel (untuk admin) dan card (untuk pelapor).
 
-## Type Support for `.vue` Imports in TS
+---
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+#### PBI-19 — Melihat Detail Laporan Kerusakan  
+**Backlog Title**: Melihat Detail Laporan Kerusakan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan pengguna untuk melihat detail lengkap laporan kerusakan, termasuk informasi pengirim, judul, deskripsi kerusakan, lokasi, jenis kerusakan, foto bukti pendukung, serta status dan riwayat perubahan laporan. Fitur ini membantu pelapor dalam memantau perkembangan penanganan laporan.
 
-## Customize configuration
+---
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### 2️⃣ Menanggapi Laporan Bullying dan Laporan Kerusakan
+#### PBI-20 — Membuat Pesan Tanggapan Laporan  
+**Backlog Title**: Membuat Pesan Tanggapan Laporan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan Kemahasiswaan, Guru BK, siswa, dan guru untuk mengirimkan pesan tanggapan terhadap laporan yang ada. Pesan ditampilkan dalam bentuk thread sehingga komunikasi antara pelapor dan pihak sekolah dapat berlangsung secara terstruktur dan terdokumentasi.
 
-## Project Setup
+---
 
-```sh
-npm install
-```
+#### PBI-21 — Membaca Pesan Tanggapan Laporan  
+**Backlog Title**: Membaca Pesan Tanggapan Laporan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan pengguna untuk membaca seluruh pesan tanggapan yang telah dikirimkan pada suatu laporan. Pesan ditampilkan berdasarkan urutan waktu pengiriman untuk memudahkan pemahaman alur komunikasi.
 
-### Compile and Hot-Reload for Development
+---
 
-```sh
-npm run dev
-```
+#### PBI-22 — Mengupdate Status Laporan  
+**Backlog Title**: Mengupdate Status Laporan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan Kemahasiswaan dan Guru BK untuk memperbarui status laporan menjadi *Diproses*, *Ditolak*, atau *Selesai*. Setiap perubahan status akan dicatat dalam sistem beserta informasi siapa yang melakukan perubahan dan waktu perubahan tersebut.
 
-### Type-Check, Compile and Minify for Production
+---
 
-```sh
-npm run build
-```
+#### PBI-23 — Menutup Laporan  
+**Backlog Title**: Menutup Laporan  
+**Deskripsi Singkat**:  
+Fitur ini digunakan untuk menandai laporan yang telah selesai ditindaklanjuti. Setelah laporan ditutup, status laporan tidak dapat diubah kembali, dan sistem akan menyimpan waktu penutupan laporan secara otomatis sebagai arsip.
 
-### Lint with [ESLint](https://eslint.org/)
+---
 
-```sh
-npm run lint
-```
+### 3️⃣ Daftar Laporan Periodik
+
+#### PBI-30 — Laporan Periodik Otomatis  
+**Backlog Title**: Laporan Periodik Otomatis  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan Kemahasiswaan untuk melihat rekap data laporan secara periodik dalam bentuk tabel berdasarkan rentang waktu tertentu. Data yang ditampilkan dapat diekspor dan diunduh dalam format PDF sebagai dokumen resmi untuk keperluan monitoring, evaluasi, dan arsip sekolah.

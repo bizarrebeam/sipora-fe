@@ -7,6 +7,9 @@ import ManajemenAkunView from '../views/ManajemenAkunView.vue'
 import LogAktivitasView from '../views/LogAktivitasView.vue'
 import LoginGuruView from '../views/LoginGuruView.vue'
 import LoginAdminView from '../views/LoginAdminView.vue'
+import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
+import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
+import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,6 +60,24 @@ const router = createRouter({
       path: '/log-aktivitas',
       name: 'logAktivitas',
       component: LogAktivitasView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-kerusakan',
+      name: 'laporanKerusakan',
+      component: LaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/detail-kerusakan',
+      name: 'detailKerusakan',
+      component: DetailLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-kerusakan',
+      name: 'createKerusakan',
+      component: CreateLaporanKerusakanView,
       meta: { requiresAuth: true },
     },
   ],
