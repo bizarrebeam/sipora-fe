@@ -42,3 +42,4 @@ _screenshots_/
 .env
 .env.local
 .env.*.local
+.env.*
