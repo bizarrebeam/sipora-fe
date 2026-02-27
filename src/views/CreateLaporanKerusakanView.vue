@@ -1,10 +1,33 @@
-
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { v4 as uuidv4 } from 'uuid'
+import { useRouter } from 'vue-router'
 import STextField from '@/components/STextField.vue'
 import SToggle from '@/components/SToggle.vue'
-// SDatePicker import removed, not used
+import SButton from '@/components/SButton.vue'
+import SAlert from '@/components/SAlert.vue'
+import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
+
+const router = useRouter()
+const laporanStore = useLaporanKerusakanStore()
+
+const alertVisible = ref(false)
+const alertType = ref<'default' | 'warning' | 'no-header'>('default')
+const alertTitle = ref('')
+const alertDescription = ref('')
+let alertOnPrimary: (() => void) | null = null
+
+function showAlert(opts: { type?: 'default' | 'warning' | 'no-header'; title?: string; description: string; onPrimary?: () => void }) {
+    alertType.value = opts.type ?? 'default'
+    alertTitle.value = opts.title ?? ''
+    alertDescription.value = opts.description
+    alertOnPrimary = opts.onPrimary ?? null
+    alertVisible.value = true
+}
+
+function handleAlertPrimary() {
+    alertVisible.value = false
+    if (alertOnPrimary) alertOnPrimary()
+}
 
 const judul = ref('')
 const buktiInputRef = ref<HTMLInputElement | null>(null)
@@ -13,7 +36,7 @@ const tanggalInputRef = ref<HTMLInputElement | null>(null)
 const lokasi = ref('')
 const deskripsi = ref('')
 const anonimitas = ref(false)
-const buktiPendukung = ref<File | null>(null)
+const buktiPendukung = ref<File[]>([])
 const buktiError = ref('')
 
 const errors = ref({
@@ -48,74 +71,104 @@ function triggerFileInput() {
 function handleFileChange(e: Event) {
     const files = (e.target as HTMLInputElement).files
     buktiError.value = ''
-    if (files && files.length > 0) {
-        const file = files[0]
-        if (!file) {
-            buktiPendukung.value = null
-            return
-        }
-        const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-        if (!allowed.includes(file.type)) {
-            buktiError.value = 'Format gambar tidak didukung'
-            buktiPendukung.value = null
-            return
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            buktiError.value = 'Ukuran maksimal 5 MB'
-            buktiPendukung.value = null
-            return
-        }
-        buktiPendukung.value = file
-    } else {
-        buktiPendukung.value = null
+    
+    if (!files || files.length === 0) return
+    
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    const newFiles: File[] = []
+    
+    // Check if adding new files would exceed max limit
+    if (buktiPendukung.value.length + files.length > 5) {
+        buktiError.value = 'Maksimal 5 foto'
+        if (buktiInputRef.value) buktiInputRef.value.value = ''
+        return
     }
+    
+    // Validate each file
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (!file) continue
+        
+        if (!allowed.includes(file.type)) {
+            buktiError.value = `Format ${file.name} tidak didukung`
+            if (buktiInputRef.value) buktiInputRef.value.value = ''
+            return
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            buktiError.value = `Ukuran ${file.name} maksimal 5 MB`
+            if (buktiInputRef.value) buktiInputRef.value.value = ''
+            return
+        }
+        
+        newFiles.push(file)
+    }
+    
+    buktiPendukung.value = [...buktiPendukung.value, ...newFiles]
+    if (buktiInputRef.value) buktiInputRef.value.value = ''
 }
 
-function generateNoLaporan() {
-    // Simulasi: LK-YYYY-XXX (XXX = random 3 digit)
-    const year = new Date().getFullYear()
-    const rand = Math.floor(1 + Math.random() * 999)
-    return `LK-${year}-${String(rand).padStart(3, '0')}`
+function removeFile(index: number) {
+    buktiPendukung.value.splice(index, 1)
+    buktiError.value = ''
 }
 
-function handleSubmit() {
+async function handleSubmit() {
     validate()
     if (!isFormValid.value) return
 
-    const payload = {
-        id: uuidv4(),
-        no_laporan: generateNoLaporan(),
-        judul_laporan: judul.value.trim(),
-        tanggal_kejadian: tanggalKejadian.value,
-        lokasi: lokasi.value.trim(),
-        deskripsi: deskripsi.value.trim(),
-        anonimitas: anonimitas.value,
-        status: 'menunggu',
-        tanggal_laporan: new Date().toISOString(),
-        bukti_pendukung: buktiPendukung.value ? [buktiPendukung.value] : [],
+    try {
+        await laporanStore.createLaporanKerusakan({
+            judul: judul.value.trim(),
+            tanggal_kejadian: tanggalKejadian.value,
+            lokasi: lokasi.value.trim(),
+            deskripsi: deskripsi.value.trim(),
+            anonimitas: anonimitas.value,
+            foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
+        })
+        
+        // Reset form
+        judul.value = ''
+        tanggalKejadian.value = ''
+        lokasi.value = ''
+        deskripsi.value = ''
+        anonimitas.value = false
+        buktiPendukung.value = []
+        buktiError.value = ''
+        Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
+        
+        // Redirect after loading completes — no popup needed
+        router.push('/laporan-kerusakan')
+    } catch (error: any) {
+        showAlert({
+            type: 'warning',
+            title: 'Gagal Membuat Laporan',
+            description: error?.message || 'Terjadi kesalahan. Silakan coba lagi.',
+        })
     }
-    // Dummy submit
-    // eslint-disable-next-line no-console
-    console.log('Payload:', payload)
-    alert('Laporan berhasil disiapkan! (lihat console)')
-    // Reset form (opsional)
-    judul.value = ''
-    tanggalKejadian.value = ''
-    lokasi.value = ''
-    deskripsi.value = ''
-    anonimitas.value = false
-    buktiPendukung.value = null
-    buktiError.value = ''
-    Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
 }
 </script>
 
 <template>
     <div class="create-laporan-page">
+        <!-- SAlert overlay -->
+        <Teleport to="body">
+            <Transition name="fade">
+                <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
+                    <SAlert
+                        :type="alertType"
+                        :title="alertTitle"
+                        :description="alertDescription"
+                        primary-button-text="OK"
+                        @close="alertVisible = false"
+                        @primary-click="handleAlertPrimary"
+                    />
+                </div>
+            </Transition>
+        </Teleport>
         <h4 class="form-title stf-header">Tambah Laporan Kerusakan</h4>
         <div class="form-container">
             <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
-                <!-- Judul -->
                 <div class="form-group">
                     <STextField
                         v-model="judul"
@@ -128,7 +181,6 @@ function handleSubmit() {
                     />
                     <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
                 </div>
-                <!-- Tanggal Kejadian -->
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Tanggal Kejadian</label>
@@ -155,7 +207,6 @@ function handleSubmit() {
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                 </div>
-                <!-- Lokasi Kejadian -->
                 <div class="form-group">
                     <STextField
                         v-model="lokasi"
@@ -168,11 +219,10 @@ function handleSubmit() {
                     />
                     <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                 </div>
-                <!-- Deskripsi Kejadian -->
                 <div class="form-group">
                     <STextField
                         v-model="deskripsi"
-                        label="Deskripsi Kejadian"
+                        label="Deskripsi Kerusakan"
                         :required="true"
                         :placeholder="'Ketik di sini...'"
                         :variant="'textarea'"
@@ -181,23 +231,39 @@ function handleSubmit() {
                     />
                     <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
                 </div>
-                <!-- Bukti Pendukung -->
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Bukti Pendukung (opsional)</label>
+                        <span v-if="buktiPendukung.length > 0" class="file-count">{{ buktiPendukung.length }}/5 foto</span>
                     </div>
-                    <div class="file-upload-wrapper">
+                    <div class="file-upload-section">
                         <input
                             ref="buktiInputRef"
                             type="file"
                             accept="image/png,image/jpeg,image/jpg,image/webp"
                             class="file-input-hidden"
+                            multiple
                             @change="handleFileChange"
                         />
-                        <button type="button" class="choose-file-btn" @click="triggerFileInput">
-                            Pilih File
+                        <button 
+                            type="button" 
+                            class="choose-file-btn" 
+                            @click="triggerFileInput"
+                            :disabled="buktiPendukung.length >= 5"
+                        >
+                            {{ buktiPendukung.length >= 5 ? 'Maksimal 5 Foto' : 'Tambah Foto' }}
                         </button>
-                        <span v-if="buktiPendukung" class="file-chosen">{{ buktiPendukung.name }}</span>
+                        <div v-if="buktiPendukung.length > 0" class="file-list">
+                            <div v-for="(file, index) in buktiPendukung" :key="index" class="file-chosen-wrapper">
+                                <span class="file-chosen">{{ file.name }}</span>
+                                <button type="button" class="remove-file-btn" @click="removeFile(index)" title="Hapus file">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <span v-if="buktiError" class="error-msg">{{ buktiError }}</span>
                 </div>
@@ -213,15 +279,23 @@ function handleSubmit() {
                     </div>
                 </div>
 
-                <!-- Submit Button -->
                 <div class="form-group">
-                    <button
-                        type="submit"
-                        class="submit-btn"
-                        :disabled="!isFormValid"
-                    >
-                        Kirim Laporan
-                    </button>
+                    <div style="display: flex; gap: 12px;">
+                        <SButton
+                            label="Kembali"
+                            variant="ghost"
+                            type="button"
+                            @click="$router.back()"
+                            class="w-full"
+                        />
+                        <button
+                            type="submit"
+                            class="submit-btn w-full"
+                            :disabled="!isFormValid"
+                        >
+                            Kirim Laporan
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -272,7 +346,6 @@ function handleSubmit() {
     padding: 48px 40px;
 }
 
-/* Make sure native date picker is visible and not overridden by custom font */
 .input-date-native[type='date'] {
     font-family: inherit;
     font-size: inherit;
@@ -315,6 +388,18 @@ function handleSubmit() {
 .file-input-hidden {
     display: none;
 }
+.file-upload-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.file-count {
+    font-size: 12px;
+    color: var(--color-neutral-400);
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 500;
+    margin-left: auto;
+}
 .choose-file-btn {
     background: var(--color-blue-500);
     color: var(--color-general-white);
@@ -325,23 +410,58 @@ function handleSubmit() {
     border-radius: 8px;
     padding: 8px 18px;
     cursor: pointer;
-    margin-right: 10px;
     transition: background 0.2s;
+    align-self: flex-start;
 }
-.choose-file-btn:hover {
+.choose-file-btn:hover:not(:disabled) {
     background: var(--color-blue-600);
+}
+.choose-file-btn:disabled {
+    background: var(--color-neutral-300);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.file-chosen-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--color-blue-50);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-blue-200);
 }
 .file-chosen {
     font-size: 13px;
     color: var(--color-blue-500);
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 500;
+    flex: 1;
 }
-.file-upload-wrapper {
+.remove-file-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    color: var(--color-blue-400);
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+    flex-shrink: 0;
 }
+.remove-file-btn:hover {
+    background: var(--color-blue-100);
+    color: var(--color-blue-600);
+}
+
 .error-msg {
     color: var(--color-blue-200);
     font-size: 12px;
@@ -415,11 +535,75 @@ function handleSubmit() {
     cursor: not-allowed;
 }
 @media (max-width: 600px) {
+    .create-laporan-page {
+        padding: 16px 8px;
+    }
     .form-container {
-        padding: 14px 4px;
+        padding: 20px 16px;
+        border-radius: 16px;
     }
     .form-title {
         font-size: 18px;
+        margin-bottom: 20px;
     }
+    .laporan-form {
+        gap: 12px;
+    }
+    .form-group {
+        gap: 4px;
+    }
+    .submit-btn, .submit-btn:disabled {
+        font-size: 14px;
+        padding: 10px 0;
+        border-radius: 8px;
+    }
+    .choose-file-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 6px;
+    }
+    .file-chosen {
+        font-size: 11px;
+    }
+    .switch-label {
+        font-size: 11px;
+    }
+    .custom-label, .custom-asterisk {
+        font-size: 14px;
+    }
+    .error-msg {
+        font-size: 11px;
+    }
+    /* Stack buttons vertically: Submit on top, Kembali below */
+    .form-group > div[style*="display: flex"] {
+        flex-direction: column-reverse !important;
+        gap: 8px !important;
+    }
+    .form-group > div[style*="display: flex"] > * {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: none !important;
+    }
+}
+
+/* SAlert overlay */
+.salert-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(2px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
 </style>

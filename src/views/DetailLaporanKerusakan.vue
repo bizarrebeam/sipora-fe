@@ -44,29 +44,14 @@ async function handleSubmit() {
 
 <template>
     <div class="create-laporan-page">
-        <h1 class="title">Buat Laporan Kerusakan</h1>
-
-        <form @submit.prevent="handleSubmit" class="form">
-            <STextField v-model="noLaporan" label="No. Laporan" placeholder="Masukkan nomor laporan" required />
-            <STextField v-model="pelapor" label="Pelapor" placeholder="Masukkan nama pelapor" required />
-            <STextField v-model="kelas" label="Kelas" placeholder="Masukkan kelas" required />
-            <STextField v-model="lokasi" label="Lokasi" placeholder="Masukkan lokasi kerusakan" required />
-            <STextField v-model="deskripsi" label="Deskripsi" placeholder="Masukkan deskripsi kerusakan" required
-                textarea />
-
-            <div class="actions">
-                <SButton label="Batal" variant="secondary" @click="() => router.push('/laporan-kerusakan')" />
-                <SButton :label="loading ? 'Menyimpan...' : 'Simpan'" :disabled="loading" variant="primary"
-                    type="submit" />
-            </div>
-        </form>
+        <h1 class="title">Detail Kerusakan</h1>
     </div>
 </template>
 
 <style scoped>
 .create-laporan-page {
     max-width: 600px;
-    margin: 0 auto;
+    margin: 0 auto; 
     padding: 24px;
     background: white;
     border-radius: 8px;
