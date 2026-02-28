@@ -298,7 +298,7 @@ onMounted(() => {
 
 							<template #body-cell-pengirim="{ row }">
 								<span class="text-sm text-gray-500">
-									{{ row.anonimitas ? 'Anonim' : (row.nama_lengkap || row.pengirim_username || '-') }}
+									{{ row.nama_lengkap || row.pengirim_username || '-' }}
 								</span>
 							</template>
 
