@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
@@ -7,6 +7,7 @@ import STable from '@/components/STable.vue'
 import SDialog from '@/components/SDialog.vue'
 import SPagination from '@/components/SPagination.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 
 interface LaporanKerusakan {
 	id: string
@@ -16,17 +17,19 @@ interface LaporanKerusakan {
 	deskripsi: string
 	tanggal_kejadian: string
 	anonimitas: boolean
-	pengirim_username?: string // Only used if anonimitas is false
-	nama_lengkap?: string // Only used if anonimitas is false
+	pengirim_username?: string
+	nama_lengkap?: string
 	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak'
-	foto_bukti?: string
+	foto_bukti?: Array<{ id: string; foto: string; uploaded_at: string }>
+	foto_pendukung?: string[]
 	catatan_admin?: string
 }
 
 const auth = useAuthStore()
+const laporanStore = useLaporanKerusakanStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isGuruBk = computed(() => auth.user?.role === 'guru_bk')
-const isAdmin = computed(() => isKemahasiswaan.value || isGuruBk.value)
+const isAdmin = computed(() => isKemahasiswaan.value)
 const isPelapor = computed(() => !isAdmin.value)
 
 const loading = ref(false)
@@ -67,132 +70,15 @@ const columns = [
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
 
-// ── Dummy data ──
-const laporanList = ref<LaporanKerusakan[]>([
-	{
-		id: '3f96f0b6-2b5e-4d3b-a7e1-1a92d0b4b1a1',
-		no_laporan: 'LK-2026-001',
-		judul: 'AC Kelas Tidak Berfungsi',
-		lokasi: 'Ruang Kelas XII IPA 1',
-		deskripsi: 'AC di ruang kelas tidak berfungsi, sudah mati sejak 2 hari yang lalu. Suhu ruangan sangat panas.',
-		tanggal_kejadian: '2026-02-25',
-		anonimitas: false,
-		pengirim_username: 'budi.siswa',
-		nama_lengkap: 'Budi Santoso',
-		status: 'menunggu',
-		foto_bukti: 'ac-rusak-2026-001.jpg',
-	},
-	{
-		id: 'b6b7f1ac-7b2b-4c0f-8f73-2c0a8f6c4c5e',
-		no_laporan: 'LK-2026-002',
-		judul: 'Monitor Berkedip-kedip',
-		lokasi: 'Laboratorium Komputer',
-		deskripsi: 'Monitor komputer nomor 5 dan 8 layarnya berkedip-kedip dan kadang mati sendiri.',
-		tanggal_kejadian: '2026-02-24',
-		anonimitas: true,
-		pengirim_username: 'siti.guru',
-		status: 'diproses',
-		foto_bukti: 'monitor-berkedip-2026-002.png',
-		catatan_admin: 'Sudah dilaporkan ke teknisi, estimasi perbaikan 3 hari kerja.',
-	},
-	{
-		id: '2d4c1aef-0e44-4c1d-b1c3-4e2a7f6d2f18',
-		no_laporan: 'LK-2026-003',
-		judul: 'Kran Wastafel Bocor',
-		lokasi: 'Toilet Lantai 2',
-		deskripsi: 'Kran wastafel rusak, air mengalir terus tidak bisa dimatikan.',
-		tanggal_kejadian: '2026-02-23',
-		anonimitas: false,
-		pengirim_username: 'agus.wali',
-		nama_lengkap: 'Agus Waluyo',
-		status: 'selesai',
-		foto_bukti: 'kran-bocor-2026-003.jpg',
-		catatan_admin: 'Kran sudah diganti oleh bagian sarpras tanggal 24 Februari.',
-	},
-	{
-		id: 'ad9c2c1e-1a74-4d0f-9c3f-5c5b2d7f8b8a',
-		no_laporan: 'LK-2026-004',
-		judul: 'Lampu Area Baca Mati',
-		lokasi: 'Perpustakaan',
-		deskripsi: 'Lampu di area baca bagian belakang mati, gelap saat sore hari.',
-		tanggal_kejadian: '2026-02-22',
-		anonimitas: true,
-		pengirim_username: 'rina.siswa',
-		status: 'selesai',
-		foto_bukti: 'lampu-mati-2026-004.jpg',
-		catatan_admin: 'Lampu sudah diganti.',
-	},
-	{
-		id: 'c8e6f4bd-7b6f-4c9a-9d1a-7e9b2d1f3c91',
-		no_laporan: 'LK-2026-005',
-		judul: 'Jendela Kelas Tidak Rapat',
-		lokasi: 'Ruang Kelas XI IPA 1',
-		deskripsi: 'Jendela kelas tidak bisa ditutup rapat, saat hujan air masuk ke dalam kelas.',
-		tanggal_kejadian: '2026-02-21',
-		anonimitas: false,
-		pengirim_username: 'rina.siswa',
-		nama_lengkap: 'Rina Sari',
-		status: 'ditolak',
-		foto_bukti: 'jendela-rusak-2026-005.jpg',
-		catatan_admin: 'Laporan duplikat, sudah dilaporkan sebelumnya oleh wali kelas.',
-	},
-	{
-		id: '1f6b8a6e-2b6d-4b1e-9d8e-7f6a2d1c0e4a',
-		no_laporan: 'LK-2026-006',
-		judul: 'Meja Kantin Goyang',
-		lokasi: 'Kantin Sekolah',
-		deskripsi: 'Meja dan kursi di area kantin banyak yang goyang dan hampir patah.',
-		tanggal_kejadian: '2026-02-20',
-		anonimitas: true,
-		pengirim_username: 'rina.siswa',
-		status: 'diproses',
-		foto_bukti: 'meja-kantin-2026-006.jpg',
-		catatan_admin: 'Sedang dalam proses pengadaan meja kursi baru.',
-	},
-	{
-		id: '9e3b1c5d-4f7a-4b9d-8c2a-1d6f5b9a7c3e',
-		no_laporan: 'LK-2026-007',
-		judul: 'Ring Basket Miring',
-		lokasi: 'Lapangan Basket',
-		deskripsi: 'Ring basket sebelah kiri sudah miring dan berbahaya jika digunakan.',
-		tanggal_kejadian: '2026-02-19',
-		anonimitas: false,
-		pengirim_username: 'doni.siswa',
-		nama_lengkap: 'Doni Pratama',
-		status: 'menunggu',
-		foto_bukti: 'ring-basket-2026-007.jpg',
-	},
-	{
-		id: '7a2c4d9b-8e3f-4b2a-9c7d-5f1a2c3e4d5b',
-		no_laporan: 'LK-2026-008',
-		judul: 'Papan Tulis Sulit Dihapus',
-		lokasi: 'Ruang Kelas XI IPA 3',
-		deskripsi: 'Papan tulis whiteboard sudah sulit dihapus, tulisan menempel permanen.',
-		tanggal_kejadian: '2026-02-18',
-		anonimitas: true,
-		status: 'menunggu',
-		foto_bukti: 'whiteboard-2026-008.jpg',
-	},
-])
+// Data from store (backend API)
+const laporanList = computed(() => laporanStore.laporanList)
+const totalLaporan = computed(() => laporanStore.totalLaporan)
 
-// Computed: filtered, sorted, paginated
+// Computed: date filtering (backend handles status & search), sorting, pagination
 const filteredList = computed(() => {
 	let list = laporanList.value
 
-	if (selectedStatus.value !== 'semua') {
-		list = list.filter(item => item.status === selectedStatus.value)
-	}
-
-	if (search.value) {
-		const q = search.value.toLowerCase()
-		list = list.filter(item =>
-			item.no_laporan.toLowerCase().includes(q) ||
-			item.judul.toLowerCase().includes(q) ||
-			item.lokasi.toLowerCase().includes(q) ||
-			item.deskripsi.toLowerCase().includes(q)
-		)
-	}
-
+	// Date filtering (backend doesn't support this yet)
 	if (selectedDate.value) {
 		list = list.filter(item => {
 			const itemDate = new Date(item.tanggal_kejadian).toISOString().slice(0, 10)
@@ -309,9 +195,27 @@ const statusCounts = computed(() => ({
 	ditolak: laporanList.value.filter(l => l.status === 'ditolak').length,
 }))
 
+// Fetch data when filters change
+watch([selectedStatus, search], () => {
+	fetchData()
+}, { immediate: false })
+
+async function fetchData() {
+	loading.value = true
+	try {
+		await laporanStore.fetchLaporanKerusakan({
+			status: selectedStatus.value,
+			search: search.value,
+		})
+	} catch (error) {
+		console.error('Error fetching laporan:', error)
+	} finally {
+		loading.value = false
+	}
+}
+
 onMounted(() => {
-	loading.value = false // Ensure loading is set to false initially
-	// No need to fetch data, as dummy data or store data is already used
+	fetchData()
 })
 </script>
 

@@ -51,7 +51,7 @@ async function confirmLogout() {
         <img :src="SiporaLogo" alt="SIPORA" class="navbar-logo-img" />
       </RouterLink>
 
-      <div class="navbar-links">
+      <div v-if="isLoggedIn" class="navbar-links">
         <RouterLink to="/" class="nav-link">Beranda</RouterLink>
         <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
         <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
@@ -95,13 +95,13 @@ async function confirmLogout() {
 
     <div class="mobile-menu-wrapper" :class="{ 'mobile-menu-wrapper--open': mobileMenuOpen }">
       <div class="mobile-menu">
-        <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
-        <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
-        <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
-        <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
-        <RouterLink to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
-        <div class="mobile-divider"></div>
         <template v-if="isLoggedIn">
+          <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
+          <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
+          <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
+          <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
+          <RouterLink to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
+          <div class="mobile-divider"></div>
           <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">
             <div class="mobile-user-info">
               <span class="mobile-user-name">{{ namaDepan }}</span>
