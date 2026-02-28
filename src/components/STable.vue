@@ -117,11 +117,8 @@ function onPageSizeChange(e: Event) {
       </div>
       
       <!-- Bottom Pagination -->
-      <div v-show="!loading" class="px-6 py-4 border-t border-gray-100 flex flex-col justify-center sm:flex-row items-center sm:justify-between gap-4">
-        <div class="text-xs text-gray-500 font-display sm:hidden">
-          Menampilkan {{ startDataIndex }} - {{ endDataIndex }} dari {{ totalData }}
-        </div>
-        <div v-if="totalPages > 1 && data.length > 0" class="mx-auto sm:mx-0 w-full flex justify-center sm:justify-end">
+      <div v-show="!loading" class="px-6 py-4 border-t border-gray-100 flex flex-col items-center gap-4">
+        <div v-if="totalPages > 1 && data.length > 0" class="w-full flex justify-center">
           <SPagination 
             :modelValue="currentPage"
             :totalPages="totalPages"
