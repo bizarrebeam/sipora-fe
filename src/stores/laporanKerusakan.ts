@@ -1,19 +1,37 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { apiAuthGet, apiAuthPost } from '@/services/api'
+import { apiAuthGet } from '@/services/api'
 import { useLoadingStore } from '@/stores/loading'
 
 interface LaporanKerusakan {
     id: string
     no_laporan: string
-    pelapor: string
-    kelas: string
+    judul: string
     lokasi: string
     deskripsi: string
+    tanggal_kejadian: string
     tanggal_laporan: string
     status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak'
-    gambar?: string
+    anonimitas: boolean
+    pengirim_username?: string
+    nama_lengkap?: string
+    foto_bukti?: Array<{
+        id: string
+        foto: string
+        uploaded_at: string
+    }>
+    foto_pendukung?: string[]
     catatan_admin?: string
+    updated_at?: string
+}
+
+interface CreateLaporanPayload {
+    judul: string
+    deskripsi: string
+    lokasi: string
+    tanggal_kejadian: string
+    anonimitas: boolean
+    foto_bukti?: File[]
 }
 
 export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
@@ -22,32 +40,64 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
 
     const loadingStore = useLoadingStore()
 
-    async function fetchLaporanKerusakan(params: { page: number; pageSize: number; status?: string; search?: string; date?: string }) {
+    async function fetchLaporanKerusakan(params: { status?: string; search?: string }) {
         loadingStore.show('Memuat laporan kerusakan...')
         try {
-            const query = new URLSearchParams({
-                page: params.page.toString(),
-                page_size: params.pageSize.toString(),
-                ...(params.status && { status: params.status }),
-                ...(params.search && { search: params.search }),
-                ...(params.date && { date: params.date }),
-            })
-            const data = await apiAuthGet(`laporan-kerusakan/?${query}`)
-            laporanList.value = data.results
+            const queryParams: string[] = []
+            if (params.status && params.status !== 'semua') {
+                queryParams.push(`status=${params.status}`)
+            }
+            if (params.search) {
+                queryParams.push(`search=${encodeURIComponent(params.search)}`)
+            }
+            
+            const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : ''
+            const data = await apiAuthGet(`laporan-kerusakan/list/${queryString}`)
+            
+            // data is already unwrapped: { total: ..., laporan: [...] }
+            laporanList.value = data.laporan
             totalLaporan.value = data.total
         } catch (error: any) {
-            console.error('Gagal memuat laporan kerusakan:', error)
+            throw error
         } finally {
             loadingStore.hide()
         }
     }
 
-    async function createLaporanKerusakan(payload: Omit<LaporanKerusakan, 'id' | 'status'>) {
+    async function createLaporanKerusakan(payload: CreateLaporanPayload) {
         loadingStore.show('Menyimpan laporan kerusakan...')
         try {
-            await apiAuthPost('laporan-kerusakan/create', payload)
+            // Create FormData for multipart/form-data
+            const formData = new FormData()
+            formData.append('judul', payload.judul)
+            formData.append('deskripsi', payload.deskripsi)
+            formData.append('lokasi', payload.lokasi)
+            formData.append('tanggal_kejadian', payload.tanggal_kejadian)
+            formData.append('anonimitas', payload.anonimitas.toString())
+            
+            // Append all photo files
+            if (payload.foto_bukti && payload.foto_bukti.length > 0) {
+                payload.foto_bukti.forEach((file) => {
+                    formData.append('foto_bukti', file)
+                })
+            }
+            
+            // Direct fetch for FormData upload (api.ts doesn't support FormData)
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-kerusakan/tambah/`, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData // Don't set Content-Type, browser will set it with boundary
+            })
+            
+            const json = await response.json()
+            if (!response.ok || json.status === 'error') {
+                const errorMsg = json.message || 'Gagal membuat laporan'
+                throw new Error(errorMsg)
+            }
+            
+            return json.data
         } catch (error: any) {
-            console.error('Gagal membuat laporan kerusakan:', error)
             throw error
         } finally {
             loadingStore.hide()
