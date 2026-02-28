@@ -126,8 +126,8 @@ const sortedLogs = computed(() => {
     
     // Custom mapping for nested fields
     if (sortKey.value === 'pengguna') {
-      valA = a.pengguna?.nama_lengkap || 'Sistem Admin'
-      valB = b.pengguna?.nama_lengkap || 'Sistem Admin'
+      valA = a.pengguna?.nama_lengkap || (a.deskripsi?.startsWith('Anonim') ? a.deskripsi.split(' membuat')[0] : 'Sistem')
+      valB = b.pengguna?.nama_lengkap || (b.deskripsi?.startsWith('Anonim') ? b.deskripsi.split(' membuat')[0] : 'Sistem')
     } else if (sortKey.value === 'role') {
       valA = formatRole(a.pengguna?.role)
       valB = formatRole(b.pengguna?.role)
@@ -212,12 +212,12 @@ onMounted(() => {
           </template>
           
           <template #body-cell-pengguna="{ row }">
-             <span class="font-semibold">{{ row.pengguna?.nama_lengkap || 'Sistem Admin' }}</span>
+             <span class="font-semibold">{{ row.pengguna?.nama_lengkap || (row.deskripsi?.startsWith('Anonim') ? row.deskripsi.split(' membuat')[0] : 'Sistem') }}</span>
           </template>
           
           <template #body-cell-role="{ row }">
             <span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-600">
-              {{ formatRole(row.pengguna?.role) }}
+              {{ row.pengguna ? formatRole(row.pengguna?.role) : (row.deskripsi?.startsWith('Anonim') ? 'Anonim' : 'Sistem') }}
             </span>
           </template>
           
