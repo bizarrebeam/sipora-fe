@@ -69,14 +69,14 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/detail-kerusakan',
-      name: 'detailKerusakan',
+      path: '/laporan-kerusakan/:id',
+      name: 'detailLaporanKerusakan',
       component: DetailLaporanKerusakanView,
       meta: { requiresAuth: true },
     },
     {
       path: '/create-kerusakan',
-      name: 'createKerusakan',
+      name: 'createLaporanKerusakan',
       component: CreateLaporanKerusakanView,
       meta: { requiresAuth: true },
     },

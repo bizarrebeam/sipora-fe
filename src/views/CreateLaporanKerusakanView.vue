@@ -58,13 +58,26 @@ const isFormValid = computed(() => {
 
 function validate() {
     errors.value.judul = !judul.value.trim() ? 'Judul wajib diisi' : ''
-    errors.value.tanggalKejadian = !tanggalKejadian.value ? 'Tanggal wajib diisi' : ''
+
+    if (!tanggalKejadian.value) {
+        errors.value.tanggalKejadian = 'Tanggal wajib diisi'
+    } else {
+        const picked = new Date(tanggalKejadian.value)
+        const today = new Date()
+        today.setHours(0,0,0,0)
+        picked.setHours(0,0,0,0)
+        if (picked > today) {
+            errors.value.tanggalKejadian = 'Tanggal tidak boleh lebih dari hari ini'
+        } else {
+            errors.value.tanggalKejadian = ''
+        }
+    }
+
     errors.value.lokasi = !lokasi.value.trim() ? 'Lokasi wajib diisi' : ''
     errors.value.deskripsi = !deskripsi.value.trim() ? 'Deskripsi wajib diisi' : ''
 }
 
 function triggerFileInput() {
-    // Non-null assertion because the button is only clickable if the ref is mounted
     buktiInputRef.value!.click();
 }
 
@@ -77,14 +90,12 @@ function handleFileChange(e: Event) {
     const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     const newFiles: File[] = []
     
-    // Check if adding new files would exceed max limit
     if (buktiPendukung.value.length + files.length > 5) {
         buktiError.value = 'Maksimal 5 foto'
         if (buktiInputRef.value) buktiInputRef.value.value = ''
         return
     }
     
-    // Validate each file
     for (let i = 0; i < files.length; i++) {
         const file = files[i]
         if (!file) continue
@@ -118,7 +129,7 @@ async function handleSubmit() {
     if (!isFormValid.value) return
 
     try {
-        await laporanStore.createLaporanKerusakan({
+        const result = await laporanStore.createLaporanKerusakan({
             judul: judul.value.trim(),
             tanggal_kejadian: tanggalKejadian.value,
             lokasi: lokasi.value.trim(),
@@ -126,8 +137,8 @@ async function handleSubmit() {
             anonimitas: anonimitas.value,
             foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
         })
-        
-        // Reset form
+
+        // clear form
         judul.value = ''
         tanggalKejadian.value = ''
         lokasi.value = ''
@@ -136,9 +147,21 @@ async function handleSubmit() {
         buktiPendukung.value = []
         buktiError.value = ''
         Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
-        
-        // Redirect after loading completes — no popup needed
-        router.push('/laporan-kerusakan')
+
+        // show success and redirect to detail page of created laporan
+        showAlert({
+            type: 'default',
+            title: 'Laporan Terkirim',
+            description: 'Laporan berhasil dibuat',
+            onPrimary: () => {
+                if (result && result.id) {
+                    router.push(`/laporan-kerusakan/${result.id}`)
+                } else {
+                    router.push('/laporan-kerusakan')
+                }
+            }
+        })
+
     } catch (error: any) {
         showAlert({
             type: 'warning',
@@ -151,7 +174,6 @@ async function handleSubmit() {
 
 <template>
     <div class="create-laporan-page">
-        <!-- SAlert overlay -->
         <Teleport to="body">
             <Transition name="fade">
                 <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
@@ -166,6 +188,7 @@ async function handleSubmit() {
                 </div>
             </Transition>
         </Teleport>
+
         <h4 class="form-title stf-header">Tambah Laporan Kerusakan</h4>
         <div class="form-container">
             <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
@@ -181,6 +204,7 @@ async function handleSubmit() {
                     />
                     <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
                 </div>
+
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Tanggal Kejadian</label>
@@ -207,6 +231,7 @@ async function handleSubmit() {
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                 </div>
+
                 <div class="form-group">
                     <STextField
                         v-model="lokasi"
@@ -219,6 +244,7 @@ async function handleSubmit() {
                     />
                     <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                 </div>
+
                 <div class="form-group">
                     <STextField
                         v-model="deskripsi"
@@ -231,6 +257,7 @@ async function handleSubmit() {
                     />
                     <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
                 </div>
+
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Bukti Pendukung (opsional)</label>
@@ -267,7 +294,7 @@ async function handleSubmit() {
                     </div>
                     <span v-if="buktiError" class="error-msg">{{ buktiError }}</span>
                 </div>
-                <!-- Anonimitas -->
+
                 <div class="form-group">
                     <div class="flex items-center gap-3">
                         <div class="custom-label-row mb-0">
@@ -574,7 +601,7 @@ async function handleSubmit() {
     .error-msg {
         font-size: 11px;
     }
-    /* Stack buttons vertically: Submit on top, Kembali below */
+
     .form-group > div[style*="display: flex"] {
         flex-direction: column-reverse !important;
         gap: 8px !important;
@@ -586,7 +613,6 @@ async function handleSubmit() {
     }
 }
 
-/* SAlert overlay */
 .salert-overlay {
     position: fixed;
     inset: 0;
