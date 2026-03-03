@@ -10,6 +10,7 @@ import LoginAdminView from '../views/LoginAdminView.vue'
 import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
+import LaporanBullyingView from '@/views/LaporanBullyingView.vue'
 import FAQView from '../views/FAQView.vue'
 
 const router = createRouter({
@@ -79,6 +80,12 @@ const router = createRouter({
       path: '/create-kerusakan',
       name: 'createKerusakan',
       component: CreateLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-bullying',
+      name: 'laporanBullying',
+      component: LaporanBullyingView,
       meta: { requiresAuth: true },
     },
   ],
