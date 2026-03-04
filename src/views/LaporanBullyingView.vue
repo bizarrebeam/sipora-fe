@@ -43,12 +43,14 @@ const statusTabs = [
 ]
 
 const columns = [
-	{ key: 'id', label: 'ID Internal', sortable: false },
+	{ key: 'tanggal_laporan', label: 'Timestamp', sortable: true },
 	{ key: 'no_laporan', label: 'No. Laporan', sortable: true },
 	{ key: 'judul', label: 'Judul Laporan', sortable: true },
 	{ key: 'lokasi', label: 'Lokasi', sortable: true },
 	{ key: 'tanggal_kejadian', label: 'Tanggal Kejadian', sortable: true },
 	{ key: 'nama_pengirim', label: 'Pengirim', sortable: true },
+	{ key: 'kelas', label: 'Kelas', sortable: true },
+	{ key: 'is_verified', label: 'Status Verifikasi Akun', sortable: true },
 	{ key: 'status', label: 'Status', sortable: true },
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
@@ -58,7 +60,7 @@ const laporanList = computed(() => laporanStore.daftarLaporan)
 
 // Computed: date filtering, search, sorting, pagination
 const filteredList = computed(() => {
-	let list = laporanList.value || []
+	let list = Array.isArray(laporanList.value) ? laporanList.value : []
 
     if (selectedStatus.value !== 'semua') {
         list = list.filter((item: any) => item.status === selectedStatus.value)
@@ -232,9 +234,9 @@ onMounted(() => {
 						<STable :columns="columns" :data="paginatedList" :total-data="totalData"
 							v-model:current-page="currentPage" v-model:page-size="pageSize" :sort-key="sortKey"
 							:sort-order="sortOrder" @sort="handleSort"
-							empty-message="Tidak ada laporan bullying yang ditemukan.">
-							<template #body-cell-id="{ row }">
-								<span class="text-xs text-gray-500">{{ row.id }}</span>
+							empty-message="Belum ada laporan bullying.">
+							<template #body-cell-tanggal_laporan="{ row }">
+								<span class="text-xs text-gray-500">{{ formatDate(row.tanggal_laporan) }}</span>
 							</template>
 
 							<template #body-cell-no_laporan="{ row }">
@@ -256,6 +258,18 @@ onMounted(() => {
 							<template #body-cell-nama_pengirim="{ row }">
 								<span class="text-sm text-gray-500">
 									{{ row.nama_pengirim || '-' }}
+								</span>
+							</template>
+
+							<template #body-cell-kelas="{ row }">
+								<span class="text-sm text-gray-500">
+									{{ row.kelas || '-' }}
+								</span>
+							</template>
+
+							<template #body-cell-is_verified="{ row }">
+								<span class="text-sm text-gray-500">
+									{{ row.is_verified ? 'Verified' : 'Not Verified' }}
 								</span>
 							</template>
 
