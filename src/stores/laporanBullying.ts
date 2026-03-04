@@ -9,11 +9,19 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
 
     const loader = useLoadingStore()
 
-    async function ambilLaporan() {
+    async function ambilLaporan(params: { sortOrder?: string; status?: string; search?: string; date?: string } = {}) {
         loader.show('Mengambil data laporan...')
 
         try {
-            daftarLaporan.value = await apiAuthGet('laporan-bullying/')
+            const searchParams = new URLSearchParams()
+            if (params.sortOrder) searchParams.append('sort', params.sortOrder)
+            else searchParams.append('sort', 'desc')
+
+            if (params.status && params.status !== 'semua') searchParams.append('status', params.status)
+            if (params.search) searchParams.append('search', params.search)
+            if (params.date) searchParams.append('date', params.date)
+
+            daftarLaporan.value = await apiAuthGet(`laporan-bullying/?${searchParams.toString()}`)
         } catch (error: any) {
             console.error('Gagal mengambil laporan:', error.message)
         } finally {

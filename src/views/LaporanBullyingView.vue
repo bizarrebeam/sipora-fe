@@ -20,6 +20,7 @@ const loading = ref(false)
 const search = ref('')
 const selectedStatus = ref('semua')
 const selectedDate = ref('')
+const apiSort = ref<'desc' | 'asc'>('desc')
 
 const sortKey = ref('')
 const sortOrder = ref<'asc' | 'desc'>('desc')
@@ -60,41 +61,8 @@ const laporanList = computed(() => laporanStore.daftarLaporan)
 
 // Computed: date filtering, search, sorting, pagination
 const filteredList = computed(() => {
-	let list = Array.isArray(laporanList.value) ? laporanList.value : []
-
-    if (selectedStatus.value !== 'semua') {
-        list = list.filter((item: any) => item.status === selectedStatus.value)
-    }
-
-    if (search.value) {
-        const query = search.value.toLowerCase()
-        list = list.filter((item: any) => 
-            item.judul.toLowerCase().includes(query) ||
-            item.no_laporan.toLowerCase().includes(query) ||
-            item.lokasi.toLowerCase().includes(query)
-        )
-    }
-
-	if (selectedDate.value) {
-		list = list.filter((item: any) => {
-			const itemDate = new Date(item.tanggal_kejadian).toISOString().slice(0, 10)
-			return itemDate === selectedDate.value
-		})
-	}
-
-	return list
-})
-
-const sortedList = computed(() => {
-	if (!sortKey.value) return filteredList.value
-
-	return [...filteredList.value].sort((a: any, b: any) => {
-		let valA = a[sortKey.value]
-		let valB = b[sortKey.value]
-		if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
-		if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
-		return 0
-	})
+    // Kita langsung kembalikan data dari API karena backend sudah menghandle filter
+	return Array.isArray(laporanList.value) ? laporanList.value : []
 })
 
 const totalData = computed(() => filteredList.value.length)
@@ -102,13 +70,22 @@ const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
 
 const paginatedList = computed(() => {
 	const start = (currentPage.value - 1) * pageSize.value
-	return sortedList.value.slice(start, start + pageSize.value)
+	return filteredList.value.slice(start, start + pageSize.value)
 })
 
 function formatDate(dateStr: string) {
 	if (!dateStr) return '-'
 	const d = new Date(dateStr)
-	return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+    
+    // Tambahkan format jam jika string tanggal aslinya mengandung informasi waktu
+    if (dateStr.includes('T') || dateStr.includes(':')) {
+        options.hour = '2-digit'
+        options.minute = '2-digit'
+        options.second = '2-digit'
+    }
+    
+	return d.toLocaleString('id-ID', options)
 }
 
 function statusLabel(status: string) {
@@ -124,20 +101,35 @@ function statusLabel(status: string) {
 function handleTabChange(value: string) {
 	selectedStatus.value = value
 	currentPage.value = 1
+    fetchData()
 }
 
 function handleDateChange(e: Event) {
 	selectedDate.value = (e.target as HTMLInputElement).value
 	currentPage.value = 1
+    fetchData()
 }
 
+function handleApiSortChange() {
+    currentPage.value = 1
+    sortKey.value = 'tanggal_laporan'
+    sortOrder.value = apiSort.value
+    fetchData()
+}
+
+// Removed duplicate declaration from here.
 function handleSort(key: string) {
 	if (sortKey.value === key) {
-		sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+		sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
 	} else {
 		sortKey.value = key
-		sortOrder.value = 'asc'
+		sortOrder.value = 'desc'
 	}
+    
+    if (key === 'tanggal_laporan') {
+        apiSort.value = sortOrder.value === 'desc' ? 'desc' : 'asc'
+        fetchData()
+    }
 }
 
 let searchTimeout: ReturnType<typeof setTimeout>
@@ -145,6 +137,7 @@ function onSearchInput() {
 	clearTimeout(searchTimeout)
 	searchTimeout = setTimeout(() => {
 		currentPage.value = 1
+        fetchData()
 	}, 400)
 }
 
@@ -156,9 +149,14 @@ function openDetail(laporan: any) {
 }
 
 const statusCounts = computed(() => {
-    const list = laporanList.value || []
+    // Sebagai catatan: Karena sekarang data di backend difilter, 
+    // `laporanList` hanya akan berisi data yang sudah difilter (misalnya hanya status tertentu).
+    // Idealnya count ini didapat dari API terpisah atau disertakan dalam response (misalnya { total, waiting, processing, dsb }).
+    // Untuk saat ini karena belum ada update response agregasi, ini kita buat return default structure dulu untuk mencegah error linting, 
+    // tapi angka ini hanya akan merepresentasikan yang ada di satu view paginated API.
+    const list = Array.isArray(laporanList.value) ? laporanList.value : []
     return {
-	    semua: list.length,
+	    semua: selectedStatus.value === 'semua' ? totalData.value : 0,
 	    menunggu: list.filter((l: any) => l.status === 'menunggu').length,
 	    diproses: list.filter((l: any) => l.status === 'diproses').length,
 	    selesai: list.filter((l: any) => l.status === 'selesai').length,
@@ -169,7 +167,12 @@ const statusCounts = computed(() => {
 async function fetchData() {
 	loading.value = true
 	try {
-        await laporanStore.ambilLaporan()
+        await laporanStore.ambilLaporan({
+            sortOrder: apiSort.value,
+            status: selectedStatus.value,
+            search: search.value,
+            date: selectedDate.value
+        })
 	} catch (error) {
 		console.error('Error fetching laporan:', error)
 	} finally {
@@ -214,6 +217,12 @@ onMounted(() => {
 				<div>
 					<input type="date" :value="selectedDate" class="date-input" @change="handleDateChange" />
 				</div>
+                <div>
+					<select v-model="apiSort" class="date-input" @change="handleApiSortChange">
+						<option value="desc">Terbaru</option>
+						<option value="asc">Terlama</option>
+					</select>
+				</div>
 			</div>
 
 			<div v-if="loading" class="loading-state">
@@ -232,7 +241,7 @@ onMounted(() => {
 
 					<div class="table-wrapper">
 						<STable :columns="columns" :data="paginatedList" :total-data="totalData"
-							v-model:current-page="currentPage" v-model:page-size="pageSize" :sort-key="sortKey"
+							v-model:current-page="currentPage" v-model:page-size="pageSize" :sort-key="sortKey || 'tanggal_laporan'"
 							:sort-order="sortOrder" @sort="handleSort"
 							empty-message="Belum ada laporan bullying.">
 							<template #body-cell-tanggal_laporan="{ row }">
