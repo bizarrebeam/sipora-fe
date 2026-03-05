@@ -3,7 +3,7 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   label?: string
-  variant?: 'primary' | 'secondary' | 'ghost' | 'tertiary'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'tertiary' | 'danger'
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
 }>()
@@ -22,6 +22,8 @@ const variantClasses = computed(() => {
       return 'bg-transparent border border-blue-600 text-blue-600 hover:bg-blue-50 active:bg-blue-100'
     case 'tertiary':
       return 'bg-transparent border border-transparent text-general-black hover:border-general-black active:bg-neutral-50'
+    case 'danger':
+      return 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700'
     case 'primary':
     default:
       return 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700'

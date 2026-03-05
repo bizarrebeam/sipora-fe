@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
@@ -11,6 +12,7 @@ import { useLaporanBullyingStore } from '@/stores/laporanBullying'
 
 const auth = useAuthStore()
 const laporanStore = useLaporanBullyingStore()
+const router = useRouter()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isGuruBk = computed(() => auth.user?.role === 'guru_bk')
 const isAdmin = computed(() => isKemahasiswaan.value || isGuruBk.value)
@@ -28,8 +30,7 @@ const sortOrder = ref<'asc' | 'desc'>('desc')
 const currentPage = ref(1)
 const pageSize = ref(20)
 
-const showDetailDialog = ref(false)
-const selectedLaporan = ref<any | null>(null)
+
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<any | null>(null)
@@ -142,10 +143,9 @@ function onSearchInput() {
 }
 
 function openDetail(laporan: any) {
-    // For admin/detail view we could use ambilDetail
-    // For now we just show what we have or navigate to separate page
-	selectedLaporan.value = laporan
-	showDetailDialog.value = true
+    if (laporan && laporan.id) {
+        router.push({ name: 'detailLaporanBullying', params: { id: laporan.id } })
+    }
 }
 
 const statusCounts = computed(() => {
@@ -353,42 +353,6 @@ onMounted(() => {
 				</div>
 			</template>
 		</div>
-
-		<!-- Detail Dialog -->
-		<SDialog :visible="showDetailDialog" variant="primary" title="Detail Pendek Laporan Bullying"
-			@update:visible="showDetailDialog = $event" @close="showDetailDialog = false">
-			<div v-if="selectedLaporan" class="detail-content">
-				<div class="detail-row">
-					<span class="detail-label">No. Laporan</span>
-					<span class="detail-value font-semibold text-blue-600">{{ selectedLaporan.no_laporan }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Judul Laporan</span>
-					<span class="detail-value">{{ selectedLaporan.judul }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Lokasi</span>
-					<span class="detail-value">{{ selectedLaporan.lokasi }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Tanggal Kejadian</span>
-					<span class="detail-value">{{ formatDate(selectedLaporan.tanggal_kejadian) }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Status</span>
-					<span class="status-badge" :class="`status-badge--${selectedLaporan.status}`">
-						{{ statusLabel(selectedLaporan.status) }}
-					</span>
-				</div>
-                <div class="detail-row mt-2">
-                    <p class="text-sm text-gray-500 italic">Untuk melihat fitur memproses laporan atau pembatalan, silakan hubungkan detail ini ke view terpisah jika diperlukan.</p>
-                </div>
-			</div>
-
-			<template #actions>
-				<SButton label="Tutup" variant="secondary" @click="showDetailDialog = false" />
-			</template>
-		</SDialog>
 	</div>
 </template>
 
