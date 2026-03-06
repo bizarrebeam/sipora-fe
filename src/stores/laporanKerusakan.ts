@@ -182,5 +182,35 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
-    return { laporanList, totalLaporan, currentLaporan, fetchLaporanKerusakan, fetchLaporanDetail, createLaporanKerusakan, editLaporanKerusakan }
+    async function cancelLaporanKerusakan(id: string, alasan: string) {
+        loadingStore.show('Membatalkan laporan...')
+        try {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-kerusakan/${id}/cancel/`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ alasan })
+            })
+
+            const json = await response.json()
+            if (!response.ok || json.status === 'error') {
+                const errorMsg = json.message || (json.errors ? JSON.stringify(json.errors) : 'Gagal membatalkan laporan')
+                throw new Error(errorMsg)
+            }
+
+            // update local currentLaporan with returned data
+            currentLaporan.value = json.data
+
+            return json.data
+        } catch (error: any) {
+            throw error
+        } finally {
+            loadingStore.hide()
+        }
+    }
+
+    return { laporanList, totalLaporan, currentLaporan, fetchLaporanKerusakan, fetchLaporanDetail, createLaporanKerusakan, editLaporanKerusakan, cancelLaporanKerusakan }
 })

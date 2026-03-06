@@ -5,7 +5,9 @@ import { toast } from 'vue-sonner'
 import SButton from '@/components/SButton.vue'
 import SCard from '@/components/SCard.vue'
 import SModal from '@/components/SModal.vue'
+import SDialog from '@/components/SDialog.vue'
 import STextField from '@/components/STextField.vue'
+import SAlert from '@/components/SAlert.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 
@@ -20,10 +22,74 @@ const loadError = ref('')
 const fotoModalVisible = ref(false)
 const fotoModalUrl = ref('')
 
+// Cancel dialog state
+const cancelDialogVisible = ref(false)
+const alasanPembatalan = ref('')
+const alasanError = ref('')
+
+const alertVisible = ref(false)
+const alertType = ref<'default' | 'warning' | 'no-header'>('default')
+const alertTitle = ref('')
+const alertDescription = ref('')
+let alertOnPrimary: (() => void) | null = null
+
+function showAlert(opts: { type?: 'default' | 'warning' | 'no-header'; title?: string; description: string; onPrimary?: () => void }) {
+    alertType.value = opts.type ?? 'default'
+    alertTitle.value = opts.title ?? ''
+    alertDescription.value = opts.description
+    alertOnPrimary = opts.onPrimary ?? null
+    alertVisible.value = true
+}
+
+function handleAlertPrimary() {
+    alertVisible.value = false
+    if (alertOnPrimary) alertOnPrimary()
+}
+
 function openFoto(url: string) {
     fotoModalUrl.value = url
     fotoModalVisible.value = true
 }
+
+function openCancelDialog() {
+    alasanPembatalan.value = ''
+    alasanError.value = ''
+    cancelDialogVisible.value = true
+}
+
+async function submitCancel() {
+    alasanError.value = ''
+    if (!alasanPembatalan.value || alasanPembatalan.value.trim().length === 0) {
+        alasanError.value = 'Alasan pembatalan wajib diisi'
+        return
+    }
+    if (alasanPembatalan.value.trim().length < 50) {
+        alasanError.value = 'Alasan pembatalan wajib minimal 50 karakter'
+        return
+    }
+
+    try {
+        const id = route.params.id as string
+        await laporanStore.cancelLaporanKerusakan(id, alasanPembatalan.value.trim())
+        laporan.value = laporanStore.currentLaporan
+        cancelDialogVisible.value = false
+        showAlert({
+            type: 'default',
+            title: 'Laporan Dibatalkan',
+            description: 'Laporan berhasil dibatalkan',
+            onPrimary: () => {
+                    router.push(`/laporan-kerusakan/$({id}`)
+                } 
+        })
+    } catch (error: any) {
+        showAlert({
+            type: 'warning',
+            title: 'Gagal Membatalkan Laporan',
+            description: error?.message || 'Terjadi kesalahan. Silakan coba lagi.',
+        })
+    }
+}
+
 
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isPelapor = computed(() => !isKemahasiswaan.value)
@@ -86,6 +152,21 @@ onMounted(async () => {
 
 <template>
     <div class="laporan-page">
+        <Teleport to="body">
+            <Transition name="fade">
+                <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
+                    <SAlert
+                        :type="alertType"
+                        :title="alertTitle"
+                        :description="alertDescription"
+                        primary-button-text="OK"
+                        @close="alertVisible = false"
+                        @primary-click="handleAlertPrimary"
+                    />
+                </div>
+            </Transition>
+        </Teleport>
+
         <div class="laporan-container">
 
             <div v-if="loadError" class="feedback-state">
@@ -221,18 +302,16 @@ onMounted(async () => {
 
                 <!-- Pelapor: Batalkan + Ubah (row 1), Kembali (row 2) -->
                 <div v-if="isPelapor" class="action-bar action-bar--pelapor">
-                    <div class="action-bar__top">
+                    <div v-if="laporan.status === 'menunggu'" class="action-bar__top">
                         <SButton
                             label="Batalkan Laporan"
                             variant="primary"
                             class="btn-danger"
-                            @click="$router.push(`/batalkan-kerusakan/${laporan.id}`)"
+                            @click="openCancelDialog"
                         />
                         <SButton
                             label="Ubah Laporan"
                             variant="primary"
-                            :disabled = "laporan.status !== 'menunggu'"
-                            :title="laporan.status!=='menunggu'?'Laporan tidak dapat diubah karena sudah diproses': ''"
                             @click="$router.push({name:'editLaporanKerusakan', params: { id: laporan.id }})"
                         />
                     </div>
@@ -258,6 +337,29 @@ onMounted(async () => {
                 </div>
             </template>
         </div>
+
+        <SDialog
+            :visible="cancelDialogVisible"
+            title="Konfirmasi Pembatalan"
+            confirmLabel="Ya, Batalkan"
+            cancelLabel="Kembali"
+            variant="danger"
+            @update:visible="cancelDialogVisible = $event"
+            @confirm="submitCancel"
+            @cancel="cancelDialogVisible = false"
+        >
+            <!-- ini kalau mau dimasukin component sdialog/bikin baru boleh ya -->
+            <div class="dialog-body-content">
+                <p class="text-general-black subheading-s7 text-center dialog-text">Apakah anda yakin untuk membatalkan laporan ini? Mohon berikan alasan pembatalan</p>
+                <STextField
+                    label="Alasan Pembatalan"
+                    variant="textarea"
+                    :modelValue="alasanPembatalan"
+                    @update:modelValue="(v) => (alasanPembatalan = v)"
+                />
+                <p v-if="alasanError" style="color:var(--color-general-red,#DC2626);font-size:13px;margin-top:8px">{{ alasanError }}</p>
+            </div>
+        </SDialog>
 
         <SModal :visible="fotoModalVisible" title="Bukti Pendukung" @update:visible="fotoModalVisible = $event">
             <div class="foto-modal-content">
@@ -347,6 +449,17 @@ onMounted(async () => {
     .field-row-two {
         grid-template-columns: 1fr;
     }
+}
+
+.salert-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(2px);
 }
 
 .field-label {
@@ -452,6 +565,7 @@ onMounted(async () => {
 .dot--diproses  { background: var(--color-blue-500, #2E3094); border-color: var(--color-blue-500, #2E3094); }
 .dot--selesai   { background: #2E7D32; border-color: #2E7D32; }
 .dot--ditolak   { background: #DC2626; border-color: #DC2626; }
+.dot--dibatalkan   { background: #DC2626; border-color: #DC2626; }
 
 .riwayat-connector {
     position: absolute;
@@ -460,6 +574,10 @@ onMounted(async () => {
     bottom: 0;
     width: 2px;
     background: var(--color-general-border, #D9D9D9);
+}
+
+.dialog-text {
+  margin-bottom: 20px;
 }
 
 .riwayat-content {
@@ -549,6 +667,7 @@ onMounted(async () => {
     font-size: 13px;
     font-weight: 600;
     font-family: "Be Vietnam Pro", sans-serif;
+    width: fit-content;     
     white-space: nowrap;
 }
 
@@ -561,6 +680,12 @@ onMounted(async () => {
     background: #FFF8E1;
     color: #F59E0B;
     border: 1px solid #F59E0B;
+}
+
+.status-badge--dibatalkan {
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #DC2626;
 }
 
 .status-badge--diproses {
