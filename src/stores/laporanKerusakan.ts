@@ -25,7 +25,7 @@ interface LaporanKerusakan {
     deskripsi: string
     tanggal_kejadian: string
     tanggal_laporan: string
-    status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak'
+    status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
     anonimitas: boolean
     pengirim_username?: string
     nama_lengkap?: string
@@ -50,6 +50,15 @@ interface CreateLaporanPayload {
     lokasi: string
     tanggal_kejadian: string
     anonimitas: boolean
+    foto_bukti?: File[]
+}
+
+interface EditLaporanPayload {
+    judul?: string
+    deskripsi?: string
+    lokasi?: string
+    tanggal_kejadian?: string
+    anonimitas?: boolean
     foto_bukti?: File[]
 }
 
@@ -133,5 +142,45 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
-    return { laporanList, totalLaporan, currentLaporan, fetchLaporanKerusakan, fetchLaporanDetail, createLaporanKerusakan }
+    async function editLaporanKerusakan(payload: EditLaporanPayload){
+        loadingStore.show('Menyimpan laporan kerusakan...')
+        try {
+            const formData = new FormData()
+            formData.append('judul', payload.judul || '')
+            formData.append('deskripsi', payload.deskripsi || '')
+            formData.append('lokasi', payload.lokasi || '')
+            formData.append('tanggal_kejadian', payload.tanggal_kejadian || '')
+            formData.append('anonimitas', String(payload.anonimitas ?? false))
+            
+            if (payload.foto_bukti && payload.foto_bukti.length > 0) {
+                payload.foto_bukti.forEach((file) => {
+                    formData.append('foto_bukti', file)
+                })
+            }
+            
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-kerusakan/${currentLaporan.value?.id}/edit/`, {
+                method: 'PUT',
+                credentials: 'include',
+                body: formData
+            })
+            
+            const json = await response.json()
+            if (!response.ok || json.status === 'error') {
+                const errorMsg = json.message || 'Gagal memperbarui laporan'
+                throw new Error(errorMsg)
+            }
+
+            // update local currentLaporan with returned data
+            currentLaporan.value = json.data
+
+            return json.data
+        } catch (error: any) {
+            throw error
+        } finally {
+            loadingStore.hide()
+        }
+    }
+
+    return { laporanList, totalLaporan, currentLaporan, fetchLaporanKerusakan, fetchLaporanDetail, createLaporanKerusakan, editLaporanKerusakan }
 })

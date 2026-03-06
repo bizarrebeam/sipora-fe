@@ -10,6 +10,7 @@ import LoginAdminView from '../views/LoginAdminView.vue'
 import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
+import EditLaporanKerusakanView from '@/views/EditLaporanKerusakanView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -78,6 +79,12 @@ const router = createRouter({
       path: '/create-kerusakan',
       name: 'createLaporanKerusakan',
       component: CreateLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-kerusakan/:id/edit',
+      name: 'editLaporanKerusakan',
+      component: EditLaporanKerusakanView,
       meta: { requiresAuth: true },
     },
   ],

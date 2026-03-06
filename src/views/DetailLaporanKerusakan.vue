@@ -34,6 +34,7 @@ function statusLabel(s: string) {
         diproses: 'Diproses',
         selesai: 'Selesai',
         ditolak: 'Ditolak',
+        dibatalkan: 'Dibatalkan',
     }
     return map[s] || s
 }
@@ -228,9 +229,11 @@ onMounted(async () => {
                             @click="$router.push(`/batalkan-kerusakan/${laporan.id}`)"
                         />
                         <SButton
-                            label="Ubah Status Laporan"
+                            label="Ubah Laporan"
                             variant="primary"
-                            @click="$router.push(`/edit-kerusakan/${laporan.id}`)"
+                            :disabled = "laporan.status !== 'menunggu'"
+                            :title="laporan.status!=='menunggu'?'Laporan tidak dapat diubah karena sudah diproses': ''"
+                            @click="$router.push({name:'editLaporanKerusakan', params: { id: laporan.id }})"
                         />
                     </div>
                     <SButton
