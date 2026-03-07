@@ -19,7 +19,7 @@ interface LaporanKerusakan {
 	anonimitas: boolean
 	pengirim_username?: string
 	nama_lengkap?: string
-	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak'
+	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
 	foto_bukti?: Array<{ id: string; foto: string; uploaded_at: string }>
 	foto_pendukung?: string[]
 	catatan_admin?: string
@@ -47,7 +47,7 @@ const selectedLaporan = ref<LaporanKerusakan | null>(null)
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<LaporanKerusakan | null>(null)
-const statusAction = ref<'diproses' | 'selesai' | 'ditolak'>('diproses')
+const statusAction = ref<'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'>('diproses')
 
 const statusTabs = [
 	{ label: 'Semua', value: 'semua' },
@@ -55,6 +55,7 @@ const statusTabs = [
 	{ label: 'Diproses', value: 'diproses' },
 	{ label: 'Selesai', value: 'selesai' },
 	{ label: 'Ditolak', value: 'ditolak' },
+	{ label: 'Dibatalkan', value: 'dibatalkan' },
 ]
 
 function tabActiveClass(value: string) {
@@ -160,7 +161,7 @@ function openDetail(laporan: LaporanKerusakan) {
 	showDetailDialog.value = true
 }
 
-function openStatusUpdate(laporan: LaporanKerusakan, action: 'diproses' | 'selesai' | 'ditolak') {
+function openStatusUpdate(laporan: LaporanKerusakan, action: 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan') {
 	statusTarget.value = laporan
 	statusAction.value = action
 	showStatusDialog.value = true
@@ -182,6 +183,7 @@ const statusCounts = computed(() => ({
 	diproses: laporanList.value.filter(l => l.status === 'diproses').length,
 	selesai: laporanList.value.filter(l => l.status === 'selesai').length,
 	ditolak: laporanList.value.filter(l => l.status === 'ditolak').length,
+	dibatalkan: laporanList.value.filter(l => l.status === 'dibatalkan').length,
 }))
 
 watch([selectedStatus, search], () => {
@@ -508,6 +510,12 @@ onMounted(() => {
 	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
 }
 
+.tab-btn--active-dibatalkan {
+	background: #DC2626;
+	border-color: #DC2626;
+	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
 .tab-btn--inactive {
 	background: white;
 	color: var(--color-neutral-500);
@@ -636,6 +644,12 @@ onMounted(() => {
 	border: 1px solid #DC2626;
 }
 
+.status-badge--dibatalkan {
+	background: #FEF2F2;
+	color: #DC2626;
+	border: 1px solid #DC2626;
+}
+
 .aksi-btn {
 	padding: 4px 12px;
 	border-radius: 6px;
@@ -683,6 +697,15 @@ onMounted(() => {
 
 .aksi-btn--selesai:hover {
 	background: #C8E6C9;
+}
+
+.aksi-btn--dibatalkan {
+	background: #FEF2F2;
+	color: #DC2626;
+}
+
+.aksi-btn--dibatalkan:hover {
+	background:  #FECACA;
 }
 
 .detail-content {
