@@ -195,7 +195,7 @@ onMounted(() => {
 						{{ isAdmin ? 'Kelola dan pantau seluruh laporan bullying yang masuk dari siswa.' : 'Pantau status laporan bullying yang telah kamu kirim.' }}
 					</p>
 				</div>
-				<!-- <SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary" @click="$router.push({ name: 'createLaporanBullying' })" /> -->
+				<SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary" @click="$router.push({ name: 'createLaporanBullying' })" />
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">

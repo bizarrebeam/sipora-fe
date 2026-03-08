@@ -48,12 +48,39 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         tanggal_kejadian: string
         jenis_bullying: string
         anonimitas: boolean
+        foto_bukti?: File[]
     }) {
         loader.show('Mengirim laporan...')
 
         try {
-            await apiAuthPost('laporan-bullying/create/', payload)
-            await ambilLaporan() // refresh list setelah create
+            const formData = new FormData()
+
+            formData.append('judul', payload.judul)
+            formData.append('deskripsi', payload.deskripsi)
+            formData.append('lokasi', payload.lokasi)
+            formData.append('tanggal_kejadian', payload.tanggal_kejadian)
+            formData.append('jenis_bullying', payload.jenis_bullying)
+            formData.append('anonimitas', String(payload.anonimitas))
+
+            if (payload.foto_bukti) {
+                payload.foto_bukti.forEach((file) => {
+                    formData.append('foto_bukti', file)
+                })
+            }
+
+            const response = await fetch('/api/laporan-bullying/create/', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            })
+
+            const json = await response.json()
+
+            if (!response.ok || json.status === 'error') {
+                throw new Error(json.message || 'Gagal membuat laporan')
+            }
+
+            await ambilLaporan()
         } catch (error: any) {
             console.error('Gagal membuat laporan:', error.message)
             throw error

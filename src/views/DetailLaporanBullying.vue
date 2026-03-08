@@ -73,8 +73,8 @@ function formatImageUrl(path: string | undefined): string {
 
 function statusLabel(status: string) {
     const map: Record<string, string> = {
-        menunggu: 'Menunggu Verifikasi',
-        diproses: 'Sedang Diproses',
+        menunggu: 'Menunggu Konfirmasi',
+        diproses: 'Diproses',
         selesai: 'Selesai',
         dibatalkan: 'Dibatalkan',
         ditolak: 'Ditolak'
@@ -173,7 +173,7 @@ async function handleSelesai() {
                         <div class="space-y-6">
                             <div>
                                 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 font-display">Isi Laporan</h3>
-                                <div class="bg-gray-50 p-4 rounded-lg font-display text-gray-800 whitespace-pre-wrap leading-relaxed border border-gray-100">
+                                <div class="bg-gray-50 p-4 rounded-lg font-display text-gray-800 whitespace-pre-wrap leading-relaxed border border-gray-100 break-words break-all">
                                     {{ laporan.deskripsi }}
                                 </div>
                             </div>
@@ -242,7 +242,7 @@ async function handleSelesai() {
                             </template>
 
                             <div v-if="isAdmin">
-                                <span class="text-xs text-gray-500 font-display block">Status Akun (Khusus Admin)</span>
+                                <span class="text-xs text-gray-500 font-display block">Status Akun Pelapor</span>
                                 <span class="text-sm font-display inline-flex items-center gap-1 mt-1" :class="laporan.is_verified ? 'text-green-600' : 'text-red-600'">
                                     <svg v-if="laporan.is_verified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
                                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
@@ -253,7 +253,7 @@ async function handleSelesai() {
                     </SCard>
 
                     <!-- Aksi Action Bar -->
-                    <!-- <SCard class="p-6 bg-[var(--color-blue-50)] border border-[var(--color-blue-100)]">
+                    <SCard class="p-6 bg-[var(--color-blue-50)] border border-[var(--color-blue-100)]">
                         <h3 class="text-sm font-semibold text-[var(--color-blue-800)] mb-4 font-display">Tindak Lanjut Laporan</h3>
                        
                         <div v-if="isPelapor" class="space-y-3">
@@ -265,7 +265,7 @@ async function handleSelesai() {
                                 <p class="text-sm text-gray-500 italic font-display">Laporan ini sedang diproses atau telah selesai/dibatalkan. Laporan tidak dapat dihapus lagi.</p>
                             </template>
                         </div>
-                    </SCard> -->
+                    </SCard>
                 </div>
             </div>
         </template>

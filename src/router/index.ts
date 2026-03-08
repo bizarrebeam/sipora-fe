@@ -12,6 +12,7 @@ import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
 import LaporanBullyingView from '@/views/LaporanBullyingView.vue'
 import DetailLaporanBullyingView from '@/views/DetailLaporanBullying.vue'
+import CreateLaporanBullyingView from '@/views/CreateLaporanBullyingView.vue'
 import FAQView from '../views/FAQView.vue'
 
 const router = createRouter({
@@ -93,6 +94,12 @@ const router = createRouter({
       path: '/laporan-bullying/:id',
       name: 'detailLaporanBullying',
       component: DetailLaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-bullying',
+      name: 'createLaporanBullying',
+      component: CreateLaporanBullyingView,
       meta: { requiresAuth: true },
     },
   ],
