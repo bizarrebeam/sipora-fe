@@ -59,7 +59,6 @@ const isFormValid = computed(() => {
     )
 })
 
-// state untuk simpan state awal 
 const originalData = ref({
     judul: '',
     tanggalKejadian: '',
