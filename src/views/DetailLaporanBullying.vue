@@ -213,6 +213,37 @@ async function handleSelesai() {
                             <p class="text-sm text-gray-500 font-display">Tidak ada bukti pendukung</p>
                         </div>
                     </SCard>
+
+                    <!-- Riwayat Status Laporan -->
+                    <SCard class="p-6">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-4 font-display flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Riwayat Status
+                        </h3>
+                        
+                        <div v-if="laporan.riwayat_status && laporan.riwayat_status.length > 0" class="relative border-l-2 border-gray-100 ml-2 space-y-6 pb-2 mt-2">
+                            <div v-for="(riwayat, index) in laporan.riwayat_status" :key="index" class="relative pl-6">
+                                <span class="absolute -left-[9px] top-1 flex h-4 w-4 items-center justify-center rounded-full ring-4 ring-white" :class="{
+                                    'bg-yellow-400': riwayat.status === 'menunggu',
+                                    'bg-blue-500': riwayat.status === 'diproses',
+                                    'bg-green-500': riwayat.status === 'selesai',
+                                    'bg-red-500': riwayat.status === 'dibatalkan' || riwayat.status === 'ditolak',
+                                    'bg-gray-400': !['menunggu','diproses','selesai','dibatalkan','ditolak'].includes(riwayat.status)
+                                }"></span>
+                                <div class="flex flex-col gap-1">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                        <span class="text-sm font-bold text-gray-800 font-display">{{ statusLabel(riwayat.status) }}</span>
+                                        <span class="text-xs text-gray-500 font-display">{{ formatDate(riwayat.created_at) }}</span>
+                                    </div>
+                                    <p v-if="riwayat.catatan" class="text-sm text-gray-600 font-display mt-2 bg-gray-50 p-3 rounded-lg border border-gray-100 whitespace-pre-wrap">{{ riwayat.catatan }} oleh {{ riwayat.user?.nama }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-8 text-center flex flex-col items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <p class="text-sm text-gray-500 font-display">Belum ada riwayat status</p>
+                        </div>
+                    </SCard>
                 </div>
 
                 <!-- Sidebar (Right) -->
