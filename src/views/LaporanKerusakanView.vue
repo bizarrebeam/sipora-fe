@@ -119,6 +119,7 @@ function statusLabel(status: string) {
 		diproses: 'Diproses',
 		selesai: 'Selesai',
 		ditolak: 'Ditolak',
+		dibatalkan: 'Dibatalkan',
 	}
 	return map[status] || status
 }

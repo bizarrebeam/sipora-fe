@@ -276,9 +276,9 @@ onMounted(async () => {
 
                 </SCard>
 
-                <SCard v-if="laporan.riwayat_status && laporan.riwayat_status.length" class="section-card">
+                <SCard class="section-card">
                     <h3 class="section-title">Riwayat Status</h3>
-                    <div class="riwayat-list">
+                    <div v-if="laporan.riwayat_status && laporan.riwayat_status.length" class="riwayat-list">
                         <div
                             v-for="(r, idx) in laporan.riwayat_status"
                             :key="r.id"
@@ -292,12 +292,12 @@ onMounted(async () => {
                                 </span>
                                 <p class="riwayat-catatan" v-if="r.catatan">{{ r.catatan }}</p>
                                 <div class="riwayat-meta">
-                                    <span>{{ r.diubah_oleh_nama }}</span>
                                     <span>{{ formatDatetime(r.waktu) }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <p v-else class="field-value field-value--empty">Tidak ada riwayat status.</p>
                 </SCard>
 
                 <!-- Pelapor: Batalkan + Ubah (row 1), Kembali (row 2) -->
