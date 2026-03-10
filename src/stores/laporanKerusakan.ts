@@ -131,7 +131,11 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             const json = await response.json()
             if (!response.ok || json.status === 'error') {
                 const errorMsg = json.message || 'Gagal membuat laporan'
-                throw new Error(errorMsg)
+                const error = new Error(errorMsg) as Error & { fieldErrors?: Record<string, unknown> }
+                if (json?.data && typeof json.data === 'object') {
+                    error.fieldErrors = json.data
+                }
+                throw error
             }
             
             return json.data
