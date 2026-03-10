@@ -16,6 +16,8 @@ const roleBadge = computed(() => auth.roleBadge)
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 const canManageAkun = computed(() => isAdmin.value || auth.user?.role === 'guru_bk')
 
+const canViewArtikel = computed(() => isLoggedIn.value)
+
 function toggleMobile() {
   mobileMenuOpen.value = !mobileMenuOpen.value
 }
@@ -57,6 +59,7 @@ async function confirmLogout() {
         <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
         <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
         <RouterLink to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
+        <RouterLink v-if="canViewArtikel" to="/kelola-artikel" class="nav-link">Kelola Artikel</RouterLink>
       </div>
 
       <div class="navbar-auth">
@@ -101,6 +104,7 @@ async function confirmLogout() {
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
           <RouterLink to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
+          <RouterLink to="/kelola-artikel" class="mobile-link" @click="closeMobile">Kelola Artikel</RouterLink>
           <div class="mobile-divider"></div>
           <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">
             <div class="mobile-user-info">

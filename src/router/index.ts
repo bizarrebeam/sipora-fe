@@ -10,6 +10,10 @@ import LoginAdminView from '../views/LoginAdminView.vue'
 import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
+import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
+import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
+import CreateArtikelView from '@/views/CreateArtikelView.vue' //create artikel
+import EditArtikelView from '@/views/EditArtikelView.vue' //edit artikel
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -78,6 +82,30 @@ const router = createRouter({
       path: '/create-kerusakan',
       name: 'createKerusakan',
       component: CreateLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/artikel/:id',
+      name: 'detailArtikel',
+      component: DetailArtikelView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/kelola-artikel',
+      name: 'kelolaArtikel',
+      component: KelolaArtikelView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-artikel',
+      name: 'createArtikel',
+      component: CreateArtikelView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/edit-artikel/:id',
+      name: 'editArtikel',
+      component: EditArtikelView,
       meta: { requiresAuth: true },
     },
   ],
