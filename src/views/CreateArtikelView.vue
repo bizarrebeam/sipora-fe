@@ -24,7 +24,7 @@ const formData = ref({
 // Edge case constants
 const JUDUL_MIN_CHARS = 5
 const JUDUL_MAX_CHARS = 70
-const KONTEN_MIN_CHARS = 50
+const KONTEN_MIN_CHARS = 400
 const KONTEN_MAX_CHARS = 10000
 const RINGKASAN_MIN_CHARS = 5
 const RINGKASAN_MAX_CHARS = 150
@@ -42,7 +42,8 @@ const ringkasanCharCount = computed(() => formData.value.ringkasan.length)
 
 const isJudulValid = computed(() => judulCharCount.value >= JUDUL_MIN_CHARS && judulCharCount.value <= JUDUL_MAX_CHARS)
 const isKontenValid = computed(() => kontenCharCount.value >= KONTEN_MIN_CHARS && kontenCharCount.value <= KONTEN_MAX_CHARS)
-const isRingkasanValid = computed(() => ringkasanCharCount.value >= RINGKASAN_MIN_CHARS && ringkasanCharCount.value <= RINGKASAN_MAX_CHARS)
+// Ringkasan opsional: hanya invalid jika tidak kosong DAN tidak memenuhi kriteria
+const isRingkasanValid = computed(() => ringkasanCharCount.value === 0 || (ringkasanCharCount.value >= RINGKASAN_MIN_CHARS && ringkasanCharCount.value <= RINGKASAN_MAX_CHARS))
 
 // Check apakah form bisa disubmit
 const isFormValid = computed(() => isJudulValid.value && isKontenValid.value && isRingkasanValid.value)
@@ -354,13 +355,13 @@ onMounted(async () => {
           </div>
           <textarea
             v-model="formData.ringkasan"
-            class="w-full min-h-[100px] p-3 font-['Be_Vietnam_Pro'] text-[14px] text-gray-800 focus:outline-none border border-[#d9d9d9] rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 resize-none overflow-auto placeholder:text-neutral-300"
+            class="w-full min-h-[100px] p-3 font-['Be_Vietnam_Pro'] text-[14px] text-gray-800 focus:outline-none border border-[#d9d9d9] bg-white rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 resize-none overflow-auto placeholder:text-neutral-300"
             placeholder="Tuliskan ringkasan singkat artikel (atau akan diambil secara otomatis dari paragraf pertama)..."
             :maxlength="RINGKASAN_MAX_CHARS"
             @input="autoResizeTextarea"
           />
-          <span v-if="!isRingkasanValid" class="text-xs text-red-500 font-['Be_Vietnam_Pro']">
-            Ringkasan terlalu panjang (maks {{ RINGKASAN_MAX_CHARS }} karakter)
+          <span v-if="ringkasanCharCount > 0 && !isRingkasanValid" class="text-xs text-red-500 font-['Be_Vietnam_Pro']">
+            {{ ringkasanCharCount < RINGKASAN_MIN_CHARS ? `Ringkasan minimal ${RINGKASAN_MIN_CHARS} karakter` : `Ringkasan maksimal ${RINGKASAN_MAX_CHARS} karakter` }}
           </span>
           <span v-else-if="formData.ringkasan.length === 0" class="text-xs text-gray-400 font-['Be_Vietnam_Pro'] italic">
             Ringkasan akan diambil secara otomatis dari paragraf pertama jika tidak diisi
