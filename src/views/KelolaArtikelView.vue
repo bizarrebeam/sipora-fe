@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useArtikelStore } from '@/stores/artikel'
 import { useAuthStore } from '@/stores/auth'
 import SButton from '@/components/SButton.vue'
@@ -9,6 +10,7 @@ import SCard from '@/components/SCard.vue'
 
 const artikelStore = useArtikelStore()
 const auth = useAuthStore()
+const router = useRouter()
 
 // State
 const searchQuery = ref('')
@@ -49,6 +51,14 @@ const paginatedData = computed(() => {
   return filteredData.value.slice(start, start + pageSize.value)
 })
 
+const goToDetail = (id: number | string) => {
+  if (!id) {
+    console.error("ID Artikel tidak ditemukan!");
+    return;
+  }
+  router.push({ name: 'detailArtikel', params: { id } });
+};
+
 async function fetchData() {
   loading.value = true
   try {
@@ -81,6 +91,35 @@ watch(searchQuery, () => { currentPage.value = 1 })
             Temukan tips menghadapi bullying, cara menjaga kesehatan mental, dan informasi penting lainnya.
           </p>
         </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative">
+        <div class="toggle-container" v-if="isAdmin">
+          <div class="toggle-slider" :class="{ 'toggle-slider--draft': statusFilter === 'draft' }"></div>
+          <button
+            @click="statusFilter = 'published'; currentPage = 1"
+            class="toggle-btn"
+            :class="{ 'toggle-btn--active': statusFilter === 'published' }"
+          >
+            Publikasi
+          </button>
+          <button
+            @click="statusFilter = 'draft'; currentPage = 1"
+            class="toggle-btn"
+            :class="{ 'toggle-btn--active': statusFilter === 'draft' }"
+          >
+            Draft
+          </button>
+        </div>
+
+        <div class="flex-1 w-full max-w-[581px] search-container">
+          <STextField
+            v-model="searchQuery"
+            placeholder="Cari artikel berdasarkan judul..."
+            variant="text"
+          />
+        </div>
+
         <SButton
           v-if="isAdmin"
           label="Buat Artikel"
@@ -120,34 +159,11 @@ watch(searchQuery, () => { currentPage.value = 1 })
             </svg>
           </template>
         </SButton>
+
       </div>
 
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative">
-        <div class="toggle-container" v-if="isAdmin">
-          <div class="toggle-slider" :class="{ 'toggle-slider--draft': statusFilter === 'draft' }"></div>
-          <button
-            @click="statusFilter = 'published'; currentPage = 1"
-            class="toggle-btn"
-            :class="{ 'toggle-btn--active': statusFilter === 'published' }"
-          >
-            Publikasi
-          </button>
-          <button
-            @click="statusFilter = 'draft'; currentPage = 1"
-            class="toggle-btn"
-            :class="{ 'toggle-btn--active': statusFilter === 'draft' }"
-          >
-            Draft
-          </button>
-        </div>
-
-        <div class="flex-1 w-full max-w-[581px] search-container">
-          <STextField
-            v-model="searchQuery"
-            placeholder="Cari artikel berdasarkan judul..."
-            variant="text"
-          />
-        </div>
+      <div v-if="totalPages > 1" class="card-pagination">
+        <SPagination v-model="currentPage" :total-pages="totalPages" />
       </div>
 
       <div v-if="loading" class="loading-state">
@@ -172,6 +188,10 @@ watch(searchQuery, () => { currentPage.value = 1 })
             @click="$router.push({ name: 'detailArtikel', params: { id: artikel.id } })"
           >
             <div class="article-thumb">
+              <div v-if="artikel.status === 'draft'" class="draft-badge">
+                Draft
+              </div>
+
               <img v-if="artikel.gambar" :src="artikel.gambar" :alt="artikel.judul" />
               <div v-else class="thumb-empty">No Image</div>
             </div>
@@ -191,7 +211,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
               </p>
 
               <div class="article-card__footer">
-                <button class="aksi-btn--baca" @click.stop="$router.push({ name: 'detailArtikel', params: { id: artikel.id } })">
+                <button class="aksi-btn--baca" @click.stop="goToDetail(artikel.id)">
                   Baca Selengkapnya
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7 17L17 7M17 7H7M17 7V17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -200,10 +220,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
               </div>
             </div>
           </SCard>
-        </div>
-
-        <div v-if="totalPages > 1" class="card-pagination">
-          <SPagination v-model="currentPage" :total-pages="totalPages" />
         </div>
       </template>
 
@@ -247,7 +263,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	margin-bottom: 0;
 }
 
-/* Custom Toggle (Node 209:5819) */
 .toggle-container {
 	position: relative;
 	display: inline-flex;
@@ -266,14 +281,14 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	left: 1.5px;
 	height: 42px;
 	width: 99px;
-	background: #9FA0CE; /* Blue/blue-200 */
+	background: #9FA0CE;
 	border-radius: 10px;
 	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	z-index: 1;
 }
 
 .toggle-slider--draft {
-	transform: translateX(103px); /* 208 - 3 (padding) - 99 (width) = 106 available, adjust slightly */
+	transform: translateX(103px);
 }
 
 .toggle-btn {
@@ -290,7 +305,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	border: none;
 	background: transparent;
 	cursor: pointer;
-	color: var(--color-neutral-300); /* Inactive color */
+	color: var(--color-neutral-300);
 	transition: color 0.3s ease;
 }
 
@@ -338,21 +353,31 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
 .article-card:hover {
 	transform: translateY(-3px);
-	box-shadow: 0 8px 16px rgba(0,0,0,0.05); /* Slight elevation on hover */
+	box-shadow: 0 8px 16px rgba(0,0,0,0.05);
 }
 
 .article-thumb {
-	height: 215px;
-	border-radius: 16px 16px 0 0;
-	overflow: hidden;
-	background: #f0f0f0;
-	flex-shrink: 0;
+  position: relative;
+  height: 215px;
+  border-radius: 16px 16px 0 0;
+  overflow: hidden;
+  background: #f0f0f0;
+  flex-shrink: 0;
 }
 
-.article-thumb img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
+.draft-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: #3F429B;
+  color: white;
+  padding: 4px 16px;
+  border-radius: 20px;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .thumb-empty {
@@ -480,6 +505,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 .card-pagination {
 	margin-top: 32px;
 	display: flex;
-	justify-content: center;
+	justify-content: flex-start;
+  margin-bottom: 32px;
 }
 </style>

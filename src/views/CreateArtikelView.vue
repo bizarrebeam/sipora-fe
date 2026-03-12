@@ -1,22 +1,73 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useArtikelStore } from '@/stores/artikel'
 import { toast } from 'vue-sonner'
 import STextField from '@/components/STextField.vue'
+import SButton from '@/components/SButton.vue'
+import SLoading from '@/components/SLoading.vue'
 
 const router = useRouter()
+const route = useRoute()
 const artikelStore = useArtikelStore()
+
+const isLoading = ref(true)
+const articleId = route.params.id ? String(route.params.id) : null
+const isEditMode = computed(() => !!articleId)
 
 const formData = ref({
   judul: '',
   konten: '',
+  ringkasan: '',
 })
+
+// Edge case constants
+const JUDUL_MIN_CHARS = 5
+const JUDUL_MAX_CHARS = 70
+const KONTEN_MIN_CHARS = 50
+const KONTEN_MAX_CHARS = 10000
+const RINGKASAN_MIN_CHARS = 5
+const RINGKASAN_MAX_CHARS = 150
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 const previewImage = ref<string | null>(null)
 const isDragging = ref(false)
+
+// Computed properties untuk tracking karakter
+const judulCharCount = computed(() => formData.value.judul.length)
+const kontenCharCount = computed(() => formData.value.konten.length)
+const ringkasanCharCount = computed(() => formData.value.ringkasan.length)
+
+const isJudulValid = computed(() => judulCharCount.value >= JUDUL_MIN_CHARS && judulCharCount.value <= JUDUL_MAX_CHARS)
+const isKontenValid = computed(() => kontenCharCount.value >= KONTEN_MIN_CHARS && kontenCharCount.value <= KONTEN_MAX_CHARS)
+const isRingkasanValid = computed(() => ringkasanCharCount.value >= RINGKASAN_MIN_CHARS && ringkasanCharCount.value <= RINGKASAN_MAX_CHARS)
+
+// Check apakah form bisa disubmit
+const isFormValid = computed(() => isJudulValid.value && isKontenValid.value && isRingkasanValid.value)
+
+// Auto-generate ringkasan dari paragraf pertama
+const autoGenerateRingkasan = () => {
+  const text = formData.value.konten.trim()
+  if (!text) return ''
+  
+  // Get first paragraph (split by double newline or first 300 chars)
+  const firstParagraph = text.split('\n\n')[0] || text.substring(0, RINGKASAN_MAX_CHARS)
+  
+  if (firstParagraph.length > RINGKASAN_MAX_CHARS) {
+    return firstParagraph.substring(0, RINGKASAN_MAX_CHARS).trim() + '...'
+  }
+  
+  return firstParagraph.trim()
+}
+
+// Strip HTML dari konten (untuk edit mode)
+const stripHtml = (html: string) => {
+  if (!html) return ''
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  return doc.body.textContent || ''
+}
 
 const handleFileSelect = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0]
@@ -35,7 +86,7 @@ const handleDrop = (event: DragEvent) => {
 
 const processFile = (file: File) => {
   // Validate size (max 5MB)
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > MAX_FILE_SIZE) {
     toast.error('Ukuran file maksimal 5MB')
     return
   }
@@ -60,31 +111,109 @@ const triggerFileInput = () => {
 }
 
 const isSubmitting = ref(false)
+const kontenEditorRef = ref<HTMLTextAreaElement | null>(null)
+const isList = ref(false)
+
+// Auto-resize textarea untuk ringkasan
+const autoResizeTextarea = (event: Event) => {
+  const textarea = event.target as HTMLTextAreaElement
+  textarea.style.height = 'auto'
+  textarea.style.height = Math.min(textarea.scrollHeight, 300) + 'px'
+}
+
+// Format text di textarea
+const formatText = (startTag: string, endTag: string = '') => {
+  const textarea = kontenEditorRef.value
+  if (!textarea) return
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = formData.value.konten.substring(start, end)
+  
+  if (!selectedText) {
+    // Jika tidak ada selection, insert tag kosong
+    const beforeText = formData.value.konten.substring(0, start)
+    const afterText = formData.value.konten.substring(start)
+    formData.value.konten = beforeText + startTag + afterText
+  } else {
+    // Wrap selected text dengan tag
+    const beforeText = formData.value.konten.substring(0, start)
+    const afterText = formData.value.konten.substring(end)
+    formData.value.konten = beforeText + startTag + selectedText + endTag + afterText
+  }
+
+  // Focus kembali ke textarea
+  setTimeout(() => {
+    textarea.focus()
+    textarea.selectionStart = start + startTag.length
+    textarea.selectionEnd = start + startTag.length + selectedText.length
+  }, 0)
+}
 
 const submitArticle = async (status: 'draft' | 'published') => {
+  // Validasi judul
   if (!formData.value.judul.trim()) {
     toast.error('Judul artikel wajib diisi')
     return
   }
+  if (formData.value.judul.length < JUDUL_MIN_CHARS) {
+    toast.error(`Judul minimal ${JUDUL_MIN_CHARS} karakter`)
+    return
+  }
+  if (formData.value.judul.length > JUDUL_MAX_CHARS) {
+    toast.error(`Judul maksimal ${JUDUL_MAX_CHARS} karakter`)
+    return
+  }
+
+  // Validasi konten
   if (!formData.value.konten.trim()) {
     toast.error('Isi artikel wajib diisi')
+    return
+  }
+  if (formData.value.konten.length < KONTEN_MIN_CHARS) {
+    toast.error(`Isi artikel minimal ${KONTEN_MIN_CHARS} karakter`)
+    return
+  }
+  if (formData.value.konten.length > KONTEN_MAX_CHARS) {
+    toast.error(`Isi artikel maksimal ${KONTEN_MAX_CHARS} karakter`)
+    return
+  }
+
+  // Validasi ringkasan (opsional tapi jika ada harus valid)
+  if (formData.value.ringkasan.length > RINGKASAN_MAX_CHARS) {
+    toast.error(`Ringkasan maksimal ${RINGKASAN_MAX_CHARS} karakter`)
     return
   }
 
   isSubmitting.value = true
 
   try {
+    // Auto-generate ringkasan dari paragraf pertama jika kosong
+    let finalRingkasan = formData.value.ringkasan.trim()
+    if (!finalRingkasan) {
+      finalRingkasan = autoGenerateRingkasan()
+    }
+
     const data = new FormData()
-    data.append('judul', formData.value.judul)
-    data.append('konten', formData.value.konten)
+    data.append('judul', formData.value.judul.trim())
+    data.append('konten', formData.value.konten.trim())
+    data.append('ringkasan', finalRingkasan)
     data.append('status', status)
 
     if (selectedFile.value) {
       data.append('gambar', selectedFile.value)
     }
 
-    await artikelStore.simpanArtikel(data)
-    toast.success(`Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`)
+    if (isEditMode.value && articleId) {
+      // Update existing artikel
+      await artikelStore.updateArtikel(articleId, data)
+      toast.success('Artikel berhasil diperbarui')
+    } else {
+      // Create new artikel
+      await artikelStore.simpanArtikel(data)
+      toast.success(`Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`)
+    }
+    
     router.push('/kelola-artikel')
   } catch (error: any) {
     toast.error(error.message || 'Gagal menyimpan artikel')
@@ -92,32 +221,67 @@ const submitArticle = async (status: 'draft' | 'published') => {
     isSubmitting.value = false
   }
 }
+
+const toggleList = () => {
+  isList.value = !isList.value;
+    formatText('\n• ')
+};
+
+
+// Fetch artikel data saat edit mode
+onMounted(async () => {
+  if (isEditMode.value && articleId) {
+    try {
+      const data = await artikelStore.fetchDetailArtikel(articleId)
+      formData.value.judul = data.judul || ''
+      formData.value.konten = data.konten || ''
+      formData.value.ringkasan = data.ringkasan || ''
+      if (data.gambar) {
+        previewImage.value = data.gambar
+      }
+    } catch (error) {
+      console.error(error)
+      toast.error('Gagal mengambil data artikel')
+      router.push('/kelola-artikel')
+    }
+  }
+  isLoading.value = false
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f5f5f5] py-10 px-6 md:py-[60px] md:px-[80px]">
-    <div class="max-w-[996px] mx-auto w-full flex flex-col gap-6">
-
-      <!-- Back Button -->
-      <div>
-        <button
-          @click="router.push('/kelola-artikel')"
-          class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
-        >
-          <span>&larr;</span> Kembali
-        </button>
+  <div class="artikel-page">
+    <div class="artikel-container">
+      <div v-if="isLoading" class="flex justify-center items-center h-64">
+        <SLoading />
       </div>
 
-      <!-- Header -->
-      <div class="flex flex-col gap-2 mb-4">
-        <h1 class="text-[28px] font-[800] text-[#2e3094] font-['Be_Vietnam_Pro'] leading-[36px]">Menyusun Artikel</h1>
-        <p class="text-[20px] font-[600] text-[#383838] font-['Be_Vietnam_Pro'] leading-[28px]">
-          Masukan detail publikasi yang akan dibagikan ke portal siswa.
-        </p>
-      </div>
+      <template v-else>
+        <!-- Back Button -->
+        <div>
+          <button
+            @click="router.push('/kelola-artikel')"
+            class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
+          >
+            <span>&larr;</span> Kembali
+          </button>
+        </div>
 
-      <!-- Form Container -->
-      <div class="bg-[#eaeaf4] rounded-[16px] p-6 md:p-10 flex flex-col gap-8">
+        <!-- Header -->
+        <div class="artikel-header">
+          <div>
+            <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">
+              {{ isEditMode ? 'Edit Artikel' : 'Menyusun Artikel' }}
+            </h1>
+            <p class="text-gray-500 mb-6 font-display text-sm">
+              {{ isEditMode ? 'Perbarui detail artikel yang sudah dibuat.' : 'Masukan detail publikasi yang akan dibagikan ke portal siswa.' }}<br>
+              Berikan informasi berkualitas dan bermanfaat untuk siswa SMP Desa Mulia Putra.
+            </p>
+          </div>
+        </div>
+
+        <!-- Form Container -->
+        <div class="bg-[#eaeaf4] rounded-[16px] p-6 md:p-10 flex flex-col gap-8">
 
         <!-- Upload Cover -->
         <div class="flex flex-col gap-2">
@@ -138,7 +302,7 @@ const submitArticle = async (status: 'draft' | 'published') => {
               </svg>
             </div>
             <p class="text-[#aeaeae] font-['Be_Vietnam_Pro'] text-center text-xs md:text-sm px-4">
-              Masukkan gambar yang mendukung laporan anda dengan format PNG, JPEG, atau WebP (Max. 5 MB total)
+              Masukkan gambar dengan format PNG, JPEG, atau WebP (Max. 5 MB)
             </p>
             <input
               ref="fileInput"
@@ -164,70 +328,189 @@ const submitArticle = async (status: 'draft' | 'published') => {
 
         <!-- Judul -->
         <div class="flex flex-col gap-2">
-          <label class="text-[#383838] font-['Be_Vietnam_Pro'] font-bold text-[14px]">
-            Judul Artikel <span class="text-red-500">*</span>
-          </label>
+          <div class="flex items-center justify-between">
+            <label class="text-[#383838] font-['Be_Vietnam_Pro'] font-bold text-[14px]">
+              Judul Artikel <span class="text-red-500">*</span>
+            </label>
+            <span class="text-xs text-gray-500 font-['Be_Vietnam_Pro']">{{ judulCharCount }}/{{ JUDUL_MAX_CHARS }}</span>
+          </div>
           <STextField
             v-model="formData.judul"
             placeholder="Tuliskan judul artikel yang ringkas dan menarik..."
+            :maxlength="JUDUL_MAX_CHARS"
           />
+          <span v-if="!isJudulValid && judulCharCount > 0" class="text-xs text-red-500 font-['Be_Vietnam_Pro']">
+            {{ judulCharCount < JUDUL_MIN_CHARS ? `Judul minimal ${JUDUL_MIN_CHARS} karakter` : `Judul maksimal ${JUDUL_MAX_CHARS} karakter` }}
+          </span>
+        </div>
+
+        <!-- Ringkasan (Opsional) -->
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <label class="text-[#383838] font-['Be_Vietnam_Pro'] font-bold text-[14px]">
+              Ringkasan Artikel <span class="text-gray-400 text-xs">(Opsional)</span>
+            </label>
+            <span class="text-xs text-gray-500 font-['Be_Vietnam_Pro']">{{ ringkasanCharCount }}/{{ RINGKASAN_MAX_CHARS }}</span>
+          </div>
+          <textarea
+            v-model="formData.ringkasan"
+            class="w-full min-h-[100px] p-3 font-['Be_Vietnam_Pro'] text-[14px] text-gray-800 focus:outline-none border border-[#d9d9d9] rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 resize-none overflow-auto placeholder:text-neutral-300"
+            placeholder="Tuliskan ringkasan singkat artikel (atau akan diambil secara otomatis dari paragraf pertama)..."
+            :maxlength="RINGKASAN_MAX_CHARS"
+            @input="autoResizeTextarea"
+          />
+          <span v-if="!isRingkasanValid" class="text-xs text-red-500 font-['Be_Vietnam_Pro']">
+            Ringkasan terlalu panjang (maks {{ RINGKASAN_MAX_CHARS }} karakter)
+          </span>
+          <span v-else-if="formData.ringkasan.length === 0" class="text-xs text-gray-400 font-['Be_Vietnam_Pro'] italic">
+            Ringkasan akan diambil secara otomatis dari paragraf pertama jika tidak diisi
+          </span>
         </div>
 
         <!-- Isi Artikel -->
         <div class="flex flex-col gap-2">
-          <label class="text-[#383838] font-['Be_Vietnam_Pro'] font-bold text-[14px]">
-            Isi Artikel <span class="text-red-500">*</span>
-          </label>
+          <div class="flex items-center justify-between">
+            <label class="text-[#383838] font-['Be_Vietnam_Pro'] font-bold text-[14px]">
+              Isi Artikel <span class="text-red-500">*</span>
+            </label>
+            <span class="text-xs text-gray-500 font-['Be_Vietnam_Pro']">{{ kontenCharCount }}/{{ KONTEN_MAX_CHARS }}</span>
+          </div>
           <div class="w-full relative border border-[#d9d9d9] bg-white rounded-xl overflow-hidden focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/15 transition-all">
-            <!-- Simulated Toolbar -->
-            <div class="border-b border-gray-200 p-2 flex gap-2 justify-end bg-white">
-              <button type="button" class="p-1 text-gray-400 hover:bg-gray-100 rounded">
-                <span class="font-serif font-bold w-5 h-5 flex items-center justify-center">B</span>
-              </button>
-              <button type="button" class="p-1 text-gray-400 hover:bg-gray-100 rounded">
-                <span class="font-serif italic font-bold w-5 h-5 flex items-center justify-center">I</span>
-              </button>
-              <button type="button" class="p-1 text-gray-400 hover:bg-gray-100 rounded">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"></path>
-                  <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"></path>
-                </svg>
+            <!-- Rich Editor Toolbar -->
+            <div class="border-b border-gray-200 p-3 flex flex-wrap gap-2 bg-gray-50">
+              <!-- Text Formatting -->
+              <div class="flex gap-1 border-r border-gray-300 pr-2">
+                <button 
+                  type="button" 
+                  class="p-2 text-gray-600 hover:bg-gray-200 rounded font-bold text-sm" 
+                  title="Bold (select text then click)"
+                  @click="formatText('<b>', '</b>')"
+                >
+                  B
+                </button>
+                <button 
+                  type="button" 
+                  class="p-2 text-gray-600 hover:bg-gray-200 rounded italic text-sm"
+                  title="Italic (select text then click)"
+                  @click="formatText('<i>', '</i>')"
+                >
+                  I
+                </button>
+                <button 
+                  type="button" 
+                  class="p-2 text-gray-600 hover:bg-gray-200 rounded underline text-sm"
+                  title="Underline (select text then click)"
+                  @click="formatText('<u>', '</u>')"
+                >
+                  U
+                </button>
+              </div>
+
+              <!-- Lists -->
+              <div class="flex gap-1 border-r border-gray-300 pr-2">
+                  <button 
+                    type="button" 
+                    class="p-2 text-gray-600 hover:bg-gray-200 rounded text-sm"
+                    :class="isList ? 'bg-blue-100' : ''"
+                    title="Bullet List"
+                    @click="toggleList"
+                  >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="5" cy="6" r="1.5"></circle>
+                    <circle cx="5" cy="12" r="1.5"></circle>
+                    <circle cx="5" cy="18" r="1.5"></circle>
+                    <line x1="10" y1="6" x2="20" y2="6"></line>
+                    <line x1="10" y1="12" x2="20" y2="12"></line>
+                    <line x1="10" y1="18" x2="20" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Clear Formatting -->
+              <button 
+                type="button" 
+                class="p-2 text-gray-600 hover:bg-gray-200 rounded text-xs"
+                title="Clear all text"
+                @click="formData.konten = ''"
+              >
+                ✕ Clear
               </button>
             </div>
+
+            <!-- Textarea Editor -->
             <textarea
+              ref="kontenEditorRef"
               v-model="formData.konten"
               class="w-full min-h-[300px] p-4 font-['Be_Vietnam_Pro'] text-[16px] text-gray-800 focus:outline-none resize-y placeholder:text-neutral-300"
               placeholder="Tuliskan isi paragraf artikel di sini..."
+              :maxlength="KONTEN_MAX_CHARS"
             ></textarea>
           </div>
+
+          <!-- Live Preview -->
+          <div class="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
+            <p class="text-xs font-bold text-gray-600 mb-3 font-['Be_Vietnam_Pro']">Preview:</p>
+            <div class="prose prose-sm max-w-none bg-white p-4 rounded border border-gray-200 font-['Be_Vietnam_Pro'] text-[14px] text-gray-800 leading-relaxed"
+              v-html="formData.konten.replace(/\n/g, '<br>').replace(/• /g, '• ').replace(/1\. /g, '1. ')">
+            </div>
+          </div>
+
+          <span v-if="!isKontenValid && kontenCharCount > 0" class="text-xs text-red-500 font-['Be_Vietnam_Pro']">
+            {{ kontenCharCount < KONTEN_MIN_CHARS ? `Isi artikel minimal ${KONTEN_MIN_CHARS} karakter` : `Isi artikel maksimal ${KONTEN_MAX_CHARS} karakter` }}
+          </span>
         </div>
 
         <!-- Actions -->
         <div class="flex flex-col sm:flex-row gap-4 mt-4 w-full justify-between items-center sm:h-12">
-          <button
-            type="button"
+          <SButton
+            :label="isEditMode ? 'Simpan Perubahan' : 'Simpan Sebagai Draft'"
+            variant="ghost"
+            :disabled="isSubmitting || !isJudulValid || !isKontenValid"
             @click="submitArticle('draft')"
-            :disabled="isSubmitting"
-            class="w-full sm:w-1/2 h-12 rounded-lg border border-[#2e3094] text-[#2e3094] font-['Be_Vietnam_Pro'] font-bold text-[16px] flex items-center justify-center bg-transparent hover:bg-blue-50 transition-colors disabled:opacity-50"
-          >
-            Simpan Sebagai Draft
-          </button>
+            class="w-full sm:w-1/2"
+          />
 
-          <button
-            type="button"
+          <SButton
+            variant="primary"
+            :disabled="isSubmitting || !isFormValid"
             @click="submitArticle('published')"
-            :disabled="isSubmitting"
-            class="w-full sm:w-1/2 h-12 rounded-lg bg-[#2e3094] text-white font-['Be_Vietnam_Pro'] font-bold text-[16px] flex items-center justify-center gap-2 hover:bg-blue-800 transition-colors disabled:opacity-50"
+            class="w-full sm:w-1/2"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-            Unggah Artikel
-          </button>
+            <template #left-icon>
+              <svg v-if="!isEditMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </template>
+            {{ isEditMode ? 'Perbarui Artikel' : 'Unggah Artikel' }}
+          </SButton>
         </div>
 
-      </div>
+        </div>
+      </template>
     </div>
   </div>
 </template>
+
+<style scoped>
+.artikel-page {
+  min-height: calc(100vh - 64px);
+  background: var(--color-general-frame, #f5f5f5);
+  padding: 24px 16px;
+}
+
+.artikel-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.artikel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+</style>

@@ -12,8 +12,7 @@ import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
 import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
 import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
-import CreateArtikelView from '@/views/CreateArtikelView.vue' //create artikel
-import EditArtikelView from '@/views/EditArtikelView.vue' //edit artikel
+import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit artikel
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -105,7 +104,7 @@ const router = createRouter({
     {
       path: '/edit-artikel/:id',
       name: 'editArtikel',
-      component: EditArtikelView,
+      component: CreateArtikelView,
       meta: { requiresAuth: true },
     },
   ],
