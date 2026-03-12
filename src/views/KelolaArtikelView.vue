@@ -21,16 +21,57 @@ const loading = ref(false)
 
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 
-const formatTanggal = (dateString: string) => {
+const formatTanggalDanJam = (dateString: string) => {
   if (!dateString) return '-'
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-  return new Date(dateString).toLocaleDateString('id-ID', options)
+  const date = new Date(dateString)
+  const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
+  const formattedDate = date.toLocaleDateString('id-ID', dateOptions)
+  const formattedTime = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  return `${formattedDate} ${formattedTime}`
 }
 
 const stripHtml = (html: string) => {
   if (!html) return ''
   const doc = new DOMParser().parseFromString(html, 'text/html')
   return doc.body.textContent || ''
+}
+
+interface ArtikelCard {
+  id: number | string
+  created_at: string
+  updated_at?: string
+  nama_penulis?: string
+  judul: string
+  ringkasan?: string
+  konten: string
+  gambar?: string | null
+  status?: string
+}
+
+const getTimestampText = (artikel: ArtikelCard) => {
+  if (!artikel.created_at) return '-'
+
+  const createdDateTime = formatTanggalDanJam(artikel.created_at)
+
+  // Compare only up to minutes (not including seconds/milliseconds)
+  if (artikel.updated_at) {
+    const createdDate = new Date(artikel.created_at)
+    const updatedDate = new Date(artikel.updated_at)
+
+    const isSameMinute =
+      createdDate.getFullYear() === updatedDate.getFullYear() &&
+      createdDate.getMonth() === updatedDate.getMonth() &&
+      createdDate.getDate() === updatedDate.getDate() &&
+      createdDate.getHours() === updatedDate.getHours() &&
+      createdDate.getMinutes() === updatedDate.getMinutes()
+
+    if (!isSameMinute) {
+      const updatedDateTime = formatTanggalDanJam(artikel.updated_at)
+      return `Created: ${createdDateTime}\n Edited: ${updatedDateTime}`
+    }
+  }
+
+  return createdDateTime
 }
 
 const filteredData = computed(() => {
@@ -199,7 +240,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
             <div class="article-card-content">
               <div class="article-card__top">
                 <span class="author-tag">{{ artikel.nama_penulis || 'Tim Kemahasiswaan' }}</span>
-                <span class="article-card__date">{{ formatTanggal(artikel.created_at) }}</span>
+                <span class="article-card__date">{{ getTimestampText(artikel) }}</span>
               </div>
 
               <h4 class="article-card__title">
@@ -329,7 +370,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 /* Card View */
 .card-grid {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 	gap: 24px;
 }
 
@@ -348,7 +389,10 @@ watch(searchQuery, () => { currentPage.value = 1 })
 .article-card {
 	cursor: pointer;
 	transition: 0.2s;
-	height: 450px;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 450px;
 }
 
 .article-card:hover {
@@ -399,8 +443,9 @@ watch(searchQuery, () => { currentPage.value = 1 })
 .article-card__top {
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: flex-start;
 	margin-bottom: 12px;
+	gap: 12px;
 }
 
 .author-tag {
@@ -408,12 +453,16 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	font-weight: 600;
 	font-size: 10px;
 	color: var(--color-blue-500);
+	flex: 1;
 }
 
 .article-card__date {
 	font-family: "Be Vietnam Pro", sans-serif;
 	font-size: 10px;
 	color: var(--color-neutral-600);
+	flex: 1;
+	text-align: right;
+	white-space: pre-line;
 }
 
 .article-card__title {
@@ -442,6 +491,9 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	overflow: hidden;
 	margin: 0;
 	text-align: justify;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+	hyphens: auto;
 }
 
 .article-card__footer {

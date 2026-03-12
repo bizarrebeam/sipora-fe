@@ -13,6 +13,7 @@ interface Artikel {
   judul: string;
   gambar: string | null;
   created_at: string;
+  updated_at?: string;
   nama_penulis: string;
   konten: string;
   status?: string;
@@ -41,6 +42,41 @@ const formatTanggal = (dateString: string) => {
   if (!dateString) return ''
   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
   return new Date(dateString).toLocaleDateString('id-ID', options)
+}
+
+const formatTanggalDanJam = (dateString: string) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
+  const formattedDate = date.toLocaleDateString('id-ID', dateOptions)
+  const formattedTime = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+  return `${formattedDate} ${formattedTime}`
+}
+
+const getTimestampText = (artikel: Artikel) => {
+  if (!artikel.created_at) return ''
+
+  const createdDateTime = formatTanggalDanJam(artikel.created_at)
+
+  // Compare only up to minutes (not including seconds/milliseconds)
+  if (artikel.updated_at) {
+    const createdDate = new Date(artikel.created_at)
+    const updatedDate = new Date(artikel.updated_at)
+
+    const isSameMinute =
+      createdDate.getFullYear() === updatedDate.getFullYear() &&
+      createdDate.getMonth() === updatedDate.getMonth() &&
+      createdDate.getDate() === updatedDate.getDate() &&
+      createdDate.getHours() === updatedDate.getHours() &&
+      createdDate.getMinutes() === updatedDate.getMinutes()
+
+    if (!isSameMinute) {
+      const updatedDateTime = formatTanggalDanJam(artikel.updated_at)
+      return `Created: ${createdDateTime} • Edited: ${updatedDateTime}`
+    }
+  }
+
+  return createdDateTime
 }
 
 // Decode HTML entities and convert newlines to <br>
@@ -117,7 +153,7 @@ const decodeHtmlEntities = (text: string) => {
                 Artikel
               </span>
               <span class="text-white/80 font-['Be_Vietnam_Pro'] text-[14px]">
-                {{ formatTanggal(artikel.created_at) }}
+                {{ getTimestampText(artikel) }}
               </span>
             </div>
             <h1 class="text-white font-['Be_Vietnam_Pro'] font-extrabold text-[32px] md:text-[40px] leading-[40px] md:leading-[48px]">
@@ -163,6 +199,15 @@ const decodeHtmlEntities = (text: string) => {
 </template>
 
 <style scoped>
+/* Article Body Container */
+.article-body {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Deep selectors to properly style user-generated html based on Figma design tokens */
 .article-body :deep(p) {
   font-family: "Be Vietnam Pro", sans-serif;
@@ -172,6 +217,9 @@ const decodeHtmlEntities = (text: string) => {
   color: #383838;
   margin-bottom: 24px;
   text-align: justify;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .article-body :deep(h1),
@@ -182,6 +230,9 @@ const decodeHtmlEntities = (text: string) => {
   color: #383838;
   margin-top: 32px;
   margin-bottom: 16px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .article-body :deep(h1) { font-size: 28px; line-height: 36px; }
@@ -211,6 +262,8 @@ const decodeHtmlEntities = (text: string) => {
   font-size: 16px;
   line-height: 24px;
   color: #383838;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .article-body :deep(ul) {
@@ -221,10 +274,15 @@ const decodeHtmlEntities = (text: string) => {
   font-size: 16px;
   line-height: 24px;
   color: #383838;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .article-body :deep(li) {
   margin-bottom: 8px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Specific styling for highlight quotes matching Figma */
@@ -241,6 +299,9 @@ const decodeHtmlEntities = (text: string) => {
   font-size: 16px;
   line-height: 24px;
   color: #2e3094;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .article-body :deep(blockquote p) {

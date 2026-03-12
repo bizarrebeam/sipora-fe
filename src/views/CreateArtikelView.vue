@@ -52,22 +52,15 @@ const isFormValid = computed(() => isJudulValid.value && isKontenValid.value && 
 const autoGenerateRingkasan = () => {
   const text = formData.value.konten.trim()
   if (!text) return ''
-  
+
   // Get first paragraph (split by double newline or first 300 chars)
   const firstParagraph = text.split('\n\n')[0] || text.substring(0, RINGKASAN_MAX_CHARS)
-  
+
   if (firstParagraph.length > RINGKASAN_MAX_CHARS) {
     return firstParagraph.substring(0, RINGKASAN_MAX_CHARS).trim() + '...'
   }
-  
-  return firstParagraph.trim()
-}
 
-// Strip HTML dari konten (untuk edit mode)
-const stripHtml = (html: string) => {
-  if (!html) return ''
-  const doc = new DOMParser().parseFromString(html, 'text/html')
-  return doc.body.textContent || ''
+  return firstParagraph.trim()
 }
 
 const handleFileSelect = (event: Event) => {
@@ -130,7 +123,7 @@ const formatText = (startTag: string, endTag: string = '') => {
   const start = textarea.selectionStart
   const end = textarea.selectionEnd
   const selectedText = formData.value.konten.substring(start, end)
-  
+
   if (!selectedText) {
     // Jika tidak ada selection, insert tag kosong
     const beforeText = formData.value.konten.substring(0, start)
@@ -214,10 +207,11 @@ const submitArticle = async (status: 'draft' | 'published') => {
       await artikelStore.simpanArtikel(data)
       toast.success(`Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`)
     }
-    
+
     router.push('/kelola-artikel')
-  } catch (error: any) {
-    toast.error(error.message || 'Gagal menyimpan artikel')
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Gagal menyimpan artikel'
+    toast.error(errorMessage)
   } finally {
     isSubmitting.value = false
   }
@@ -381,24 +375,24 @@ onMounted(async () => {
             <div class="border-b border-gray-200 p-3 flex flex-wrap gap-2 bg-gray-50">
               <!-- Text Formatting -->
               <div class="flex gap-1 border-r border-gray-300 pr-2">
-                <button 
-                  type="button" 
-                  class="p-2 text-gray-600 hover:bg-gray-200 rounded font-bold text-sm" 
+                <button
+                  type="button"
+                  class="p-2 text-gray-600 hover:bg-gray-200 rounded font-bold text-sm"
                   title="Bold (select text then click)"
                   @click="formatText('<b>', '</b>')"
                 >
                   B
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   class="p-2 text-gray-600 hover:bg-gray-200 rounded italic text-sm"
                   title="Italic (select text then click)"
                   @click="formatText('<i>', '</i>')"
                 >
                   I
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   class="p-2 text-gray-600 hover:bg-gray-200 rounded underline text-sm"
                   title="Underline (select text then click)"
                   @click="formatText('<u>', '</u>')"
@@ -409,8 +403,8 @@ onMounted(async () => {
 
               <!-- Lists -->
               <div class="flex gap-1 border-r border-gray-300 pr-2">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     class="p-2 text-gray-600 hover:bg-gray-200 rounded text-sm"
                     :class="isList ? 'bg-blue-100' : ''"
                     title="Bullet List"
@@ -428,8 +422,8 @@ onMounted(async () => {
               </div>
 
               <!-- Clear Formatting -->
-              <button 
-                type="button" 
+              <button
+                type="button"
                 class="p-2 text-gray-600 hover:bg-gray-200 rounded text-xs"
                 title="Clear all text"
                 @click="formData.konten = ''"
@@ -451,7 +445,7 @@ onMounted(async () => {
           <!-- Live Preview -->
           <div class="mt-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
             <p class="text-xs font-bold text-gray-600 mb-3 font-['Be_Vietnam_Pro']">Preview:</p>
-            <div class="prose prose-sm max-w-none bg-white p-4 rounded border border-gray-200 font-['Be_Vietnam_Pro'] text-[14px] text-gray-800 leading-relaxed"
+            <div class="prose prose-sm max-w-full bg-white p-4 rounded border border-gray-200 font-['Be_Vietnam_Pro'] text-[14px] text-gray-800 leading-relaxed break-words"
               v-html="formData.konten.replace(/\n/g, '<br>').replace(/• /g, '• ').replace(/1\. /g, '1. ')">
             </div>
           </div>
