@@ -89,14 +89,12 @@ function handleFileChange(e: Event) {
     const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     const newFiles: File[] = []
     
-    // Check if adding new files would exceed max limit
     if (buktiPendukung.value.length + files.length > 5) {
         buktiError.value = 'Maksimal 5 foto'
         if (buktiInputRef.value) buktiInputRef.value.value = ''
         return
     }
     
-    // Validate each file
     for (let i = 0; i < files.length; i++) {
         const file = files[i]
         if (!file) continue
@@ -140,7 +138,6 @@ async function handleSubmit() {
             foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
         })
         
-        // Reset form
         judul.value = ''
         deskripsi.value = ''
         lokasi.value = ''
@@ -151,7 +148,6 @@ async function handleSubmit() {
         buktiError.value = ''
         Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
         
-        // Redirect setelah berhasil
         router.push('/laporan-bullying')
     } catch (error: any) {
         showAlert({
@@ -180,9 +176,13 @@ async function handleSubmit() {
                 </div>
             </Transition>
         </Teleport>
+
         <h4 class="form-title stf-header">Tambah Laporan Bullying</h4>
+
         <div class="form-container">
             <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
+
+                <!-- Judul -->
                 <div class="form-group">
                     <STextField
                         v-model="judul"
@@ -195,6 +195,8 @@ async function handleSubmit() {
                     />
                     <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
                 </div>
+
+                <!-- Tanggal Kejadian -->
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Tanggal Kejadian</label>
@@ -212,15 +214,17 @@ async function handleSubmit() {
                         />
                         <button
                             type="button"
-                            class="flex w-full items-center rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="date-picker-btn"
                             @click="() => { if (tanggalInputRef?.showPicker) tanggalInputRef.showPicker(); else tanggalInputRef?.click(); }"
                         >
                             <span v-if="tanggalKejadian">{{ new Date(tanggalKejadian).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
-                            <span v-else class="text-neutral-300">Pilih tanggal...</span>
+                            <span v-else class="placeholder-text">Pilih tanggal...</span>
                         </button>
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                 </div>
+
+                <!-- Lokasi -->
                 <div class="form-group">
                     <STextField
                         v-model="lokasi"
@@ -233,6 +237,8 @@ async function handleSubmit() {
                     />
                     <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                 </div>
+
+                <!-- Jenis Bullying -->
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Jenis Bullying</label>
@@ -242,8 +248,8 @@ async function handleSubmit() {
                         <select 
                             v-model="jenisBullying" 
                             @change="validate"
-                            class="flex w-full items-center rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15"
-                            :class="{ 'text-neutral-300': !jenisBullying }"
+                            class="bullying-select"
+                            :class="{ 'placeholder-active': !jenisBullying }"
                         >
                             <option value="" disabled selected>Pilih jenis bullying...</option>
                             <option v-for="option in jenisBullyingOptions" :key="option.value" :value="option.value" class="text-general-black">
@@ -253,6 +259,8 @@ async function handleSubmit() {
                     </div>
                     <span v-if="errors.jenisBullying" class="error-msg">{{ errors.jenisBullying }}</span>
                 </div>
+
+                <!-- Deskripsi -->
                 <div class="form-group">
                     <STextField
                         v-model="deskripsi"
@@ -266,9 +274,10 @@ async function handleSubmit() {
                     <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
                 </div>
 
+                <!-- Bukti Pendukung -->
                 <div class="form-group">
                     <div class="custom-label-row">
-                        <label class="custom-label">Bukti Pendukung (opsional)</label>
+                        <label class="custom-label">Bukti Pendukung <span class="optional-tag">(opsional)</span></label>
                         <span v-if="buktiPendukung.length > 0" class="file-count">{{ buktiPendukung.length }}/5 foto</span>
                     </div>
                     <div class="file-upload-section">
@@ -304,8 +313,8 @@ async function handleSubmit() {
                 </div>
                 
                 <!-- Anonimitas -->
-                <div class="form-group mb-4">
-                    <div class="flex items-center gap-3">
+                <div class="form-group anonimitas-group">
+                    <div class="anonimitas-row">
                         <div class="custom-label-row mb-0">
                             <label class="custom-label">Anonimitas</label>
                             <span class="custom-asterisk">*</span>
@@ -313,35 +322,38 @@ async function handleSubmit() {
                         <SToggle v-model="anonimitas" />
                         <span class="switch-label">{{ anonimitas ? 'Ya (Laporkan secara Anonim)' : 'Tidak (Gunakan Nama Asli)' }}</span>
                     </div>
-                    <p class="text-xs text-neutral-500 mt-1 font-['Be_Vietnam_Pro']" v-if="anonimitas">
+                    <p class="anon-hint" v-if="anonimitas">
                         Identitas Anda akan disembunyikan dari pihak yang dilaporkan, namun tetap dapat dilihat oleh admin/guru untuk keperluan validasi.
                     </p>
                 </div>
 
+                <!-- Action Buttons -->
                 <div class="form-group">
-                    <div style="display: flex; gap: 12px;">
+                    <div class="action-buttons">
                         <SButton
                             label="Kembali"
                             variant="ghost"
                             type="button"
                             @click="$router.back()"
-                            class="w-full"
+                            class="btn-back"
                         />
                         <button
                             type="submit"
-                            class="submit-btn w-full"
+                            class="submit-btn"
                             :disabled="!isFormValid"
                         >
                             Kirim Laporan
                         </button>
                     </div>
                 </div>
+
             </form>
         </div>
     </div>
 </template>
 
 <style scoped>
+/* ─── Utility ─── */
 .visually-hidden-date {
     position: absolute;
     width: 1px;
@@ -352,6 +364,8 @@ async function handleSubmit() {
     clip: rect(0,0,0,0);
     border: 0;
 }
+
+/* ─── Labels ─── */
 .custom-label-row {
     display: flex;
     align-items: center;
@@ -371,11 +385,20 @@ async function handleSubmit() {
     margin-left: 2px;
     font-family: "Be Vietnam Pro", sans-serif;
 }
+.optional-tag {
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--color-neutral-400, #9ca3af);
+}
+
+/* ─── Page shell ─── */
 .create-laporan-page {
     min-height: 100vh;
     background: var(--color-general-frame, #f7f8fa);
-    padding: 32px 0;
+    padding: 32px 16px;
 }
+
+/* ─── Card ─── */
 .form-container {
     max-width: 700px;
     margin: 0 auto;
@@ -385,6 +408,7 @@ async function handleSubmit() {
     padding: 48px 40px;
 }
 
+/* ─── Title ─── */
 .form-title.stf-header {
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 700;
@@ -393,8 +417,13 @@ async function handleSubmit() {
     color: var(--color-blue-500);
     text-align: center;
     letter-spacing: 0.01em;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 16px;
 }
 
+/* ─── Form layout ─── */
 .laporan-form {
     display: flex;
     flex-direction: column;
@@ -406,6 +435,7 @@ async function handleSubmit() {
     gap: 6px;
 }
 
+/* ─── Error ─── */
 .error-msg {
     color: var(--color-general-red);
     font-size: 12px;
@@ -413,6 +443,66 @@ async function handleSubmit() {
     font-weight: 600;
 }
 
+/* ─── Date picker button ─── */
+.date-picker-btn {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-radius: 8px;
+    border: 1px solid var(--color-general-border);
+    background: white;
+    padding: 10px 16px;
+    color: var(--color-general-black);
+    font-size: 15px;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 500;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-align: left;
+}
+.date-picker-btn:hover,
+.date-picker-btn:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+.placeholder-text {
+    color: #d1d5db;
+}
+
+/* ─── Select ─── */
+.bullying-select {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-radius: 8px;
+    border: 1px solid var(--color-general-border);
+    background: white;
+    padding: 10px 40px 10px 16px;
+    color: var(--color-general-black);
+    font-size: 15px;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 500;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+.bullying-select:hover,
+.bullying-select:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+.bullying-select.placeholder-active {
+    color: #d1d5db;
+}
+
+/* ─── File upload ─── */
 .file-input-hidden {
     display: none;
 }
@@ -469,6 +559,7 @@ async function handleSubmit() {
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 500;
     flex: 1;
+    word-break: break-all;
 }
 .remove-file-btn {
     display: flex;
@@ -490,25 +581,40 @@ async function handleSubmit() {
     color: var(--color-blue-600);
 }
 
-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    background-size: 1em;
+/* ─── Anonimitas ─── */
+.anonimitas-group {
+    margin-bottom: 4px;
 }
-
+.anonimitas-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
 .switch-label {
     font-size: 13px;
     color: var(--color-general-black);
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 500;
 }
+.anon-hint {
+    font-size: 12px;
+    color: var(--color-neutral-500, #6b7280);
+    font-family: "Be Vietnam Pro", sans-serif;
+    margin-top: 4px;
+    line-height: 1.5;
+}
 
+/* ─── Action buttons ─── */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+.btn-back {
+    flex: 1;
+}
 .submit-btn {
-    width: 100%;
+    flex: 1;
     background: var(--color-blue-500);
     color: var(--color-general-white);
     font-size: 16px;
@@ -532,59 +638,7 @@ select {
     background: var(--color-blue-600);
 }
 
-@media (max-width: 600px) {
-    .create-laporan-page {
-        padding: 16px 8px;
-    }
-    .form-container {
-        padding: 20px 16px;
-        border-radius: 16px;
-    }
-    .form-title {
-        font-size: 18px;
-        margin-bottom: 20px;
-    }
-    .laporan-form {
-        gap: 12px;
-    }
-    .form-group {
-        gap: 4px;
-    }
-    .submit-btn, .submit-btn:disabled {
-        font-size: 14px;
-        padding: 10px 0;
-        border-radius: 8px;
-    }
-    .switch-label {
-        font-size: 12px;
-    }
-    .custom-label, .custom-asterisk {
-        font-size: 14px;
-    }
-    .error-msg {
-        font-size: 11px;
-    }
-    .choose-file-btn {
-        font-size: 12px;
-        padding: 6px 12px;
-        border-radius: 6px;
-    }
-    .file-chosen {
-        font-size: 11px;
-    }
-    /* Stack buttons vertically: Submit on top, Kembali below */
-    .form-group > div[style*="display: flex"] {
-        flex-direction: column-reverse !important;
-        gap: 8px !important;
-    }
-    .form-group > div[style*="display: flex"] > * {
-        width: 100% !important;
-        min-width: 0 !important;
-        flex: none !important;
-    }
-}
-
-/* SAlert overlay */
+/* ─── SAlert overlay ─── */
 .salert-overlay {
     position: fixed;
     inset: 0;
@@ -594,6 +648,7 @@ select {
     justify-content: center;
     background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(2px);
+    padding: 16px;
 }
 
 .fade-enter-active,
@@ -603,5 +658,176 @@ select {
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+/* ════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ════════════════════════════════════════════ */
+
+/* ── Tablet (601px – 900px) ── */
+@media (min-width: 601px) and (max-width: 900px) {
+    .create-laporan-page {
+        padding: 24px 16px;
+    }
+    .form-container {
+        max-width: 92%;
+        padding: 36px 28px;
+        border-radius: 18px;
+    }
+    .form-title.stf-header {
+        font-size: 20px;
+        margin-bottom: 24px;
+    }
+    .laporan-form {
+        gap: 18px;
+    }
+    .custom-label {
+        font-size: 15px;
+    }
+    .custom-asterisk {
+        font-size: 15px;
+    }
+    .date-picker-btn,
+    .bullying-select {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+    .submit-btn {
+        font-size: 15px;
+        padding: 12px 0;
+    }
+}
+
+/* ── Mobile (≤ 600px) ── */
+@media (max-width: 600px) {
+    /* Page shell: flush edges, use safe area */
+    .create-laporan-page {
+        padding: 0 0 env(safe-area-inset-bottom, 24px);
+        min-height: 100dvh;
+        background: var(--color-blue-50);
+    }
+
+    /* Title sits above the card, flush left */
+    .form-title.stf-header {
+        font-size: 17px;
+        margin: 20px 16px 0;
+        text-align: left;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--color-blue-100, #dbeafe);
+    }
+
+    /* Card: no radius, no shadow, full-width */
+    .form-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 16px 16px 40px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .laporan-form {
+        gap: 14px;
+    }
+
+    .form-group {
+        gap: 4px;
+    }
+
+    /* Labels */
+    .custom-label {
+        font-size: 13px;
+    }
+    .custom-asterisk {
+        font-size: 13px;
+    }
+    .optional-tag {
+        font-size: 11px;
+    }
+
+    /* Inputs */
+    .date-picker-btn,
+    .bullying-select {
+        font-size: 13px;
+        padding: 10px 12px;
+        border-radius: 8px;
+    }
+    .bullying-select {
+        padding-right: 36px;
+    }
+
+    /* Error */
+    .error-msg {
+        font-size: 11px;
+    }
+
+    /* File upload */
+    .choose-file-btn {
+        font-size: 12px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        align-self: stretch;
+        text-align: center;
+    }
+    .file-chosen {
+        font-size: 11px;
+    }
+    .file-chosen-wrapper {
+        padding: 5px 10px;
+    }
+    .file-count {
+        font-size: 11px;
+    }
+
+    /* Anonimitas */
+    .anonimitas-row {
+        gap: 8px;
+    }
+    .switch-label {
+        font-size: 12px;
+        width: 100%;
+        margin-top: 2px;
+    }
+    .anon-hint {
+        font-size: 11px;
+    }
+
+    /* Action buttons — stack vertically, submit on top */
+    .action-buttons {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    .btn-back,
+    .submit-btn {
+        width: 100%;
+        flex: none;
+    }
+    .submit-btn {
+        font-size: 14px;
+        padding: 13px 0;
+        border-radius: 8px;
+    }
+}
+
+/* ── Very small screens (≤ 360px) ── */
+@media (max-width: 360px) {
+    .form-title.stf-header {
+        font-size: 15px;
+        margin: 16px 12px 0;
+    }
+    .form-container {
+        padding: 12px 12px 36px;
+    }
+    .custom-label {
+        font-size: 12px;
+    }
+    .date-picker-btn,
+    .bullying-select {
+        font-size: 12px;
+        padding: 9px 10px;
+    }
+    .submit-btn {
+        font-size: 13px;
+        padding: 11px 0;
+    }
 }
 </style>
