@@ -87,13 +87,13 @@ const router = createRouter({
       path: '/artikel/:id',
       name: 'detailArtikel',
       component: DetailArtikelView,
-      meta: { requiresAuth: true },
+      // No auth required - anyone can read articles
     },
     {
       path: '/kelola-artikel',
       name: 'kelolaArtikel',
       component: KelolaArtikelView,
-      meta: { requiresAuth: true },
+      // No auth required - guests can read articles, admins can manage
     },
     {
       path: '/create-artikel',

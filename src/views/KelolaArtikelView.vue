@@ -87,8 +87,8 @@ watch(searchQuery, () => { currentPage.value = 1 })
         <div>
           <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">Portal Artikel</h1>
           <p class="text-gray-500 mb-6 font-display text-sm">
-            Portal artikel berisi materi edukasi untuk siswa SMP Desa Mulia Putra.<br>
-            Temukan tips menghadapi bullying, cara menjaga kesehatan mental, dan informasi penting lainnya.
+              Portal artikel berisi materi edukasi untuk siswa SMP Desa Mulia Putra.<br>
+              Temukan tips menghadapi bullying, cara menjaga kesehatan mental, dan informasi penting lainnya.
           </p>
         </div>
       </div>
