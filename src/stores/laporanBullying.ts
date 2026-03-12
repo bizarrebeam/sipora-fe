@@ -93,7 +93,33 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         loader.show('Mengubah laporan...')
 
         try {
-            await apiAuthPut(`laporan-bullying/${id}/edit/`, payload)
+            const formData = new FormData()
+
+            if (payload.judul) formData.append('judul', payload.judul)
+            if (payload.deskripsi) formData.append('deskripsi', payload.deskripsi)
+            if (payload.lokasi) formData.append('lokasi', payload.lokasi)
+            if (payload.tanggal_kejadian) formData.append('tanggal_kejadian', payload.tanggal_kejadian)
+            if (payload.jenis_bullying) formData.append('jenis_bullying', payload.jenis_bullying)
+            if (payload.anonimitas !== undefined) formData.append('anonimitas', String(payload.anonimitas))
+
+            if (payload.foto_bukti && payload.foto_bukti.length > 0) {
+                payload.foto_bukti.forEach((file: File) => {
+                    formData.append('foto_bukti', file)
+                })
+            }
+
+            const response = await fetch(`/api/laporan-bullying/${id}/edit/`, {
+                method: 'PUT',
+                credentials: 'include',
+                body: formData
+            })
+
+            const json = await response.json()
+
+            if (!response.ok || json.status === 'error') {
+                throw new Error(json.message || 'Gagal mengedit laporan')
+            }
+
             await ambilDetail(id)
             await ambilLaporan()
         } catch (error: any) {
