@@ -15,8 +15,8 @@ export const useArtikelStore = defineStore('artikel', () => {
     loader.show('Memuat artikel...')
     try {
       const response = await apiAuthGet('artikel/')
-      // Kita ambil response.data karena BE membungkus list di dalam key 'data'
-      daftarArtikel.value = response.data || []
+      // apiAuthGet already unwraps json.data, so response is the array
+      daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
       return response
     } catch (error) {
       throw error
@@ -36,9 +36,8 @@ export const useArtikelStore = defineStore('artikel', () => {
       // DEBUG: Tambahkan console log ini untuk intip isi response aslinya
       console.log('Response dari BE:', response)
 
-      // Cek apakah data dibungkus dalam response.data atau langsung di response
-      // Jika BE kirim { data: [...] }, maka ambil response.data
-      daftarArtikel.value = response.data || response
+      // apiAuthGet already unwraps json.data, so response is the array
+      daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
 
       return response
     } catch (error) {
