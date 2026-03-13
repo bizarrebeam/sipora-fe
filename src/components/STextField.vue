@@ -15,6 +15,7 @@ const props = defineProps<{
 defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'click'): void
+  (e: 'blur'): void
 }>()
 
 const iconVisible = computed(() => {
@@ -38,6 +39,7 @@ const iconVisible = computed(() => {
       class="flex w-full items-center justify-between rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50 text-sm sm:text-base"
       :disabled="disabled"
       @click="$emit('click')"
+      @blur="$emit('blur')"
     >
       <span
         class="flex-1 text-left font-['Be_Vietnam_Pro'] font-medium"
@@ -74,6 +76,7 @@ const iconVisible = computed(() => {
       :value="modelValue"
       :disabled="disabled"
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
+      @blur="$emit('blur')"
     ></textarea>
 
     <!-- Text variant -->
@@ -86,6 +89,7 @@ const iconVisible = computed(() => {
         :value="modelValue"
         :disabled="disabled"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        @blur="$emit('blur')"
       />
       <div v-if="iconVisible" class="pointer-events-none absolute inset-y-0 right-4 flex items-center">
         <slot name="icon">

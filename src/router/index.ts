@@ -10,10 +10,16 @@ import LoginAdminView from '../views/LoginAdminView.vue'
 import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
+<<<<<<< HEAD
 import LaporanBullyingView from '@/views/LaporanBullyingView.vue'
 import DetailLaporanBullyingView from '@/views/DetailLaporanBullying.vue'
 import CreateLaporanBullyingView from '@/views/CreateLaporanBullyingView.vue'
 import EditLaporanBullyingView from '@/views/EditLaporanBullying.vue'
+=======
+import EditLaporanKerusakanView from '@/views/EditLaporanKerusakanView.vue'
+import AspirasiView from '@/views/AspirasiView.vue'
+import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
+>>>>>>> dev
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -73,18 +79,19 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/detail-kerusakan',
-      name: 'detailKerusakan',
+      path: '/laporan-kerusakan/:id',
+      name: 'detailLaporanKerusakan',
       component: DetailLaporanKerusakanView,
       meta: { requiresAuth: true },
     },
     {
       path: '/create-kerusakan',
-      name: 'createKerusakan',
+      name: 'createLaporanKerusakan',
       component: CreateLaporanKerusakanView,
       meta: { requiresAuth: true },
     },
     {
+<<<<<<< HEAD
       path: '/laporan-bullying',
       name: 'laporanBullying',
       component: LaporanBullyingView,
@@ -106,6 +113,23 @@ const router = createRouter({
       path: '/laporan-bullying/:id/edit',
       name: 'editLaporanBullying',
       component: EditLaporanBullyingView,
+=======
+      path: '/laporan-kerusakan/:id/edit',
+      name: 'editLaporanKerusakan',
+      component: EditLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/aspirasi',
+      name: 'aspirasi',
+      component: AspirasiView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-aspirasi',
+      name: 'createAspirasi',
+      component: CreateAspirasiView,
+>>>>>>> dev
       meta: { requiresAuth: true },
     },
   ],

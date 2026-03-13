@@ -38,6 +38,13 @@ const deskripsi = ref('')
 const anonimitas = ref(false)
 const buktiPendukung = ref<File[]>([])
 const buktiError = ref('')
+const isSubmitting = ref(false)
+
+const MAX_FILES = 5
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
+const MAX_TOTAL_SIZE_BYTES = MAX_FILES * MAX_FILE_SIZE_BYTES
+const MIN_REPORT_DATE = new Date('2000-01-01')
+const FORBIDDEN_SPECIAL_CHARS_REGEX = /[@!~`#$%^&*+_\-]/
 
 const errors = ref({
     judul: '',
@@ -47,24 +54,130 @@ const errors = ref({
 })
 
 const isFormValid = computed(() => {
+    const normalizedJudul = normalizeText(judul.value)
+    const normalizedLokasi = normalizeText(lokasi.value)
+    const normalizedDeskripsi = normalizeText(deskripsi.value)
+
     return (
-        judul.value.trim() &&
+        normalizedJudul &&
         tanggalKejadian.value &&
-        lokasi.value.trim() &&
-        deskripsi.value.trim() &&
-        !buktiError.value
+        normalizedLokasi &&
+        normalizedDeskripsi &&
+        !buktiError.value &&
+        !isSubmitting.value
     )
 })
 
+function normalizeText(value: string) {
+    return value
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .trim()
+}
+
+function validateTextField(opts: {
+    label: string
+    value: string
+    minLength?: number
+    maxLength?: number
+}) {
+    const normalized = normalizeText(opts.value)
+
+    if (!normalized) return `${opts.label} wajib diisi`
+    if (FORBIDDEN_SPECIAL_CHARS_REGEX.test(normalized)) {
+        return `${opts.label} mengandung karakter yang tidak diperbolehkan`
+    }
+    if (opts.minLength && normalized.length < opts.minLength) {
+        return `${opts.label} minimal ${opts.minLength} karakter`
+    }
+    if (opts.maxLength && normalized.length > opts.maxLength) {
+        return `${opts.label} maksimal ${opts.maxLength} karakter`
+    }
+
+    return ''
+}
+
+function mapServerFieldErrors(fieldErrors: Record<string, any>) {
+    const firstMessage = (value: any) => {
+        if (Array.isArray(value)) return String(value[0] ?? '')
+        return String(value ?? '')
+    }
+
+    if (fieldErrors.judul) errors.value.judul = firstMessage(fieldErrors.judul)
+    if (fieldErrors.tanggal_kejadian) errors.value.tanggalKejadian = firstMessage(fieldErrors.tanggal_kejadian)
+    if (fieldErrors.lokasi) errors.value.lokasi = firstMessage(fieldErrors.lokasi)
+    if (fieldErrors.deskripsi) errors.value.deskripsi = firstMessage(fieldErrors.deskripsi)
+    if (fieldErrors.foto_bukti) buktiError.value = firstMessage(fieldErrors.foto_bukti)
+}
+
 function validate() {
-    errors.value.judul = !judul.value.trim() ? 'Judul wajib diisi' : ''
-    errors.value.tanggalKejadian = !tanggalKejadian.value ? 'Tanggal wajib diisi' : ''
-    errors.value.lokasi = !lokasi.value.trim() ? 'Lokasi wajib diisi' : ''
-    errors.value.deskripsi = !deskripsi.value.trim() ? 'Deskripsi wajib diisi' : ''
+    errors.value.judul = validateTextField({
+        label: 'Judul',
+        value: judul.value,
+        minLength: 5,
+        maxLength: 50,
+    })
+
+    if (!tanggalKejadian.value) {
+        errors.value.tanggalKejadian = 'Tanggal wajib diisi'
+    } else {
+        const picked = new Date(tanggalKejadian.value)
+        const today = new Date()
+        today.setHours(0,0,0,0)
+        picked.setHours(0,0,0,0)
+        if (picked < MIN_REPORT_DATE) {
+            errors.value.tanggalKejadian = 'Tanggal kejadian tidak valid'
+        } else if (picked > today) {
+            errors.value.tanggalKejadian = 'Tanggal tidak boleh lebih dari hari ini'
+        } else {
+            errors.value.tanggalKejadian = ''
+        }
+    }
+
+    errors.value.lokasi = validateTextField({
+        label: 'Lokasi',
+        value: lokasi.value,
+        minLength: 3,
+        maxLength: 255,
+    })
+
+    errors.value.deskripsi = validateTextField({
+        label: 'Deskripsi',
+        value: deskripsi.value,
+        minLength: 20,
+        maxLength: 2000,
+    })
+}
+
+function validateField(field: 'judul' | 'lokasi' | 'deskripsi') {
+    if (field === 'judul') {
+        errors.value.judul = validateTextField({
+            label: 'Judul',
+            value: judul.value,
+            minLength: 5,
+            maxLength: 50,
+        })
+        return
+    }
+
+    if (field === 'lokasi') {
+        errors.value.lokasi = validateTextField({
+            label: 'Lokasi',
+            value: lokasi.value,
+            minLength: 3,
+            maxLength: 255,
+        })
+        return
+    }
+
+    errors.value.deskripsi = validateTextField({
+        label: 'Deskripsi',
+        value: deskripsi.value,
+        minLength: 20,
+        maxLength: 2000,
+    })
 }
 
 function triggerFileInput() {
-    // Non-null assertion because the button is only clickable if the ref is mounted
     buktiInputRef.value!.click();
 }
 
@@ -76,35 +189,55 @@ function handleFileChange(e: Event) {
     
     const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     const newFiles: File[] = []
+    const rejected: string[] = []
+    const existingSignatures = new Set(
+        buktiPendukung.value.map((file) => `${file.name}|${file.size}|${file.lastModified}`)
+    )
+    const remainingSlots = MAX_FILES - buktiPendukung.value.length
+    let totalSize = buktiPendukung.value.reduce((sum, file) => sum + file.size, 0)
     
-    // Check if adding new files would exceed max limit
-    if (buktiPendukung.value.length + files.length > 5) {
-        buktiError.value = 'Maksimal 5 foto'
-        if (buktiInputRef.value) buktiInputRef.value.value = ''
-        return
-    }
-    
-    // Validate each file
     for (let i = 0; i < files.length; i++) {
         const file = files[i]
         if (!file) continue
-        
-        if (!allowed.includes(file.type)) {
-            buktiError.value = `Format ${file.name} tidak didukung`
-            if (buktiInputRef.value) buktiInputRef.value.value = ''
-            return
+
+        if (newFiles.length >= remainingSlots) {
+            rejected.push(`${file.name}: melewati batas maksimal ${MAX_FILES} foto`)
+            continue
         }
         
-        if (file.size > 5 * 1024 * 1024) {
-            buktiError.value = `Ukuran ${file.name} maksimal 5 MB`
-            if (buktiInputRef.value) buktiInputRef.value.value = ''
-            return
+        const signature = `${file.name}|${file.size}|${file.lastModified}`
+        if (existingSignatures.has(signature)) {
+            rejected.push(`${file.name}: file duplikat`)
+            continue
+        }
+
+        if (file.size === 0) {
+            rejected.push(`${file.name}: file kosong`)
+            continue
+        }
+        
+        if (!allowed.includes(file.type)) {
+            rejected.push(`${file.name}: format tidak didukung`)
+            continue
+        }
+        
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+            rejected.push(`${file.name}: ukuran maksimal 5 MB`)
+            continue
+        }
+
+        if (totalSize + file.size > MAX_TOTAL_SIZE_BYTES) {
+            rejected.push(`${file.name}: total ukuran semua foto maksimal 25 MB`)
+            continue
         }
         
         newFiles.push(file)
+        totalSize += file.size
+        existingSignatures.add(signature)
     }
     
     buktiPendukung.value = [...buktiPendukung.value, ...newFiles]
+    buktiError.value = rejected.length > 0 ? rejected.join(' | ') : ''
     if (buktiInputRef.value) buktiInputRef.value.value = ''
 }
 
@@ -114,20 +247,23 @@ function removeFile(index: number) {
 }
 
 async function handleSubmit() {
+    if (isSubmitting.value) return
+
     validate()
     if (!isFormValid.value) return
 
+    isSubmitting.value = true
+
     try {
-        await laporanStore.createLaporanKerusakan({
-            judul: judul.value.trim(),
+        const result = await laporanStore.createLaporanKerusakan({
+            judul: normalizeText(judul.value),
             tanggal_kejadian: tanggalKejadian.value,
-            lokasi: lokasi.value.trim(),
-            deskripsi: deskripsi.value.trim(),
+            lokasi: normalizeText(lokasi.value),
+            deskripsi: normalizeText(deskripsi.value),
             anonimitas: anonimitas.value,
             foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
         })
-        
-        // Reset form
+
         judul.value = ''
         tanggalKejadian.value = ''
         lokasi.value = ''
@@ -136,22 +272,37 @@ async function handleSubmit() {
         buktiPendukung.value = []
         buktiError.value = ''
         Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
-        
-        // Redirect after loading completes — no popup needed
-        router.push('/laporan-kerusakan')
+
+        showAlert({
+            type: 'default',
+            title: 'Laporan Terkirim',
+            description: 'Laporan berhasil dibuat',
+            onPrimary: () => {
+                if (result && result.id) {
+                    router.push(`/laporan-kerusakan/${result.id}`)
+                } else {
+                    router.push('/laporan-kerusakan')
+                }
+            }
+        })
+
     } catch (error: any) {
         showAlert({
             type: 'warning',
             title: 'Gagal Membuat Laporan',
             description: error?.message || 'Terjadi kesalahan. Silakan coba lagi.',
         })
+        if (error?.fieldErrors && typeof error.fieldErrors === 'object') {
+            mapServerFieldErrors(error.fieldErrors)
+        }
+    } finally {
+        isSubmitting.value = false
     }
 }
 </script>
 
 <template>
     <div class="create-laporan-page">
-        <!-- SAlert overlay -->
         <Teleport to="body">
             <Transition name="fade">
                 <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
@@ -166,6 +317,7 @@ async function handleSubmit() {
                 </div>
             </Transition>
         </Teleport>
+
         <h4 class="form-title stf-header">Tambah Laporan Kerusakan</h4>
         <div class="form-container">
             <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
@@ -177,10 +329,11 @@ async function handleSubmit() {
                         :placeholder="'Ketik di sini...'"
                         :variant="'text'"
                         :disabled="false"
-                        @blur="validate"
+                        @blur="validateField('judul')"
                     />
                     <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
                 </div>
+
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Tanggal Kejadian</label>
@@ -207,6 +360,7 @@ async function handleSubmit() {
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                 </div>
+
                 <div class="form-group">
                     <STextField
                         v-model="lokasi"
@@ -215,10 +369,11 @@ async function handleSubmit() {
                         :placeholder="'Ketik di sini...'"
                         :variant="'text'"
                         :disabled="false"
-                        @blur="validate"
+                        @blur="validateField('lokasi')"
                     />
                     <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                 </div>
+
                 <div class="form-group">
                     <STextField
                         v-model="deskripsi"
@@ -227,15 +382,17 @@ async function handleSubmit() {
                         :placeholder="'Ketik di sini...'"
                         :variant="'textarea'"
                         :disabled="false"
-                        @blur="validate"
+                        @blur="validateField('deskripsi')"
                     />
                     <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
                 </div>
+
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Bukti Pendukung (opsional)</label>
-                        <span v-if="buktiPendukung.length > 0" class="file-count">{{ buktiPendukung.length }}/5 foto</span>
+                        <span v-if="buktiPendukung.length > 0" class="file-count">{{ buktiPendukung.length }}/{{ MAX_FILES }} foto</span>
                     </div>
+                    <p class="file-guidance">Format: JPG/JPEG/PNG/WEBP · Maks. 25MB/5 foto</p>
                     <div class="file-upload-section">
                         <input
                             ref="buktiInputRef"
@@ -249,9 +406,9 @@ async function handleSubmit() {
                             type="button" 
                             class="choose-file-btn" 
                             @click="triggerFileInput"
-                            :disabled="buktiPendukung.length >= 5"
+                            :disabled="buktiPendukung.length >= MAX_FILES"
                         >
-                            {{ buktiPendukung.length >= 5 ? 'Maksimal 5 Foto' : 'Tambah Foto' }}
+                            {{ buktiPendukung.length >= MAX_FILES ? 'Maksimal 5 Foto' : 'Tambah Foto' }}
                         </button>
                         <div v-if="buktiPendukung.length > 0" class="file-list">
                             <div v-for="(file, index) in buktiPendukung" :key="index" class="file-chosen-wrapper">
@@ -267,7 +424,7 @@ async function handleSubmit() {
                     </div>
                     <span v-if="buktiError" class="error-msg">{{ buktiError }}</span>
                 </div>
-                <!-- Anonimitas -->
+
                 <div class="form-group">
                     <div class="flex items-center gap-3">
                         <div class="custom-label-row mb-0">
@@ -293,7 +450,7 @@ async function handleSubmit() {
                             class="submit-btn w-full"
                             :disabled="!isFormValid"
                         >
-                            Kirim Laporan
+                            {{ isSubmitting ? 'Mengirim...' : 'Kirim Laporan' }}
                         </button>
                     </div>
                 </div>
@@ -399,6 +556,12 @@ async function handleSubmit() {
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 500;
     margin-left: auto;
+}
+.file-guidance {
+    font-size: 12px;
+    color: var(--color-neutral-400);
+    font-family: "Be Vietnam Pro", sans-serif;
+    margin: 0;
 }
 .choose-file-btn {
     background: var(--color-blue-500);
@@ -574,7 +737,7 @@ async function handleSubmit() {
     .error-msg {
         font-size: 11px;
     }
-    /* Stack buttons vertically: Submit on top, Kembali below */
+
     .form-group > div[style*="display: flex"] {
         flex-direction: column-reverse !important;
         gap: 8px !important;
@@ -586,7 +749,6 @@ async function handleSubmit() {
     }
 }
 
-/* SAlert overlay */
 .salert-overlay {
     position: fixed;
     inset: 0;
