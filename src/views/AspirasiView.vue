@@ -16,9 +16,17 @@ interface Aspirasi {
     kategori: 'sarana' | 'kurikulum' | 'layanan' | 'ekstrakulikuler' | 'kesehatan' | 'lainnya'
 	deskripsi: string
 	anonimitas: boolean
-    status_ditandai: 'ditandai' | 'tidak_ditandai'
+	status_ditandai: 'ditandai' | 'tidak_ditandai'
 	pengirim_username?: string
 	nama_lengkap?: string
+	pelapor_info?: {
+        nama_lengkap: string;
+        kelas: string;
+        role: string;
+        id?: string;
+        username?: string;
+    }
+	akun_terverifikasi?: boolean
 	foto_bukti?: Array<{ id: string; foto: string; uploaded_at: string }>
 	foto_pendukung?: string[]
 }
@@ -261,7 +269,6 @@ onMounted(() => {
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">
-				<!-- Kategori tabs untuk semua role -->
 					<button v-for="tab in kategoriTabs" :key="tab.value" @click="() => handleKategoriSelect(tab.value)" class="stf-tab-btn"
 						:class="[
 							selectedKategori === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
@@ -276,7 +283,6 @@ onMounted(() => {
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">
-				<!-- Status tabs only for kemahasiswaan -->
 				<template v-if="isAdmin">
 					<button v-for="tab in statusTabs" :key="tab.value" @click="() => handleStatusSelect(tab.value)" class="stf-tab-btn"
 						:class="[
@@ -306,7 +312,6 @@ onMounted(() => {
 				<p>Memuat data...</p>
 			</div>
 
-			<!-- Admin Table View -->
 			<template v-else-if="isAdmin">
 				<SCard class="section-card">
 					<div class="section-header">
@@ -345,9 +350,14 @@ onMounted(() => {
 							</template>
 
 							<template #body-cell-pengirim="{ row }">
-								<span class="text-sm text-gray-500">
-									{{ row.pelapor_info?.nama_lengkap || row.nama_lengkap || row.pengirim_username || '-' }}
-								</span>
+								<div class="flex items-center gap-1.5 flex-wrap">
+									<span class="text-sm font-medium text-gray-700">
+										{{ row.pelapor_info?.nama_lengkap || row.nama_lengkap || row.pengirim_username || '-' }}
+									</span>
+									<span v-if="row.akun_terverifikasi" title="Terverifikasi" class="flex-shrink-0 text-green-600">
+										<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+									</span>
+								</div>
 							</template>
 
 							<template #body-cell-status_ditandai="{ row }">
@@ -360,7 +370,6 @@ onMounted(() => {
 								<div class="flex items-center gap-2">
 									<button class="aksi-btn aksi-btn--detail"
 										@click="$router.push({ name: 'detailAspirasi', params: { id: row.id } })"> 
-										<!-- detail button gabisa dipake dulu  @click="$router.push({ name: 'detailAspirasi', params: { id: row.id } })"> -->
 										Detail
 									</button>
 								</div>
@@ -370,16 +379,15 @@ onMounted(() => {
 				</SCard>
 			</template>
 
-			<!-- Pelapor Card View -->
 			<template v-else-if="isPelapor">
 				<p class="card-view-count">{{ totalData }} Aspirasi ditemukan</p>
 
-				<div v-if="paginatedList.length === 0" class="empty-state">
-					<svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<div v-if="paginatedList.length === 0" class="s-empty-state">
+					<svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 					</svg>
-					<p class="stf-page-title">Belum ada aspirasi</p>
-					<p class="empty-desc">Aspirasi yang kamu buat akan muncul di sini.</p>
+					<h3 class="s-empty-state__title">Belum ada aspirasi</h3>
+					<p class="s-empty-state__desc">Aspirasi yang kamu buat akan muncul di sini.</p>
 				</div>
 
 				<div v-else class="card-grid">
@@ -418,7 +426,6 @@ onMounted(() => {
 			</template>
 		</div>
 
-		<!-- Detail Dialog -->
 		<SDialog :visible="showDetailDialog" variant="primary" title="Detail Aspirasi"
 			@update:visible="showDetailDialog = $event" @close="showDetailDialog = false">
 			<div v-if="selectedLaporan" class="detail-content">
@@ -442,6 +449,15 @@ onMounted(() => {
 				<div class="detail-row">
 					<span class="detail-label">Anonimitas</span>
 					<span class="detail-value">{{ anonimitasLabel(selectedLaporan.anonimitas) }}</span>
+				</div>
+				<div v-if="isAdmin && selectedLaporan" class="detail-row">
+					<span class="detail-label">Pengirim</span>
+					<div class="detail-value flex items-center gap-1.5">
+						<span>{{ selectedLaporan.pelapor_info?.nama_lengkap || selectedLaporan.nama_lengkap || selectedLaporan.pengirim_username || '-' }}</span>
+						<span v-if="selectedLaporan.akun_terverifikasi" title="Terverifikasi" class="text-green-600">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+						</span>
+					</div>
 				</div>
 				<div v-if="isAdmin" class="detail-row">
 					<span class="detail-label">Status</span>
@@ -550,7 +566,6 @@ onMounted(() => {
 	border: 1px solid var(--color-blue-400);
 }
 
-
 .status-badge--ditandai {
 	background: #FFF8E1;
 	color: #F59E0B;
@@ -642,7 +657,6 @@ onMounted(() => {
 
 /* Card View: Pelapor (Siswa / Guru) */
 
-/* ── Stats Row ── */
 .stats-row {
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
@@ -685,13 +699,10 @@ onMounted(() => {
 	color: var(--color-blue-600);
 }
 
-
 .stat-card--kategori .stat-number {
 	color: var(--color-blue-500);
 }
 
-
-/* ── Card View Count ── */
 .card-view-count {
 	font-family: "Be Vietnam Pro", sans-serif;
 	font-weight: 500;
@@ -700,45 +711,12 @@ onMounted(() => {
 	margin-bottom: 16px;
 }
 
-/* ── Empty State ── */
-.empty-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 60px 20px;
-	text-align: center;
-}
-
-.empty-icon {
-	width: 64px;
-	height: 64px;
-	color: var(--color-neutral-300);
-	margin-bottom: 16px;
-}
-
-.empty-title {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-weight: 700;
-	font-size: 18px;
-	color: var(--color-general-black);
-	margin-bottom: 4px;
-}
-
-.empty-desc {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-neutral-400);
-}
-
-/* ── Card Grid ── */
 .card-grid {
 	display: grid;
 	grid-template-columns: 1fr;
 	gap: 16px;
 }
 
-/* ── Report Card ── */
 .report-card {
 	background: white;
 	border: 1px solid var(--color-general-border);
@@ -833,27 +811,22 @@ onMounted(() => {
 	color: var(--color-blue-500);
 }
 
-/* ── Card Pagination ── */
 .card-pagination {
 	display: flex;
 	justify-content: center;
 	margin-top: 24px;
 }
 
-/* ── Responsive ── */
 @media (min-width: 480px) {
 	.laporan-page {
 		padding: 32px 24px;
 	}
-
 	.laporan-title {
 		font-size: 28px;
 	}
-
 	.stats-row {
 		grid-template-columns: repeat(4, 1fr);
 	}
-
 	.card-grid {
 		grid-template-columns: repeat(2, 1fr);
 	}
@@ -863,7 +836,6 @@ onMounted(() => {
 	.date-input {
 		width: auto;
 	}
-
 	.card-grid {
 		grid-template-columns: repeat(2, 1fr);
 	}
@@ -875,99 +847,76 @@ onMounted(() => {
 	}
 }
 
-/* Mobile Responsive Adjustments */
 @media (max-width: 768px) {
 	.laporan-page {
 		padding: 16px;
 	}
-
 	.laporan-title {
 		font-size: 20px;
 	}
-
 	.laporan-subtitle {
 		font-size: 12px;
 	}
-
 	.tab-btn {
 		font-size: 12px;
 		padding: 6px 12px;
 	}
-
 	.tab-badge {
 		font-size: 10px;
 		padding: 1px 5px;
 	}
-
 	.date-input {
 		padding: 8px 12px;
 		font-size: 12px;
 	}
-
 	.section-title {
 		font-size: 16px;
 	}
-
 	.section-count {
 		font-size: 12px;
 	}
-
 	.deskripsi-cell {
 		max-width: 200px;
 	}
-
 	.status-badge {
 		font-size: 10px;
 		padding: 3px 8px;
 	}
-
 	.aksi-btn {
 		font-size: 10px;
 		padding: 3px 8px;
 	}
-
 	.detail-label {
 		font-size: 12px;
 	}
-
 	.detail-value {
 		font-size: 12px;
 	}
-
 	.detail-desc {
 		font-size: 12px;
 	}
-
-	/* Card view mobile */
 	.stat-number {
 		font-size: 22px;
 	}
-
 	.stat-label {
 		font-size: 11px;
 	}
-
 	.stat-card {
 		padding: 12px 8px;
 	}
-
 	.report-card {
 		padding: 16px;
 		gap: 10px;
 	}
-
 	.report-card__no {
 		font-size: 14px;
 	}
-
 	.report-card__desc {
 		font-size: 12px;
 	}
-
 	.report-card__detail-link {
 		font-size: 12px;
 	}
-
 	.laporan-header {
 		flex-direction: column;
 		gap: 8px;

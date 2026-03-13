@@ -70,18 +70,20 @@ function onPageSizeChange(e: Event) {
     </div>
 
     <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-100 relative">
-      <!-- States overlay/block -->
       <div v-if="loading" class="p-8 text-center text-gray-400 font-display min-h-[200px] flex items-center justify-center">
         Memuat data...
       </div>
       <div v-else-if="error" class="p-8 text-center text-red-500 font-display min-h-[200px] flex items-center justify-center">
         {{ error }}
       </div>
-      <div v-else-if="data.length === 0" class="p-8 text-center text-gray-400 font-display min-h-[200px] flex items-center justify-center">
-        {{ emptyMessage || 'Tidak ada data ditemukan.' }}
+      <div v-else-if="data.length === 0" class="s-empty-state min-h-[300px]">
+        <svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="s-empty-state__title">Data Tidak Ditemukan</h3>
+        <p class="s-empty-state__desc">{{ emptyMessage || 'Tidak ada data yang tersedia saat ini.' }}</p>
       </div>
 
-      <!-- Main Table -->
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-sm font-display whitespace-nowrap">
           <thead class="bg-gray-50 text-gray-600 border-b border-gray-100 uppercase text-xs select-none">
@@ -116,7 +118,6 @@ function onPageSizeChange(e: Event) {
         </table>
       </div>
       
-      <!-- Bottom Pagination -->
       <div v-if="!loading && totalPages > 1 && data.length > 0" class="px-6 py-4 border-t border-gray-100 flex flex-col items-center gap-4">
         <div class="w-full flex justify-center">
           <SPagination 

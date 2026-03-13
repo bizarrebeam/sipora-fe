@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 // ---
 // KelolaArtikelView
@@ -181,13 +180,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
 </script>
 
 <template>
-  <!--
-    Kelola Artikel View Template
-    - Displays a list of articles with search, filter, and pagination.
-    - Admins can toggle between published and draft articles, and create new articles.
-    - Each article is shown as a card with image, title, summary, and detail navigation.
-    - Handles loading, empty state, and paginated display.
-  -->
   <div class="stf-page">
     <div class="stf-container">
       <div class="stf-header">
@@ -200,9 +192,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
         </div>
       </div>
 
-      <!-- Filter, search, and create button row -->
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative">
-        <!-- Status toggle for admin users -->
         <div class="toggle-container" v-if="isAdmin">
           <div class="toggle-slider" :class="{ 'toggle-slider--draft': statusFilter === 'draft' }"></div>
           <button
@@ -221,7 +211,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
           </button>
         </div>
 
-        <!-- Search field for article title -->
         <div class="flex-1 w-full max-w-[581px] search-container">
           <STextField
             v-model="searchQuery"
@@ -230,7 +219,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
           />
         </div>
 
-        <!-- Create article button for admin users -->
         <SButton
           v-if="isAdmin"
           label="Buat Artikel"
@@ -273,28 +261,23 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
       </div>
 
-      <!-- Pagination controls (if more than one page) -->
       <div v-if="totalPages > 1" class="card-pagination">
         <SPagination v-model="currentPage" :total-pages="totalPages" />
       </div>
 
-      <!-- Loading state -->
       <div v-if="loading" class="loading-state">
         <p>Memuat data...</p>
       </div>
 
-      <!-- Main article card grid and empty state -->
       <template v-else>
-        <!-- Empty state if no articles found -->
-        <div v-if="paginatedData.length === 0" class="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div v-if="paginatedData.length === 0" class="s-empty-state">
+          <svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <p class="stf-section-title">Tidak ada artikel</p>
-          <p class="empty-desc">Belum ada artikel di kategori ini.</p>
+          <h3 class="s-empty-state__title">Tidak ada artikel</h3>
+          <p class="s-empty-state__desc">Belum ada artikel di kategori ini.</p>
         </div>
 
-        <!-- Article card grid -->
         <div v-else class="card-grid">
           <SCard
             v-for="artikel in paginatedData"
@@ -303,7 +286,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
             padding="0"
             @click="$router.push({ name: 'detailArtikel', params: { id: artikel.id } })"
           >
-            <!-- Article thumbnail and draft badge -->
             <div class="article-thumb">
               <div v-if="artikel.status === 'draft'" class="draft-badge">
                 Draft
@@ -313,7 +295,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
               <div v-else class="thumb-empty">No Image</div>
             </div>
 
-            <!-- Article card content: author, date, title, summary, and footer -->
             <div class="article-card-content">
               <div class="article-card__top">
                 <span class="author-tag">{{ artikel.nama_penulis || 'Tim Kemahasiswaan' }}</span>
@@ -563,37 +544,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
 .aksi-btn--baca:hover {
 	background: var(--color-blue-700);
-}
-
-/* ── Empty State ── */
-.empty-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 60px 20px;
-	text-align: center;
-}
-
-.empty-icon {
-	width: 64px;
-	height: 64px;
-	color: var(--color-neutral-300);
-	margin-bottom: 16px;
-}
-
-.empty-title {
-	font-family: var(--font-be-vietnam);
-	font-weight: 700;
-	font-size: 18px;
-	color: var(--color-general-black);
-	margin-bottom: 8px;
-}
-
-.empty-desc {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-neutral-500);
 }
 
 .card-pagination {

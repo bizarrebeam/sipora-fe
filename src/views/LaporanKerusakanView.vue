@@ -19,6 +19,7 @@ interface LaporanKerusakan {
 	anonimitas: boolean
 	pengirim_username?: string
 	nama_lengkap?: string
+	akun_terverifikasi?: boolean
 	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
 	foto_bukti?: Array<{ id: string; foto: string; uploaded_at: string }>
 	foto_pendukung?: string[]
@@ -251,7 +252,6 @@ onMounted(() => {
 				<p>Memuat data...</p>
 			</div>
 
-			<!-- Admin: Table View -->
 			<template v-else-if="isAdmin">
 				<SCard class="section-card">
 					<div class="section-header">
@@ -291,9 +291,14 @@ onMounted(() => {
 							</template>
 
 							<template #body-cell-pengirim="{ row }">
-								<span class="text-sm text-gray-500">
-									{{ row.nama_lengkap || row.pengirim_username || '-' }}
-								</span>
+								<div class="flex items-center gap-1.5 flex-wrap">
+									<span class="text-sm text-gray-700 font-medium">
+										{{ row.nama_lengkap || row.pengirim_username || '-' }}
+									</span>
+									<span v-if="row.akun_terverifikasi" title="Terverifikasi" class="flex-shrink-0 text-green-600">
+										<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+									</span>
+								</div>
 							</template>
 
 							<template #body-cell-status="{ row }">
@@ -315,16 +320,15 @@ onMounted(() => {
 				</SCard>
 			</template>
 
-			<!-- Pelapor: Card View -->
 			<template v-else-if="isPelapor">
 				<p class="card-view-count">{{ totalData }} laporan ditemukan</p>
 
-				<div v-if="paginatedList.length === 0" class="empty-state">
-					<svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<div v-if="paginatedList.length === 0" class="s-empty-state">
+					<svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 					</svg>
-					<p class="stf-section-title">Belum ada laporan</p>
-					<p class="empty-desc">Laporan kerusakan yang kamu buat akan muncul di sini.</p>
+					<h3 class="s-empty-state__title">Belum ada laporan</h3>
+					<p class="s-empty-state__desc">Laporan kerusakan yang kamu buat akan muncul di sini.</p>
 				</div>
 
 				<div v-else class="card-grid">
@@ -370,7 +374,6 @@ onMounted(() => {
 			</template>
 		</div>
 
-		<!-- Detail Dialog -->
 		<SDialog :visible="showDetailDialog" variant="primary" title="Detail Laporan Kerusakan"
 			@update:visible="showDetailDialog = $event" @close="showDetailDialog = false">
 			<div v-if="selectedLaporan" class="detail-content">
@@ -385,6 +388,15 @@ onMounted(() => {
 				<div class="detail-row">
 					<span class="detail-label">Judul Laporan</span>
 					<span class="detail-value">{{ selectedLaporan.judul }}</span>
+				</div>
+				<div v-if="isAdmin && selectedLaporan" class="detail-row">
+					<span class="detail-label">Pengirim</span>
+					<div class="detail-value flex items-center gap-1.5">
+						<span>{{ selectedLaporan.nama_lengkap || selectedLaporan.pengirim_username || '-' }}</span>
+						<span v-if="selectedLaporan.akun_terverifikasi" title="Terverifikasi" class="text-green-600">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+						</span>
+					</div>
 				</div>
 				<div class="detail-row">
 					<span class="detail-label">Lokasi</span>
@@ -419,7 +431,6 @@ onMounted(() => {
 			</template>
 		</SDialog>
 
-		<!-- Status Update Confirmation Dialog -->
 		<SDialog :visible="showStatusDialog" :variant="statusAction === 'ditolak' ? 'danger' : 'primary'"
 			:title="statusAction === 'diproses' ? 'Proses Laporan' : statusAction === 'selesai' ? 'Selesaikan Laporan' : 'Tolak Laporan'"
 			:message="`Apakah Anda yakin ingin ${statusAction === 'diproses' ? 'memproses' : statusAction === 'selesai' ? 'menyelesaikan' : 'menolak'} laporan ${statusTarget?.no_laporan}?`"
@@ -709,37 +720,6 @@ onMounted(() => {
 	font-size: 13px;
 	color: var(--color-neutral-400);
 	margin-bottom: 16px;
-}
-
-/* ── Empty State ── */
-.empty-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 60px 20px;
-	text-align: center;
-}
-
-.empty-icon {
-	width: 64px;
-	height: 64px;
-	color: var(--color-neutral-300);
-	margin-bottom: 16px;
-}
-
-.empty-title {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-weight: 700;
-	font-size: 18px;
-	color: var(--color-general-black);
-	margin-bottom: 4px;
-}
-
-.empty-desc {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-neutral-400);
 }
 
 /* ── Card Grid ── */

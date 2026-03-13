@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { apiAuthGet, apiAuthPost } from '@/services/api'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
+import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SDialog from '@/components/SDialog.vue'
 import STable from '@/components/STable.vue'
@@ -12,11 +13,12 @@ import { useAuthStore } from '@/stores/auth'
 interface AkunItem {
   id: string
   nama_lengkap: string
-  nisn?: string
+  nis?: string
   nuptk?: string
   kelas?: string
   mata_pelajaran?: string
   role: string
+  is_verified?: boolean
   date_joined: string
 }
 
@@ -43,6 +45,9 @@ const createNama = ref('')
 const createMapels = ref<string[]>([''])
 const createPassword = ref('')
 const createLoading = ref(false)
+const showVerifyDialog = ref(false)
+const verifyLoading = ref(false)
+const selectedSiswa = ref<AkunItem | null>(null)
 
 const createTitle = computed(() => createType.value === 'guru' ? 'Buat Akun Guru' : 'Buat Akun Guru BK')
 
@@ -77,9 +82,11 @@ function handleTabChange(tab: string) {
 
 const siswaColumns = [
   { key: 'nama_lengkap', label: 'Nama', sortable: true },
-  { key: 'nisn', label: 'NISN', sortable: true },
+  { key: 'nis', label: 'NIS', sortable: true },
   { key: 'kelas', label: 'Kelas', sortable: true },
-  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true }
+  { key: 'is_verified', label: 'Status Verifikasi', sortable: true },
+  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true },
+  { key: 'action', label: 'Aksi', sortable: false }
 ]
 
 const guruColumns = [
@@ -158,6 +165,42 @@ async function fetchDaftar() {
     toast.error(err.message || 'Gagal memuat daftar akun.')
   } finally {
     loading.value = false
+  }
+}
+
+async function handleVerify(id: string) {
+  try {
+    await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
+    toast.success('Akun siswa berhasil diverifikasi.')
+    await fetchDaftar()
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal memverifikasi akun.')
+  }
+}
+
+function openVerifyDialog(siswa: AkunItem) {
+  selectedSiswa.value = siswa
+  showVerifyDialog.value = true
+}
+
+function closeVerifyDialog() {
+  showVerifyDialog.value = false
+  selectedSiswa.value = null
+}
+
+const verifyMessage = computed(() => {
+  if (!selectedSiswa.value) return ''
+  return `Apakah Anda yakin memverifikasi bahwa siswa ${selectedSiswa.value.nama_lengkap} dengan NIS ${selectedSiswa.value.nis || '-'} adalah siswa kelas ${selectedSiswa.value.kelas || '-'} di SMP Desa Putera?`
+})
+
+async function confirmVerify() {
+  if (!selectedSiswa.value) return
+  verifyLoading.value = true
+  try {
+    await handleVerify(selectedSiswa.value.id)
+    closeVerifyDialog()
+  } finally {
+    verifyLoading.value = false
   }
 }
 
@@ -261,7 +304,6 @@ onMounted(fetchDaftar)
         </div>
       </div>
 
-      <!-- Tabs (Only show if kemahasiswaan, otherwise only Siswa exists) -->
       <div v-if="isKemahasiswaan" class="flex flex-wrap gap-2 mb-6">
         <button 
           v-for="tab in accountTabs" 
@@ -280,7 +322,7 @@ onMounted(fetchDaftar)
       <div class="search-bar">
         <STextField
           label=""
-          placeholder="Cari berdasarkan nama, NISN, atau NUPTK..."
+          placeholder="Cari berdasarkan nama, NIS, atau NUPTK..."
           variant="text"
           v-model="search"
           @input="onSearchInput"
@@ -292,7 +334,6 @@ onMounted(fetchDaftar)
       </div>
 
       <template v-else>
-        <!-- SISWA TAB -->
         <SCard v-if="activeTab === 'siswa'" class="section-card">
           <div class="section-header">
             <div>
@@ -312,20 +353,35 @@ onMounted(fetchDaftar)
               @sort="(k) => handleSort('siswa', k)"
               empty-message="Belum ada siswa yang terdaftar."
             >
-              <template #body-cell-nisn="{ row }">
-                {{ row.nisn || '-' }}
+              <template #body-cell-nis="{ row }">
+                {{ row.nis || '-' }}
               </template>
               <template #body-cell-kelas="{ row }">
                 {{ row.kelas || '-' }}
               </template>
+              <template #body-cell-is_verified="{ row }">
+                <SChip
+                  :label="row.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'"
+                  :tone="row.is_verified ? 'success' : 'warning'"
+                  variant="light"
+                  size="small"
+                />
+              </template>
               <template #body-cell-date_joined="{ row }">
                 {{ formatDate(row.date_joined) }}
+              </template>
+              <template #body-cell-action="{ row }">
+                <SButton
+                  v-if="!row.is_verified && isKemahasiswaan"
+                  label="Verifikasi"
+                  variant="secondary"
+                  @click="openVerifyDialog(row)"
+                />
               </template>
             </STable>
           </div>
         </SCard>
 
-        <!-- GURU TAB -->
         <SCard v-if="activeTab === 'guru' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
@@ -358,7 +414,6 @@ onMounted(fetchDaftar)
           </div>
         </SCard>
 
-        <!-- GURU BK TAB -->
         <SCard v-if="activeTab === 'guru_bk' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
@@ -474,6 +529,22 @@ onMounted(fetchDaftar)
         <SButton :label="createLoading ? 'Membuat...' : 'Buat Akun'" variant="primary" :disabled="createLoading" @click="handleCreate" />
       </template>
     </SDialog>
+
+    <SDialog
+      :visible="showVerifyDialog"
+      variant="primary"
+      title="Verifikasi Siswa"
+      @update:visible="showVerifyDialog = $event"
+      @close="closeVerifyDialog"
+      @cancel="closeVerifyDialog"
+    >
+      <p class="verify-dialog-message">{{ verifyMessage }}</p>
+
+      <template #actions>
+        <SButton label="Batal" variant="secondary" @click="closeVerifyDialog" />
+        <SButton :label="verifyLoading ? 'Memverifikasi...' : 'Ya, Verifikasi'" variant="primary" :disabled="verifyLoading" @click="confirmVerify" />
+      </template>
+    </SDialog>
   </div>
 </template>
 
@@ -504,12 +575,14 @@ onMounted(fetchDaftar)
   color: var(--color-neutral-400);
 }
 
-.empty-msg {
+.verify-dialog-message {
+  color: var(--color-general-black);
+  font-family: var(--font-be-vietnam);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 0;
   text-align: center;
-  padding: 20px 0;
-  color: var(--color-neutral-400);
-  font-family: "Be Vietnam Pro", sans-serif;
-  font-size: 14px;
 }
 
 .create-form {

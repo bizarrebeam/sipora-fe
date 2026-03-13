@@ -7,11 +7,13 @@ interface User {
   id?: number
   role: string
   nama_lengkap: string
-  nisn?: string | null
+  nis?: string | null
   nuptk?: string | null
   username?: string
+  email?: string | null
   kelas?: string | null
   mata_pelajaran?: string | null
+  is_verified?: boolean
   tahun_ajaran?: string
   semester?: string
   date_joined?: string
@@ -45,7 +47,16 @@ export const useAuthStore = defineStore('auth', () => {
       guru_bk: 'Guru BK',
       kemahasiswaan: 'Kemahasiswaan',
     }
-    return map[user.value.role] || user.value.role
+    const roleStr = map[user.value.role] || user.value.role
+    if (user.value.role === 'siswa' && !user.value.is_verified) {
+      return `${roleStr} • Belum Terverifikasi`
+    }
+    return roleStr
+  })
+
+  const verificationLabel = computed(() => {
+    if (!user.value || user.value.role !== 'siswa') return ''
+    return user.value.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'
   })
 
   function setUser(userData: User) {
@@ -55,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function clearAuth() {
     user.value = null
-    localStorage.removeItem('access_token') // clean up old items
+    localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
   }
@@ -71,12 +82,15 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       setUser({
+        username: data.username,
         role: data.role,
         nama_lengkap: data.nama_lengkap,
-        nisn: data.nisn,
+        nis: data.nis,
         nuptk: data.nuptk,
+        email: data.email,
         kelas: data.kelas,
         mata_pelajaran: data.mata_pelajaran,
+        is_verified: data.is_verified,
       })
       return data
     } finally {
@@ -85,8 +99,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function registerSiswa(
-    nisn: string,
+    nis: string,
     nama_lengkap: string,
+    email: string,
     kelas: string,
     password: string,
     konfirmasi_password: string,
@@ -94,7 +109,27 @@ export const useAuthStore = defineStore('auth', () => {
     const loader = useLoadingStore()
     loader.show('Mendaftarkan akun...')
     try {
-      await apiPost('akun/register/', { nisn, nama_lengkap, kelas, password, konfirmasi_password })
+      await apiPost('akun/register/', { nis, nama_lengkap, email, kelas, password, konfirmasi_password })
+    } finally {
+      loader.hide()
+    }
+  }
+
+  async function forgotPassword(nis: string) {
+    const loader = useLoadingStore()
+    loader.show('Mengirim email reset...')
+    try {
+      return await apiPost('akun/forgot-password/', { nis })
+    } finally {
+      loader.hide()
+    }
+  }
+
+  async function resetPassword(uid: string, token: string, password: string, konfirmasi_password: string) {
+    const loader = useLoadingStore()
+    loader.show('Mengubah password...')
+    try {
+      return await apiPost('akun/reset-password/', { uid, token, password, konfirmasi_password })
     } finally {
       loader.hide()
     }
@@ -153,8 +188,11 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     namaDepan,
     roleBadge,
+    verificationLabel,
     login,
     registerSiswa,
+    forgotPassword,
+    resetPassword,
     logout,
     fetchProfile,
     editProfil,

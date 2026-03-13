@@ -53,7 +53,6 @@ const columns = [
     { key: 'tanggal_kejadian', label: 'Tanggal Kejadian', sortable: true },
     { key: 'nama_pengirim', label: 'Pengirim', sortable: true },
     { key: 'kelas', label: 'Kelas', sortable: true },
-    { key: 'is_verified', label: 'Status Verifikasi Akun', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
     { key: 'aksi', label: 'Aksi', sortable: false },
 ]
@@ -190,7 +189,6 @@ onMounted(() => { fetchData() })
                 <SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary" @click="$router.push({ name: 'createLaporanBullying' })" />
             </div>
 
-            <!-- ── Status Tabs ── -->
             <div class="flex flex-wrap gap-2 mb-6">
                 <button
                     v-for="tab in statusTabs"
@@ -209,9 +207,7 @@ onMounted(() => { fetchData() })
                 </button>
             </div>
 
-            <!-- ── Filters Row ── -->
             <div class="filters-row">
-                <!-- Search -->
                 <div class="filter-search">
                     <STextField
                         v-model="search"
@@ -221,7 +217,6 @@ onMounted(() => { fetchData() })
                     />
                 </div>
 
-                <!-- Date + Sort (hidden on mobile, shown via drawer) -->
                 <div class="filter-extras">
                     <input
                         type="date"
@@ -235,7 +230,6 @@ onMounted(() => { fetchData() })
                     </select>
                 </div>
 
-                <!-- Mobile filter toggle -->
                 <button class="filter-toggle-btn" @click="showFilterDrawer = true" aria-label="Filter">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
                     Filter
@@ -243,12 +237,10 @@ onMounted(() => { fetchData() })
                 </button>
             </div>
 
-            <!-- ── Loading ── -->
             <div v-if="loading" class="loading-state">
                 <p>Memuat data...</p>
             </div>
 
-            <!-- ══ Admin: Table View ══ -->
             <template v-else-if="isAdmin">
                 <SCard class="section-card">
                     <div class="section-header">
@@ -286,13 +278,17 @@ onMounted(() => { fetchData() })
                                 <span class="cell-muted">{{ formatDate(row.tanggal_kejadian) }}</span>
                             </template>
                             <template #body-cell-nama_pengirim="{ row }">
-                                <span class="cell-muted">{{ row.nama_pengirim || '-' }}</span>
+								<div class="flex items-center gap-1.5 flex-wrap">
+									<span class="cell-muted font-medium">
+										{{ row.nama_pengirim || '-' }}
+									</span>
+									<span v-if="row.akun_terverifikasi" title="Terverifikasi" class="flex-shrink-0 text-green-600">
+										<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+									</span>
+								</div>
                             </template>
                             <template #body-cell-kelas="{ row }">
                                 <span class="cell-muted">{{ row.kelas || '-' }}</span>
-                            </template>
-                            <template #body-cell-is_verified="{ row }">
-                                <span class="cell-muted">{{ row.is_verified ? 'Verified' : 'Not Verified' }}</span>
                             </template>
                             <template #body-cell-status="{ row }">
                                 <span class="status-badge" :class="`status-badge--${row.status}`">
@@ -307,16 +303,15 @@ onMounted(() => { fetchData() })
                 </SCard>
             </template>
 
-            <!-- ══ Pelapor: Card View ══ -->
             <template v-else-if="isPelapor">
                 <p class="card-view-count">{{ totalData }} laporan ditemukan</p>
 
-                <div v-if="paginatedList.length === 0" class="empty-state">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div v-if="paginatedList.length === 0" class="s-empty-state">
+                    <svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <p class="stf-section-title">Belum ada laporan</p>
-                    <p class="empty-desc">Laporan bullying yang kamu buat akan muncul di sini.</p>
+                    <h3 class="s-empty-state__title">Belum ada laporan</h3>
+                    <p class="s-empty-state__desc">Laporan bullying yang kamu buat akan muncul di sini.</p>
                 </div>
 
                 <div v-else class="card-grid">
@@ -355,7 +350,6 @@ onMounted(() => { fetchData() })
             </template>
         </div>
 
-        <!-- ══ Mobile Filter Drawer ══ -->
         <Transition name="drawer-fade">
             <div v-if="showFilterDrawer" class="drawer-overlay" @click.self="showFilterDrawer = false">
                 <div class="drawer">
@@ -623,11 +617,6 @@ onMounted(() => { fetchData() })
 /* ─── Pagination ─── */
 .card-pagination { display:flex; justify-content:center; margin-top:24px; }
 
-/* ─── Empty state ─── */
-.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; text-align:center; }
-.empty-icon  { width:56px; height:56px; color:var(--color-neutral-300); margin-bottom:16px; }
-.empty-title { font-weight:700; font-size:17px; color:var(--color-general-black); margin:0 0 8px; }
-.empty-desc  { font-size:13px; color:var(--color-neutral-500); margin:0; }
 
 /* ─── Mobile Filter Drawer ─── */
 .drawer-overlay {
@@ -699,16 +688,6 @@ onMounted(() => { fetchData() })
     transition: background 0.2s;
 }
 .drawer-apply:hover { background: var(--color-blue-700); }
-
-/* Drawer animation */
-.drawer-fade-enter-active { transition: opacity 0.2s ease; }
-.drawer-fade-leave-active { transition: opacity 0.2s ease; }
-.drawer-fade-enter-from,
-.drawer-fade-leave-to    { opacity: 0; }
-.drawer-fade-enter-active .drawer,
-.drawer-fade-leave-active .drawer { transition: transform 0.25s ease; }
-.drawer-fade-enter-from .drawer,
-.drawer-fade-leave-to .drawer    { transform: translateY(100%); }
 
 /* ════════════════════════════════════════════
    RESPONSIVE
@@ -784,11 +763,6 @@ onMounted(() => { fetchData() })
     .report-card__title { font-size: 14px; }
     .report-card__date  { font-size: 10px; }
     .status-badge { font-size: 10px; padding: 3px 10px; }
-
-    /* Empty state */
-    .empty-state { padding: 40px 16px; }
-    .empty-title { font-size: 15px; }
-    .empty-desc  { font-size: 12px; }
 
     /* Pagination */
     .card-pagination { margin-top: 16px; padding-bottom: 16px; }

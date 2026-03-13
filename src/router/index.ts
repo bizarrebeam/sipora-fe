@@ -21,6 +21,9 @@ import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
 import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
 import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit artikel
 
+import ForgotPasswordView from '../views/ForgotPasswordView.vue'
+import ResetPasswordView from '../views/ResetPasswordView.vue'
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -40,6 +43,18 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView,
+      meta: { guest: true },
+    },
+    {
+      path: '/forgot-password',
+      name: 'forgotPassword',
+      component: ForgotPasswordView,
+      meta: { guest: true },
+    },
+    {
+      path: '/reset-password/:uid/:token',
+      name: 'resetPassword',
+      component: ResetPasswordView,
       meta: { guest: true },
     },
     {

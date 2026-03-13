@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { apiAuthGet } from '@/services/api'
+import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SPagination from '@/components/SPagination.vue'
 import STable from '@/components/STable.vue'
@@ -10,6 +11,7 @@ interface LogEntry {
   pengguna: {
     nama_lengkap: string
     role: string
+    is_verified?: boolean
   } | null
   aksi: string
   deskripsi: string
@@ -219,7 +221,14 @@ onMounted(() => {
           </template>
           
           <template #body-cell-role="{ row }">
-            <span class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-600">
+            <SChip
+              v-if="row.pengguna?.role === 'siswa'"
+              :label="row.pengguna?.is_verified ? 'Siswa' : 'Siswa • Belum Terverifikasi'"
+              :tone="row.pengguna?.is_verified ? 'success' : 'warning'"
+              variant="light"
+              size="small"
+            />
+            <span v-else class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap border border-transparent">
               {{ row.pengguna ? formatRole(row.pengguna?.role) : (row.deskripsi?.startsWith('Anonim') ? 'Anonim' : 'Sistem') }}
             </span>
           </template>

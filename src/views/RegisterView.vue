@@ -9,8 +9,9 @@ import SiporaLogo from '@/assets/sipora-logo.svg'
 const auth = useAuthStore()
 const router = useRouter()
 
-const nisn = ref('')
+const nis = ref('')
 const namaLengkap = ref('')
+const email = ref('')
 const kelas = ref('')
 const password = ref('')
 const konfirmasiPassword = ref('')
@@ -37,13 +38,18 @@ const semesterInfo = computed(() => {
 async function handleRegister() {
   errorMsg.value = ''
 
-  if (!nisn.value || !namaLengkap.value || !kelas.value || !password.value || !konfirmasiPassword.value) {
+  if (!nis.value || !namaLengkap.value || !email.value || !kelas.value || !password.value || !konfirmasiPassword.value) {
     errorMsg.value = 'Harap isi semua field.'
     return
   }
 
-  if (nisn.value.length !== 10 || !/^\d+$/.test(nisn.value)) {
-    errorMsg.value = 'NISN harus terdiri dari 10 digit angka.'
+  if (nis.value.length !== 4 || !/^\d+$/.test(nis.value)) {
+    errorMsg.value = 'NIS harus terdiri dari 4 digit angka.'
+    return
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    errorMsg.value = 'Format email tidak valid.'
     return
   }
 
@@ -59,8 +65,8 @@ async function handleRegister() {
 
   loading.value = true
   try {
-    await auth.registerSiswa(nisn.value, namaLengkap.value, kelas.value, password.value, konfirmasiPassword.value)
-    await auth.login(nisn.value, password.value, ['siswa'])
+    await auth.registerSiswa(nis.value, namaLengkap.value, email.value, kelas.value, password.value, konfirmasiPassword.value)
+    await auth.login(nis.value, password.value, ['siswa'])
     router.push('/')
   } catch (err: any) {
     errorMsg.value = err.message || 'Pendaftaran gagal. Silakan coba lagi.'
@@ -91,31 +97,46 @@ async function handleRegister() {
       <form @submit.prevent="handleRegister" class="register-form">
         <!-- Row 1 -->
         <div class="form-row">
-          <div class="nisn-field form-col">
+          <div class="nis-field form-col">
             <STextField
-              label="NISN"
-              placeholder="Masukkan 10 digit NISN"
+              label="Nomor Induk Siswa (NIS) SMP Desa Putera"
+              placeholder="Masukkan 4 digit NIS"
+              name="username"
+              autocomplete="username"
               variant="text"
-              v-model="nisn"
+              v-model="nis"
               :required="true"
-              maxlength="10"
-              digitGuide="10"
+              maxlength="4"
+              digitGuide="4"
             />
-            <a
-              href="https://nisn.data.kemdikbud.go.id/index.php/Cindex/formcaribynama/"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="nisn-help"
-            >Lupa NISN?</a>
           </div>
           <div class="form-col">
             <STextField
               label="Nama Lengkap"
               placeholder="Masukkan nama lengkap"
+              name="name"
+              autocomplete="name"
               variant="text"
               v-model="namaLengkap"
               :required="true"
             />
+          </div>
+        </div>
+
+        <!-- Row 2: Email -->
+        <div class="form-row">
+          <div class="form-col">
+            <STextField
+              label="Email"
+              placeholder="Masukkan email aktif"
+              name="email"
+              autocomplete="email"
+              variant="text"
+              input-type="email"
+              v-model="email"
+              :required="true"
+            />
+            <p class="email-hint">Digunakan untuk reset password jika lupa.</p>
           </div>
         </div>
 
@@ -138,6 +159,8 @@ async function handleRegister() {
             <STextField
               label="Password"
               placeholder="Kombinasi huruf & angka"
+              name="password"
+              autocomplete="new-password"
               variant="text"
               v-model="password"
               :required="true"
@@ -160,6 +183,8 @@ async function handleRegister() {
             <STextField
               label="Konfirmasi Password"
               placeholder="Ulangi password"
+              name="confirm-password"
+              autocomplete="new-password"
               variant="text"
               v-model="konfirmasiPassword"
               :required="true"
@@ -290,27 +315,17 @@ async function handleRegister() {
   margin-top: 16px;
 }
 
-/* ── NISN field wrapper ── */
-.nisn-field {
+/* ── NIS field wrapper ── */
+.nis-field {
   position: relative;
 }
 
-.nisn-help {
-  position: absolute;
-  top: 0;
-  right: 0;
+.email-hint {
+  margin-top: 4px;
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
-  font-weight: 500;
-  color: var(--color-blue-400);
-  text-decoration: none;
-  line-height: 24px;
-  transition: color 0.2s;
-}
-
-.nisn-help:hover {
-  color: var(--color-blue-600);
-  text-decoration: underline;
+  color: var(--color-neutral-400);
+  font-style: italic;
 }
 
 /* ── Kelas Select ── */

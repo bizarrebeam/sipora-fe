@@ -6,12 +6,14 @@ const props = defineProps<{
   required?: boolean
   placeholder?: string
   modelValue?: string | number | null
+  name?: string
   variant?: 'dropdown' | 'text' | 'textarea'
   disabled?: boolean
   inputType?: 'text' | 'password' | 'email' | 'number'
   showIcon?: boolean
   maxlength?: string | number
   digitGuide?: string | number // e.g. "16" for NUPTK
+  autocomplete?: string
 }>()
 
 defineEmits<{
@@ -76,6 +78,7 @@ const iconVisible = computed(() => {
       class="flex w-full min-h-[113px] items-start rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
       :placeholder="placeholder || 'Ketik di sini...'"
       :value="modelValue"
+      :name="name"
       :disabled="disabled"
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
       @blur="$emit('blur')"
@@ -89,8 +92,10 @@ const iconVisible = computed(() => {
         :class="{ 'pr-10': iconVisible, 'tracking-[0.2em] font-mono': digitGuide }"
         :placeholder="placeholder || 'Ketik di sini...'"
         :value="modelValue"
+        :name="name"
         :disabled="disabled"
         :maxlength="maxlength"
+        :autocomplete="autocomplete"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         @blur="$emit('blur')"
       />

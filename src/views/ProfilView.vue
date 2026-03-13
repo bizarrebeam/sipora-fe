@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
+import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import { toast } from 'vue-sonner'
 
@@ -78,13 +79,13 @@ const roleLabel = computed(() => {
 })
 
 const identifier = computed(() => {
-  if (isSiswa.value) return user.value?.nisn || '-'
+  if (isSiswa.value) return user.value?.nis || '-'
   if (isGuru.value || isGuruBk.value) return user.value?.nuptk || '-'
   return user.value?.username || '-'
 })
 
 const identifierLabel = computed(() => {
-  if (isSiswa.value) return 'NISN'
+  if (isSiswa.value) return 'Nomor Induk Siswa (NIS)'
   if (isGuru.value || isGuruBk.value) return 'NUPTK'
   return 'Username'
 })
@@ -143,6 +144,13 @@ async function handleUbahPassword() {
             <div class="info-badges">
               <span class="badge badge--role">{{ roleLabel }}</span>
               <span class="badge badge--semester">{{ semesterInfo }}</span>
+              <SChip
+                v-if="isSiswa"
+                :label="user?.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'"
+                :tone="user?.is_verified ? 'success' : 'warning'"
+                variant="light"
+                size="small"
+              />
             </div>
           </div>
         </div>
@@ -348,6 +356,18 @@ async function handleUbahPassword() {
 .badge--semester {
   background: #f0fdf4;
   color: #15803d;
+}
+
+.badge--verify-true {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.badge--verify-false {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 /* ── Info Grid ── */
