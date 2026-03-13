@@ -29,6 +29,10 @@ const guruBkTotal = ref(0)
 const search = ref('')
 const loading = ref(false)
 
+const isPasswordLengthValid = computed(() => createPassword.value.length >= 8)
+const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.value) && /[0-9]/.test(createPassword.value))
+const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
+
 const auth = useAuthStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 
@@ -169,6 +173,10 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 async function handleCreate() {
   if (!createNuptk.value || !createNama.value || !createPassword.value) {
     toast.error('Harap isi semua field wajib.')
+    return
+  }
+  if (!isPasswordValid.value) {
+    toast.error('Password harus minimal 8 karakter dan mengandung huruf serta angka.')
     return
   }
   if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
@@ -400,6 +408,8 @@ onMounted(fetchDaftar)
             variant="text"
             v-model="createNuptk"
             :required="true"
+            maxlength="16"
+            digitGuide="16"
           />
           <a href="https://gtk.belajar.kemendikdasmen.go.id/akun/ptk" target="_blank" rel="noopener noreferrer" class="nuptk-help">Cek NUPTK</a>
         </div>
@@ -434,7 +444,29 @@ onMounted(fetchDaftar)
           <span class="auto-value">Bimbingan Konseling</span>
           <span class="auto-note">(otomatis)</span>
         </div>
-        <STextField label="Password" placeholder="Min. 6 karakter" variant="text" v-model="createPassword" :required="true" input-type="password" />
+        
+        <div>
+          <STextField 
+            label="Password" 
+            placeholder="Min. 8 karakter + huruf & angka" 
+            variant="text" 
+            v-model="createPassword" 
+            :required="true" 
+            input-type="password" 
+          />
+          <div class="password-rules" v-if="createPassword.length > 0">
+            <div :class="['rule-item', isPasswordLengthValid ? 'valid' : 'invalid']">
+              <svg v-if="isPasswordLengthValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Minimal 8 karakter</span>
+            </div>
+            <div :class="['rule-item', isPasswordAlphanumeric ? 'valid' : 'invalid']">
+              <svg v-if="isPasswordAlphanumeric" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Terdapat kombinasi huruf dan angka</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <template #actions>
@@ -462,7 +494,7 @@ onMounted(fetchDaftar)
 }
 
 .section-header {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .section-count {
@@ -534,6 +566,36 @@ onMounted(fetchDaftar)
   color: var(--color-neutral-400);
   font-size: 12px;
   font-style: italic;
+}
+
+/* ── Password Rules ── */
+.password-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--color-general-frame);
+  border-radius: 8px;
+  border: 1px solid var(--color-general-border);
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.rule-item.valid {
+  color: #10B981; /* green-500 */
+}
+
+.rule-item.invalid {
+  color: #EF4444; /* red-500 */
 }
 
 @media (min-width: 480px) {

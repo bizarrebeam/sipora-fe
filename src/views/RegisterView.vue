@@ -98,6 +98,8 @@ async function handleRegister() {
               variant="text"
               v-model="nisn"
               :required="true"
+              maxlength="10"
+              digitGuide="10"
             />
             <a
               href="https://nisn.data.kemdikbud.go.id/index.php/Cindex/formcaribynama/"

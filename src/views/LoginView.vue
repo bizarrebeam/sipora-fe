@@ -57,6 +57,8 @@ async function handleLogin() {
             variant="text"
             v-model="identifier"
             :required="true"
+            maxlength="10"
+            digitGuide="10"
           />
           <a
             href="https://nisn.data.kemdikbud.go.id/index.php/Cindex/formcaribynama/"

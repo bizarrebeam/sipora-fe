@@ -56,6 +56,8 @@ async function handleLogin() {
             variant="text"
             v-model="identifier"
             :required="true"
+            maxlength="16"
+            digitGuide="16"
           />
         </div>
         <STextField

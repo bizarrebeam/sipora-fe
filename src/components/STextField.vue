@@ -10,6 +10,8 @@ const props = defineProps<{
   disabled?: boolean
   inputType?: 'text' | 'password' | 'email' | 'number'
   showIcon?: boolean
+  maxlength?: string | number
+  digitGuide?: string | number // e.g. "16" for NUPTK
 }>()
 
 defineEmits<{
@@ -84,13 +86,23 @@ const iconVisible = computed(() => {
       <input
         :type="inputType || 'text'"
         class="flex w-full items-center rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
-        :class="{ 'pr-10': iconVisible }"
+        :class="{ 'pr-10': iconVisible, 'tracking-[0.2em] font-mono': digitGuide }"
         :placeholder="placeholder || 'Ketik di sini...'"
         :value="modelValue"
         :disabled="disabled"
+        :maxlength="maxlength"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         @blur="$emit('blur')"
       />
+      <!-- Visual digit guide -->
+      <div v-if="digitGuide" class="flex gap-1 mt-1.5 px-1 overflow-hidden pointer-events-none">
+        <div 
+          v-for="i in Number(digitGuide)" 
+          :key="i"
+          class="h-1 flex-1 rounded-full transition-colors"
+          :class="String(modelValue || '').length >= i ? 'bg-blue-500' : 'bg-neutral-200'"
+        ></div>
+      </div>
       <div v-if="iconVisible" class="pointer-events-none absolute inset-y-0 right-4 flex items-center">
         <slot name="icon">
           <svg
