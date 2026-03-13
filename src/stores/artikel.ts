@@ -3,13 +3,32 @@ import { ref } from 'vue'
 import { apiAuthGet, apiAuthPost, apiAuthPut } from '@/services/api'
 import { useLoadingStore } from '@/stores/loading'
 
+
+/**
+ * Pinia store for managing article (artikel) state and actions.
+ * Handles fetching, creating, and updating articles via API.
+ */
 export const useArtikelStore = defineStore('artikel', () => {
+  /**
+   * List of articles (published or all, depending on fetch method).
+   */
   const daftarArtikel = ref<any[]>([])
-  const detailArtikel = ref<any | null>(null)
-  const loader = useLoadingStore()
 
   /**
-   * PBI-50: Mengambil daftar artikel Published
+   * Detail of a single article (for view/edit).
+   */
+  const detailArtikel = ref<any | null>(null)
+
+  /**
+   * Global loading state store.
+   */
+  const loader = useLoadingStore()
+
+
+  /**
+   * Fetch the list of published articles (public endpoint).
+   * Updates daftarArtikel with the result.
+   * @returns {Promise<any>} API response
    */
   async function fetchArtikelPublik() {
     loader.show('Memuat artikel...')
@@ -25,20 +44,20 @@ export const useArtikelStore = defineStore('artikel', () => {
     }
   }
 
+
   /**
-   * PBI-52: Mengambil daftar artikel untuk kelola (Draft & Published)
+   * Fetch the list of all articles (draft & published) for admin management.
+   * Updates daftarArtikel with the result.
+   * @returns {Promise<any>} API response
    */
   async function fetchKelolaArtikel() {
     loader.show('Memuat manajemen artikel...')
     try {
       const response = await apiAuthGet('artikel/kelola/')
-
-      // DEBUG: Tambahkan console log ini untuk intip isi response aslinya
-      console.log('Response dari BE:', response)
-
+      // DEBUG: Log the raw response for troubleshooting
+      console.log('Response from backend:', response)
       // apiAuthGet already unwraps json.data, so response is the array
       daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
-
       return response
     } catch (error) {
       console.error('Error Store:', error)
@@ -48,9 +67,12 @@ export const useArtikelStore = defineStore('artikel', () => {
     }
   }
 
+
   /**
-   * PBI-50: Mengambil detail satu artikel berdasarkan ID
-   * Endpoint BE: /api/artikel/<id>/
+   * Fetch the details of a single article by ID.
+   * Updates detailArtikel with the result.
+   * @param {string} id - Article UUID
+   * @returns {Promise<any>} API response
    */
   async function fetchDetailArtikel(id: string) {
     loader.show('Memuat isi artikel...')
@@ -65,13 +87,18 @@ export const useArtikelStore = defineStore('artikel', () => {
     }
   }
 
+
   /**
-   * PBI-47: Menyimpan artikel baru
+   * Create a new article (with or without image).
+   * Handles both FormData (for file upload) and plain object payloads.
+   * @param {object|FormData} payload - Article data or FormData with image
+   * @returns {Promise<any>} API response
    */
   async function simpanArtikel(payload: object | FormData) {
     loader.show('Sedang menyimpan artikel...')
     try {
       if (payload instanceof FormData) {
+        // Use fetch for FormData to handle file uploads
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
         const response = await fetch(`${API_BASE_URL}artikel/`, {
           method: 'POST',
@@ -85,6 +112,7 @@ export const useArtikelStore = defineStore('artikel', () => {
         }
         return json.data
       } else {
+        // Use standard API helper for JSON payload
         const response = await apiAuthPost('artikel/', payload)
         return response
       }
@@ -95,13 +123,19 @@ export const useArtikelStore = defineStore('artikel', () => {
     }
   }
 
+
   /**
-   * PBI-48: Memperbarui artikel
+   * Update an existing article (with or without image).
+   * Handles both FormData (for file upload) and plain object payloads.
+   * @param {string} id - Article UUID
+   * @param {object|FormData} payload - Updated article data or FormData with image
+   * @returns {Promise<any>} API response
    */
   async function updateArtikel(id: string, payload: object | FormData) {
     loader.show('Menyimpan perubahan...')
     try {
       if (payload instanceof FormData) {
+        // Use fetch for FormData to handle file uploads
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
         const response = await fetch(`${API_BASE_URL}artikel/${id}/`, {
           method: 'PUT',
@@ -115,6 +149,7 @@ export const useArtikelStore = defineStore('artikel', () => {
         }
         return json.data
       } else {
+        // Use standard API helper for JSON payload
         const response = await apiAuthPut(`artikel/${id}/`, payload)
         return response
       }
@@ -125,6 +160,8 @@ export const useArtikelStore = defineStore('artikel', () => {
     }
   }
 
+
+  // Expose state and actions for use in components
   return {
     daftarArtikel,
     detailArtikel,

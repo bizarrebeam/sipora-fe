@@ -1,4 +1,11 @@
+
 <script setup lang="ts">
+// ---
+// KelolaArtikelView
+// This view manages and displays a list of articles for both admin and public users.
+// Admins can filter by status (published/draft), search, and create new articles.
+// Pagination, search, and card display are supported.
+// ---
 import { onMounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useArtikelStore } from '@/stores/artikel'
@@ -8,19 +15,43 @@ import STextField from '@/components/STextField.vue'
 import SPagination from '@/components/SPagination.vue'
 import SCard from '@/components/SCard.vue'
 
+// Store and router setup
 const artikelStore = useArtikelStore()
 const auth = useAuthStore()
 const router = useRouter()
 
-// State
+// --- State ---
+/**
+ * Search query for filtering articles by title
+ */
 const searchQuery = ref('')
+/**
+ * Status filter for admin (published/draft)
+ */
 const statusFilter = ref<'published' | 'draft'>('published')
+/**
+ * Current page for pagination
+ */
 const currentPage = ref(1)
+/**
+ * Number of articles per page
+ */
 const pageSize = ref(9)
+/**
+ * Loading state for data fetching
+ */
 const loading = ref(false)
 
+/**
+ * Computed property to check if the current user is an admin (kemahasiswaan)
+ */
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 
+/**
+ * Format a date string into a readable date and time (Indonesian locale).
+ * @param {string} dateString
+ * @returns {string}
+ */
 const formatTanggalDanJam = (dateString: string) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
@@ -30,12 +61,20 @@ const formatTanggalDanJam = (dateString: string) => {
   return `${formattedDate} ${formattedTime}`
 }
 
+/**
+ * Remove HTML tags from a string, used for displaying plain text summaries.
+ * @param {string} html
+ * @returns {string}
+ */
 const stripHtml = (html: string) => {
   if (!html) return ''
   const doc = new DOMParser().parseFromString(html, 'text/html')
   return doc.body.textContent || ''
 }
 
+/**
+ * Interface for article card data
+ */
 interface ArtikelCard {
   id: number | string
   created_at: string
@@ -48,32 +87,35 @@ interface ArtikelCard {
   status?: string
 }
 
+/**
+ * Get a formatted timestamp string for created/updated times.
+ * @param {ArtikelCard} artikel
+ * @returns {string}
+ */
 const getTimestampText = (artikel: ArtikelCard) => {
   if (!artikel.created_at) return '-'
-
   const createdDateTime = formatTanggalDanJam(artikel.created_at)
-
   // Compare only up to minutes (not including seconds/milliseconds)
   if (artikel.updated_at) {
     const createdDate = new Date(artikel.created_at)
     const updatedDate = new Date(artikel.updated_at)
-
     const isSameMinute =
       createdDate.getFullYear() === updatedDate.getFullYear() &&
       createdDate.getMonth() === updatedDate.getMonth() &&
       createdDate.getDate() === updatedDate.getDate() &&
       createdDate.getHours() === updatedDate.getHours() &&
       createdDate.getMinutes() === updatedDate.getMinutes()
-
     if (!isSameMinute) {
       const updatedDateTime = formatTanggalDanJam(artikel.updated_at)
       return `Created: ${createdDateTime}\n Edited: ${updatedDateTime}`
     }
   }
-
   return createdDateTime
 }
 
+/**
+ * Computed property for filtered articles based on search and status.
+ */
 const filteredData = computed(() => {
   return artikelStore.daftarArtikel.filter(artikel => {
     const matchesSearch = (artikel.judul || '').toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -84,14 +126,27 @@ const filteredData = computed(() => {
   })
 })
 
+/**
+ * Total number of filtered articles
+ */
 const totalData = computed(() => filteredData.value.length)
+/**
+ * Total number of pages for pagination
+ */
 const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value) || 1)
 
+/**
+ * Paginated articles for current page
+ */
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return filteredData.value.slice(start, start + pageSize.value)
 })
 
+/**
+ * Navigate to the detail page for a specific article
+ * @param {number | string} id
+ */
 const goToDetail = (id: number | string) => {
   if (!id) {
     console.error("ID Artikel tidak ditemukan!");
@@ -100,6 +155,9 @@ const goToDetail = (id: number | string) => {
   router.push({ name: 'detailArtikel', params: { id } });
 };
 
+/**
+ * Fetch articles from the store depending on user role (admin/public)
+ */
 async function fetchData() {
   loading.value = true
   try {
@@ -115,15 +173,25 @@ async function fetchData() {
   }
 }
 
+// Fetch data on mount
 onMounted(() => fetchData())
 
+// Reset to first page when search query changes
 watch(searchQuery, () => { currentPage.value = 1 })
 </script>
 
 <template>
+  <!--
+    Kelola Artikel View Template
+    - Displays a list of articles with search, filter, and pagination.
+    - Admins can toggle between published and draft articles, and create new articles.
+    - Each article is shown as a card with image, title, summary, and detail navigation.
+    - Handles loading, empty state, and paginated display.
+  -->
   <div class="artikel-page">
     <div class="artikel-container">
 
+      <!-- Header section with title and description -->
       <div class="artikel-header">
         <div>
           <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">Portal Artikel</h1>
@@ -134,7 +202,9 @@ watch(searchQuery, () => { currentPage.value = 1 })
         </div>
       </div>
 
+      <!-- Filter, search, and create button row -->
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative">
+        <!-- Status toggle for admin users -->
         <div class="toggle-container" v-if="isAdmin">
           <div class="toggle-slider" :class="{ 'toggle-slider--draft': statusFilter === 'draft' }"></div>
           <button
@@ -153,6 +223,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
           </button>
         </div>
 
+        <!-- Search field for article title -->
         <div class="flex-1 w-full max-w-[581px] search-container">
           <STextField
             v-model="searchQuery"
@@ -161,6 +232,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
           />
         </div>
 
+        <!-- Create article button for admin users -->
         <SButton
           v-if="isAdmin"
           label="Buat Artikel"
@@ -203,15 +275,19 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
       </div>
 
+      <!-- Pagination controls (if more than one page) -->
       <div v-if="totalPages > 1" class="card-pagination">
         <SPagination v-model="currentPage" :total-pages="totalPages" />
       </div>
 
+      <!-- Loading state -->
       <div v-if="loading" class="loading-state">
         <p>Memuat data...</p>
       </div>
 
+      <!-- Main article card grid and empty state -->
       <template v-else>
+        <!-- Empty state if no articles found -->
         <div v-if="paginatedData.length === 0" class="empty-state">
           <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -220,6 +296,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
           <p class="empty-desc">Belum ada artikel di kategori ini.</p>
         </div>
 
+        <!-- Article card grid -->
         <div v-else class="card-grid">
           <SCard
             v-for="artikel in paginatedData"
@@ -228,6 +305,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
             padding="0"
             @click="$router.push({ name: 'detailArtikel', params: { id: artikel.id } })"
           >
+            <!-- Article thumbnail and draft badge -->
             <div class="article-thumb">
               <div v-if="artikel.status === 'draft'" class="draft-badge">
                 Draft
@@ -237,6 +315,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
               <div v-else class="thumb-empty">No Image</div>
             </div>
 
+            <!-- Article card content: author, date, title, summary, and footer -->
             <div class="article-card-content">
               <div class="article-card__top">
                 <span class="author-tag">{{ artikel.nama_penulis || 'Tim Kemahasiswaan' }}</span>

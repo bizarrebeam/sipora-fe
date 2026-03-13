@@ -22,7 +22,6 @@ interface Artikel {
 const auth = useAuthStore()
 const artikel = ref<Artikel | null>(null)
 const isLoading = ref(true)
-
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 
 onMounted(async () => {

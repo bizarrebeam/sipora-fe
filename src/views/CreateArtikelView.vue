@@ -1,4 +1,9 @@
+
 <script setup lang="ts">
+// ---
+// Create/Edit Article View
+// This component handles the form for creating and editing articles, including image upload, validation, and preview.
+// ---
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useArtikelStore } from '@/stores/artikel'
@@ -7,21 +12,28 @@ import STextField from '@/components/STextField.vue'
 import SButton from '@/components/SButton.vue'
 import SLoading from '@/components/SLoading.vue'
 
+
+// Router and store setup
 const router = useRouter()
 const route = useRoute()
 const artikelStore = useArtikelStore()
 
+// Loading and mode state
 const isLoading = ref(true)
 const articleId = route.params.id ? String(route.params.id) : null
 const isEditMode = computed(() => !!articleId)
 
+/**
+ * Form data for article fields
+ */
 const formData = ref({
   judul: '',
   konten: '',
   ringkasan: '',
 })
 
-// Edge case constants
+
+// Validation constants (should match backend)
 const JUDUL_MIN_CHARS = 5
 const JUDUL_MAX_CHARS = 70
 const KONTEN_MIN_CHARS = 400
@@ -30,39 +42,49 @@ const RINGKASAN_MIN_CHARS = 5
 const RINGKASAN_MAX_CHARS = 150
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
+
+// Image upload state
 const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 const previewImage = ref<string | null>(null)
 const isDragging = ref(false)
 
-// Computed properties untuk tracking karakter
+
+// Character count and validation computed properties
 const judulCharCount = computed(() => formData.value.judul.length)
 const kontenCharCount = computed(() => formData.value.konten.length)
 const ringkasanCharCount = computed(() => formData.value.ringkasan.length)
 
 const isJudulValid = computed(() => judulCharCount.value >= JUDUL_MIN_CHARS && judulCharCount.value <= JUDUL_MAX_CHARS)
 const isKontenValid = computed(() => kontenCharCount.value >= KONTEN_MIN_CHARS && kontenCharCount.value <= KONTEN_MAX_CHARS)
-// Ringkasan opsional: hanya invalid jika tidak kosong DAN tidak memenuhi kriteria
+// Summary is optional: only invalid if not empty and not within limits
 const isRingkasanValid = computed(() => ringkasanCharCount.value === 0 || (ringkasanCharCount.value >= RINGKASAN_MIN_CHARS && ringkasanCharCount.value <= RINGKASAN_MAX_CHARS))
 
-// Check apakah form bisa disubmit
+// Form can be submitted if all required fields are valid
 const isFormValid = computed(() => isJudulValid.value && isKontenValid.value && isRingkasanValid.value)
 
-// Auto-generate ringkasan dari paragraf pertama
+
+/**
+ * Auto-generate summary from the first paragraph of content.
+ * Used if the summary field is left empty.
+ * @returns {string} Generated summary
+ */
 const autoGenerateRingkasan = () => {
   const text = formData.value.konten.trim()
   if (!text) return ''
-
-  // Get first paragraph (split by double newline or first 300 chars)
+  // Get first paragraph (split by double newline or fallback to max chars)
   const firstParagraph = text.split('\n\n')[0] || text.substring(0, RINGKASAN_MAX_CHARS)
-
   if (firstParagraph.length > RINGKASAN_MAX_CHARS) {
     return firstParagraph.substring(0, RINGKASAN_MAX_CHARS).trim() + '...'
   }
-
   return firstParagraph.trim()
 }
 
+
+/**
+ * Handle file selection from file input.
+ * @param {Event} event
+ */
 const handleFileSelect = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (file) {
@@ -70,6 +92,11 @@ const handleFileSelect = (event: Event) => {
   }
 }
 
+
+/**
+ * Handle file drop for drag-and-drop upload.
+ * @param {DragEvent} event
+ */
 const handleDrop = (event: DragEvent) => {
   isDragging.value = false
   const file = event.dataTransfer?.files?.[0]
@@ -78,6 +105,12 @@ const handleDrop = (event: DragEvent) => {
   }
 }
 
+
+/**
+ * Validate and process the selected image file.
+ * Sets preview and selectedFile state.
+ * @param {File} file
+ */
 const processFile = (file: File) => {
   // Validate size (max 5MB)
   if (file.size > MAX_FILE_SIZE) {
@@ -89,9 +122,7 @@ const processFile = (file: File) => {
     toast.error('Format file harus PNG, JPEG, atau WebP')
     return
   }
-
   selectedFile.value = file
-
   // Create preview
   const reader = new FileReader()
   reader.onload = (e) => {
@@ -100,43 +131,56 @@ const processFile = (file: File) => {
   reader.readAsDataURL(file)
 }
 
+
+/**
+ * Programmatically trigger the file input dialog.
+ */
 const triggerFileInput = () => {
   fileInput.value?.click()
 }
 
+
+// Submission and editor state
 const isSubmitting = ref(false)
 const kontenEditorRef = ref<HTMLTextAreaElement | null>(null)
 const isList = ref(false)
 
-// Auto-resize textarea untuk ringkasan
+
+/**
+ * Auto-resize the summary textarea as the user types.
+ * @param {Event} event
+ */
 const autoResizeTextarea = (event: Event) => {
   const textarea = event.target as HTMLTextAreaElement
   textarea.style.height = 'auto'
   textarea.style.height = Math.min(textarea.scrollHeight, 300) + 'px'
 }
 
-// Format text di textarea
+
+/**
+ * Format selected text in the content textarea with HTML tags.
+ * Used for bold, italic, underline, and lists.
+ * @param {string} startTag
+ * @param {string} endTag
+ */
 const formatText = (startTag: string, endTag: string = '') => {
   const textarea = kontenEditorRef.value
   if (!textarea) return
-
   const start = textarea.selectionStart
   const end = textarea.selectionEnd
   const selectedText = formData.value.konten.substring(start, end)
-
   if (!selectedText) {
-    // Jika tidak ada selection, insert tag kosong
+    // If no selection, insert empty tag
     const beforeText = formData.value.konten.substring(0, start)
     const afterText = formData.value.konten.substring(start)
     formData.value.konten = beforeText + startTag + afterText
   } else {
-    // Wrap selected text dengan tag
+    // Wrap selected text with tags
     const beforeText = formData.value.konten.substring(0, start)
     const afterText = formData.value.konten.substring(end)
     formData.value.konten = beforeText + startTag + selectedText + endTag + afterText
   }
-
-  // Focus kembali ke textarea
+  // Restore focus and selection
   setTimeout(() => {
     textarea.focus()
     textarea.selectionStart = start + startTag.length
@@ -144,8 +188,14 @@ const formatText = (startTag: string, endTag: string = '') => {
   }, 0)
 }
 
+
+/**
+ * Submit the article form (create or update).
+ * Validates all fields, auto-generates summary if needed, and sends data to backend.
+ * @param {'draft'|'published'} status - Article status to save as
+ */
 const submitArticle = async (status: 'draft' | 'published') => {
-  // Validasi judul
+  // Validate title
   if (!formData.value.judul.trim()) {
     toast.error('Judul artikel wajib diisi')
     return
@@ -158,8 +208,7 @@ const submitArticle = async (status: 'draft' | 'published') => {
     toast.error(`Judul maksimal ${JUDUL_MAX_CHARS} karakter`)
     return
   }
-
-  // Validasi konten
+  // Validate content
   if (!formData.value.konten.trim()) {
     toast.error('Isi artikel wajib diisi')
     return
@@ -172,42 +221,35 @@ const submitArticle = async (status: 'draft' | 'published') => {
     toast.error(`Isi artikel maksimal ${KONTEN_MAX_CHARS} karakter`)
     return
   }
-
-  // Validasi ringkasan (opsional tapi jika ada harus valid)
+  // Validate summary (optional, but must be valid if present)
   if (formData.value.ringkasan.length > RINGKASAN_MAX_CHARS) {
     toast.error(`Ringkasan maksimal ${RINGKASAN_MAX_CHARS} karakter`)
     return
   }
-
   isSubmitting.value = true
-
   try {
-    // Auto-generate ringkasan dari paragraf pertama jika kosong
+    // Auto-generate summary from first paragraph if empty
     let finalRingkasan = formData.value.ringkasan.trim()
     if (!finalRingkasan) {
       finalRingkasan = autoGenerateRingkasan()
     }
-
     const data = new FormData()
     data.append('judul', formData.value.judul.trim())
     data.append('konten', formData.value.konten.trim())
     data.append('ringkasan', finalRingkasan)
     data.append('status', status)
-
     if (selectedFile.value) {
       data.append('foto_artikel', selectedFile.value)
     }
-
     if (isEditMode.value && articleId) {
-      // Update existing artikel
+      // Update existing article
       await artikelStore.updateArtikel(articleId, data)
       toast.success('Artikel berhasil diperbarui')
     } else {
-      // Create new artikel
+      // Create new article
       await artikelStore.simpanArtikel(data)
       toast.success(`Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`)
     }
-
     router.push('/kelola-artikel')
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Gagal menyimpan artikel'
@@ -217,13 +259,18 @@ const submitArticle = async (status: 'draft' | 'published') => {
   }
 }
 
+
+/**
+ * Toggle bullet list formatting in the content textarea.
+ */
 const toggleList = () => {
   isList.value = !isList.value;
-    formatText('\n• ')
+  formatText('\n• ');
 };
 
 
-// Fetch artikel data saat edit mode
+
+// Fetch article data when in edit mode
 onMounted(async () => {
   if (isEditMode.value && articleId) {
     try {
