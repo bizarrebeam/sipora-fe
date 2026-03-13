@@ -19,7 +19,7 @@ interface LaporanKerusakan {
 	anonimitas: boolean
 	pengirim_username?: string
 	nama_lengkap?: string
-	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak'
+	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
 	foto_bukti?: Array<{ id: string; foto: string; uploaded_at: string }>
 	foto_pendukung?: string[]
 	catatan_admin?: string
@@ -28,7 +28,6 @@ interface LaporanKerusakan {
 const auth = useAuthStore()
 const laporanStore = useLaporanKerusakanStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
-const isGuruBk = computed(() => auth.user?.role === 'guru_bk')
 const isAdmin = computed(() => isKemahasiswaan.value)
 const isPelapor = computed(() => !isAdmin.value)
 
@@ -48,15 +47,20 @@ const selectedLaporan = ref<LaporanKerusakan | null>(null)
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<LaporanKerusakan | null>(null)
-const statusAction = ref<'diproses' | 'selesai' | 'ditolak'>('diproses')
+const statusAction = ref<'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'>('diproses')
 
 const statusTabs = [
 	{ label: 'Semua', value: 'semua' },
-	{ label: 'Menunggu Verifikasi', value: 'menunggu' },
+	{ label: 'Menunggu Konfirmasi', value: 'menunggu' },
 	{ label: 'Diproses', value: 'diproses' },
 	{ label: 'Selesai', value: 'selesai' },
 	{ label: 'Ditolak', value: 'ditolak' },
+	{ label: 'Dibatalkan', value: 'dibatalkan' },
 ]
+
+function tabActiveClass(value: string) {
+	return `tab-btn--active tab-btn--active-${value}`
+}
 
 const columns = [
 	{ key: 'id', label: 'ID Internal', sortable: false },
@@ -70,15 +74,10 @@ const columns = [
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
 
-// Data from store (backend API)
 const laporanList = computed(() => laporanStore.laporanList)
-const totalLaporan = computed(() => laporanStore.totalLaporan)
-
-// Computed: date filtering (backend handles status & search), sorting, pagination
 const filteredList = computed(() => {
 	let list = laporanList.value
 
-	// Date filtering (backend doesn't support this yet)
 	if (selectedDate.value) {
 		list = list.filter(item => {
 			const itemDate = new Date(item.tanggal_kejadian).toISOString().slice(0, 10)
@@ -103,7 +102,6 @@ const sortedList = computed(() => {
 
 const totalData = computed(() => filteredList.value.length)
 const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
-
 const paginatedList = computed(() => {
 	const start = (currentPage.value - 1) * pageSize.value
 	return sortedList.value.slice(start, start + pageSize.value)
@@ -117,10 +115,11 @@ function formatDate(dateStr: string) {
 
 function statusLabel(status: string) {
 	const map: Record<string, string> = {
-		menunggu: 'Menunggu Verifikasi',
+		menunggu: 'Menunggu Konfirmasi',
 		diproses: 'Diproses',
 		selesai: 'Selesai',
 		ditolak: 'Ditolak',
+		dibatalkan: 'Dibatalkan',
 	}
 	return map[status] || status
 }
@@ -129,15 +128,7 @@ function anonimitasLabel(value: boolean) {
 	return value ? 'Ya' : 'Tidak'
 }
 
-function statusChipVariant(status: string): 'outline' | 'outline-filled' | 'solid' | 'light' {
-	switch (status) {
-		case 'menunggu': return 'outline'
-		case 'diproses': return 'light'
-		case 'selesai': return 'solid'
-		case 'ditolak': return 'outline-filled'
-		default: return 'outline'
-	}
-}
+
 
 function handleTabChange(value: string) {
 	selectedStatus.value = value
@@ -171,7 +162,7 @@ function openDetail(laporan: LaporanKerusakan) {
 	showDetailDialog.value = true
 }
 
-function openStatusUpdate(laporan: LaporanKerusakan, action: 'diproses' | 'selesai' | 'ditolak') {
+function openStatusUpdate(laporan: LaporanKerusakan, action: 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan') {
 	statusTarget.value = laporan
 	statusAction.value = action
 	showStatusDialog.value = true
@@ -193,9 +184,9 @@ const statusCounts = computed(() => ({
 	diproses: laporanList.value.filter(l => l.status === 'diproses').length,
 	selesai: laporanList.value.filter(l => l.status === 'selesai').length,
 	ditolak: laporanList.value.filter(l => l.status === 'ditolak').length,
+	dibatalkan: laporanList.value.filter(l => l.status === 'dibatalkan').length,
 }))
 
-// Fetch data when filters change
 watch([selectedStatus, search], () => {
 	fetchData()
 }, { immediate: false })
@@ -229,12 +220,12 @@ onMounted(() => {
 						{{ isAdmin ? 'Kelola dan pantau seluruh laporan kerusakan fasilitas yang masuk dari siswa.' : 'Pantau status laporan kerusakan fasilitas yang telah kamu kirim.' }}
 					</p>
 				</div>
-				<SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary" @click="$router.push({ name: 'createKerusakan' })" />
+				<SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary" @click="$router.push({ name: 'createLaporanKerusakan' })" />
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">
 				<button v-for="tab in statusTabs" :key="tab.value" @click="handleTabChange(tab.value)" class="tab-btn"
-					:class="selectedStatus === tab.value ? 'tab-btn--active' : 'tab-btn--inactive'">
+					:class="selectedStatus === tab.value ? tabActiveClass(tab.value) : 'tab-btn--inactive'">
 					{{ tab.label }}
 					<span class="tab-badge"
 						:class="selectedStatus === tab.value ? 'tab-badge--active' : 'tab-badge--inactive'">
@@ -311,7 +302,7 @@ onMounted(() => {
 							<template #body-cell-aksi="{ row }">
 								<div class="flex items-center gap-2">
 									<button class="aksi-btn aksi-btn--detail"
-										@click="$router.push({ name: 'detailKerusakan', params: { id: row.id } })">
+										@click="$router.push({ name: 'detailLaporanKerusakan', params: { id: row.id } })">
 										Detail
 									</button>
 								</div>
@@ -334,7 +325,7 @@ onMounted(() => {
 				</div>
 
 				<div v-else class="card-grid">
-					<div v-for="item in paginatedList" :key="item.id" class="report-card" @click="$router.push({ name: 'detailKerusakan', params: { id: item.id } })">
+					<div v-for="item in paginatedList" :key="item.id" class="report-card" @click="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })">
 						<div class="report-card__top">
 							<span class="status-badge" :class="`status-badge--${item.status}`">
 								{{ statusLabel(item.status) }}
@@ -363,7 +354,7 @@ onMounted(() => {
 						<p class="report-card__desc">{{ item.deskripsi }}</p>
 
 						<div class="report-card__footer">
-							<button class="aksi-btn aksi-btn--detail" @click.stop="$router.push({ name: 'detailKerusakan', params: { id: item.id } })">
+							<button class="aksi-btn aksi-btn--detail" @click.stop="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })">
 								Detail
 							</button>
 						</div>
@@ -487,9 +478,43 @@ onMounted(() => {
 }
 
 .tab-btn--active {
-	background: var(--color-blue-600);
 	color: white;
+}
+
+.tab-btn--active-semua {
+	background: var(--color-blue-600);
+	border-color: var(--color-blue-600);
 	box-shadow: 0 2px 8px rgba(46, 48, 148, 0.25);
+}
+
+.tab-btn--active-menunggu {
+	background: #F59E0B;
+	border-color: #F59E0B;
+	box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.tab-btn--active-diproses {
+	background: var(--color-neutral-400, #9CA3AF);
+	border-color: var(--color-neutral-400, #9CA3AF);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+
+.tab-btn--active-selesai {
+	background: #2E7D32;
+	border-color: #2E7D32;
+	box-shadow: 0 2px 8px rgba(46, 125, 50, 0.25);
+}
+
+.tab-btn--active-ditolak {
+	background: #DC2626;
+	border-color: #DC2626;
+	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+.tab-btn--active-dibatalkan {
+	background: #DC2626;
+	border-color: #DC2626;
+	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
 }
 
 .tab-btn--inactive {
@@ -620,6 +645,12 @@ onMounted(() => {
 	border: 1px solid #DC2626;
 }
 
+.status-badge--dibatalkan {
+	background: #FEF2F2;
+	color: #DC2626;
+	border: 1px solid #DC2626;
+}
+
 .aksi-btn {
 	padding: 4px 12px;
 	border-radius: 6px;
@@ -667,6 +698,15 @@ onMounted(() => {
 
 .aksi-btn--selesai:hover {
 	background: #C8E6C9;
+}
+
+.aksi-btn--dibatalkan {
+	background: #FEF2F2;
+	color: #DC2626;
+}
+
+.aksi-btn--dibatalkan:hover {
+	background:  #FECACA;
 }
 
 .detail-content {

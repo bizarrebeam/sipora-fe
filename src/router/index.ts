@@ -10,6 +10,13 @@ import LoginAdminView from '../views/LoginAdminView.vue'
 import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
+import LaporanBullyingView from '@/views/LaporanBullyingView.vue'
+import DetailLaporanBullyingView from '@/views/DetailLaporanBullying.vue'
+import CreateLaporanBullyingView from '@/views/CreateLaporanBullyingView.vue'
+import EditLaporanBullyingView from '@/views/EditLaporanBullying.vue'
+import EditLaporanKerusakanView from '@/views/EditLaporanKerusakanView.vue'
+import AspirasiView from '@/views/AspirasiView.vue'
+import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
 import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
 import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
 import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit artikel
@@ -72,15 +79,57 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/detail-kerusakan',
-      name: 'detailKerusakan',
+      path: '/laporan-kerusakan/:id',
+      name: 'detailLaporanKerusakan',
       component: DetailLaporanKerusakanView,
       meta: { requiresAuth: true },
     },
     {
       path: '/create-kerusakan',
-      name: 'createKerusakan',
+      name: 'createLaporanKerusakan',
       component: CreateLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-bullying',
+      name: 'laporanBullying',
+      component: LaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-bullying/:id',
+      name: 'detailLaporanBullying',
+      component: DetailLaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-bullying',
+      name: 'createLaporanBullying',
+      component: CreateLaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-bullying/:id/edit',
+      name: 'editLaporanBullying',
+      component: EditLaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-kerusakan/:id/edit',
+      name: 'editLaporanKerusakan',
+      component: EditLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/aspirasi',
+      name: 'aspirasi',
+      component: AspirasiView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-aspirasi',
+      name: 'createAspirasi',
+      component: CreateAspirasiView,
       meta: { requiresAuth: true },
     },
     {

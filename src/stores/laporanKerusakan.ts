@@ -3,6 +3,20 @@ import { ref } from 'vue'
 import { apiAuthGet } from '@/services/api'
 import { useLoadingStore } from '@/stores/loading'
 
+interface RiwayatStatus {
+    id: string
+    status: string
+    catatan: string | null
+    diubah_oleh_nama: string
+    waktu: string
+}
+
+interface FotoBukti {
+    id: string
+    foto: string
+    uploaded_at: string
+}
+
 interface LaporanKerusakan {
     id: string
     no_laporan: string
@@ -11,18 +25,23 @@ interface LaporanKerusakan {
     deskripsi: string
     tanggal_kejadian: string
     tanggal_laporan: string
-    status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak'
+    status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
     anonimitas: boolean
     pengirim_username?: string
     nama_lengkap?: string
-    foto_bukti?: Array<{
-        id: string
-        foto: string
-        uploaded_at: string
-    }>
+    kelas_pengirim?: string
+    pelapor_info?: {
+        id?: string
+        username?: string
+        nama_lengkap: string
+        kelas?: string
+        role: string
+    }
+    foto_bukti?: FotoBukti[]
     foto_pendukung?: string[]
     catatan_admin?: string
     updated_at?: string
+    riwayat_status?: RiwayatStatus[]
 }
 
 interface CreateLaporanPayload {
@@ -34,9 +53,19 @@ interface CreateLaporanPayload {
     foto_bukti?: File[]
 }
 
+interface EditLaporanPayload {
+    judul?: string
+    deskripsi?: string
+    lokasi?: string
+    tanggal_kejadian?: string
+    anonimitas?: boolean
+    foto_bukti?: File[]
+}
+
 export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
     const laporanList = ref<LaporanKerusakan[]>([])
     const totalLaporan = ref(0)
+    const currentLaporan = ref<LaporanKerusakan | null>(null)
 
     const loadingStore = useLoadingStore()
 
@@ -54,9 +83,21 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : ''
             const data = await apiAuthGet(`laporan-kerusakan/list/${queryString}`)
             
-            // data is already unwrapped: { total: ..., laporan: [...] }
             laporanList.value = data.laporan
             totalLaporan.value = data.total
+        } catch (error: any) {
+            throw error
+        } finally {
+            loadingStore.hide()
+        }
+    }
+
+    async function fetchLaporanDetail(id: string) {
+        loadingStore.show('Memuat detail laporan...')
+        try {
+            const data = await apiAuthGet(`laporan-kerusakan/${id}/`)
+            currentLaporan.value = data
+            return data as LaporanKerusakan
         } catch (error: any) {
             throw error
         } finally {
@@ -67,7 +108,6 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
     async function createLaporanKerusakan(payload: CreateLaporanPayload) {
         loadingStore.show('Menyimpan laporan kerusakan...')
         try {
-            // Create FormData for multipart/form-data
             const formData = new FormData()
             formData.append('judul', payload.judul)
             formData.append('deskripsi', payload.deskripsi)
@@ -75,25 +115,27 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             formData.append('tanggal_kejadian', payload.tanggal_kejadian)
             formData.append('anonimitas', payload.anonimitas.toString())
             
-            // Append all photo files
             if (payload.foto_bukti && payload.foto_bukti.length > 0) {
                 payload.foto_bukti.forEach((file) => {
                     formData.append('foto_bukti', file)
                 })
             }
             
-            // Direct fetch for FormData upload (api.ts doesn't support FormData)
             const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
             const response = await fetch(`${API_BASE_URL}laporan-kerusakan/tambah/`, {
                 method: 'POST',
                 credentials: 'include',
-                body: formData // Don't set Content-Type, browser will set it with boundary
+                body: formData
             })
             
             const json = await response.json()
             if (!response.ok || json.status === 'error') {
                 const errorMsg = json.message || 'Gagal membuat laporan'
-                throw new Error(errorMsg)
+                const error = new Error(errorMsg) as Error & { fieldErrors?: Record<string, unknown> }
+                if (json?.data && typeof json.data === 'object') {
+                    error.fieldErrors = json.data
+                }
+                throw error
             }
             
             return json.data
@@ -104,5 +146,75 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
-    return { laporanList, totalLaporan, fetchLaporanKerusakan, createLaporanKerusakan }
+    async function editLaporanKerusakan(payload: EditLaporanPayload){
+        loadingStore.show('Menyimpan laporan kerusakan...')
+        try {
+            const formData = new FormData()
+            formData.append('judul', payload.judul || '')
+            formData.append('deskripsi', payload.deskripsi || '')
+            formData.append('lokasi', payload.lokasi || '')
+            formData.append('tanggal_kejadian', payload.tanggal_kejadian || '')
+            formData.append('anonimitas', String(payload.anonimitas ?? false))
+            
+            if (payload.foto_bukti && payload.foto_bukti.length > 0) {
+                payload.foto_bukti.forEach((file) => {
+                    formData.append('foto_bukti', file)
+                })
+            }
+            
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-kerusakan/${currentLaporan.value?.id}/edit/`, {
+                method: 'PUT',
+                credentials: 'include',
+                body: formData
+            })
+            
+            const json = await response.json()
+            if (!response.ok || json.status === 'error') {
+                const errorMsg = json.message || 'Gagal memperbarui laporan'
+                throw new Error(errorMsg)
+            }
+
+            // update local currentLaporan with returned data
+            currentLaporan.value = json.data
+
+            return json.data
+        } catch (error: any) {
+            throw error
+        } finally {
+            loadingStore.hide()
+        }
+    }
+
+    async function cancelLaporanKerusakan(id: string, alasan: string) {
+        loadingStore.show('Membatalkan laporan...')
+        try {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-kerusakan/${id}/cancel/`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ alasan })
+            })
+
+            const json = await response.json()
+            if (!response.ok || json.status === 'error') {
+                const errorMsg = json.message || (json.errors ? JSON.stringify(json.errors) : 'Gagal membatalkan laporan')
+                throw new Error(errorMsg)
+            }
+
+            // update local currentLaporan with returned data
+            currentLaporan.value = json.data
+
+            return json.data
+        } catch (error: any) {
+            throw error
+        } finally {
+            loadingStore.hide()
+        }
+    }
+
+    return { laporanList, totalLaporan, currentLaporan, fetchLaporanKerusakan, fetchLaporanDetail, createLaporanKerusakan, editLaporanKerusakan, cancelLaporanKerusakan }
 })

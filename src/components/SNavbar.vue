@@ -62,6 +62,7 @@ async function confirmLogout() {
         <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
         <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
         <RouterLink to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
+        <RouterLink to="/aspirasi" class="nav-link">Aspirasi</RouterLink>
         <RouterLink to="/kelola-artikel" class="nav-link">{{ artikelLabel }}</RouterLink>
       </div>
 
@@ -107,6 +108,7 @@ async function confirmLogout() {
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
           <RouterLink to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
+          <RouterLink to="/aspirasi" class="mobile-link" @click="closeMobile">Aspirasi</RouterLink>
           <RouterLink to="/kelola-artikel" class="mobile-link" @click="closeMobile">{{ artikelLabel }}</RouterLink>
           <div class="mobile-divider"></div>
           <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">
