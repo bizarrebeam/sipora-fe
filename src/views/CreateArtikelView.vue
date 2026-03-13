@@ -292,7 +292,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="artikel-page">
+  <div class="stf-page">
     <div class="artikel-container">
       <div v-if="isLoading" class="flex justify-center items-center h-64">
         <SLoading />

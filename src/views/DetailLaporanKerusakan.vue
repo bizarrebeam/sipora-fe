@@ -151,7 +151,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="laporan-page">
+    <div class="stf-page">
         <Teleport to="body">
             <Transition name="fade">
                 <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
@@ -181,14 +181,14 @@ onMounted(async () => {
             <template v-else>
                 <div class="laporan-header">
                     <div>
-                        <h1 class="laporan-title">Detail Laporan Kerusakan</h1>
-                        <p class="laporan-subtitle">{{ laporan.no_laporan }}</p>
+                        <h1 class="stf-page-title">Detail Laporan Kerusakan</h1>
+                        <p class="stf-page-subtitle">{{ laporan.no_laporan }}</p>
                     </div>
                 </div>
 
                 <!-- Card 1: Status -->
                 <SCard class="section-card">
-                    <h3 class="section-title">Status</h3>
+                    <h3 class="stf-page-title">Status</h3>
                     <div class="status-row">
                         <span class="status-badge" :class="`status-badge--${laporan.status}`">
                             {{ statusLabel(laporan.status) }}
@@ -277,7 +277,7 @@ onMounted(async () => {
                 </SCard>
 
                 <SCard class="section-card">
-                    <h3 class="section-title">Riwayat Status</h3>
+                    <h3 class="stf-page-title">Riwayat Status</h3>
                     <div v-if="laporan.riwayat_status && laporan.riwayat_status.length" class="riwayat-list">
                         <div
                             v-for="(r, idx) in laporan.riwayat_status"

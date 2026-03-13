@@ -248,12 +248,12 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="laporan-page">
-		<div class="laporan-container">
-			<div class="laporan-header">
-				<div>
-					<h1 class="laporan-title">Aspirasi</h1>
-					<p class="laporan-subtitle">
+	<div class="stf-page">
+		<div class="stf-container">
+			<div class="stf-header">
+				<div class="stf-header-text">
+					<h1 class="stf-page-title">Aspirasi</h1>
+					<p class="stf-page-subtitle">
 						{{ isAdmin ? 'Kelola dan pantau seluruh laporan aspirasi masuk dari siswa.' : 'Sampaikan ide, masukan, atau aspirasimu untuk sekolah yang lebih baik.' }}
 					</p>
 				</div>
@@ -305,7 +305,7 @@ onMounted(() => {
 				<SCard class="section-card">
 					<div class="section-header">
 						<div>
-							<h3 class="section-title">Daftar Aspirasi</h3>
+							<h3 class="stf-page-title">Daftar Aspirasi</h3>
 							<span class="section-count">{{ totalData }} Aspirasi ditemukan</span>
 						</div>
 					</div>
@@ -372,7 +372,7 @@ onMounted(() => {
 					<svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 					</svg>
-					<p class="empty-title">Belum ada aspirasi</p>
+					<p class="stf-page-title">Belum ada aspirasi</p>
 					<p class="empty-desc">Aspirasi yang kamu buat akan muncul di sini.</p>
 				</div>
 
@@ -457,41 +457,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.laporan-page {
-	min-height: calc(100vh - 64px);
-	background: var(--color-general-frame);
-	padding: 24px 16px;
-}
-
-.laporan-container {
-	max-width: 1100px;
-	margin: 0 auto;
-}
-
-.laporan-title {
-	font-family: var(--font-be-vietnam);
-	font-weight: 700;
-	font-size: 24px;
-	color: var(--color-general-black);
-	margin-bottom: 4px;
-}
-
-.laporan-subtitle {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-neutral-500);
-	margin-bottom: 24px;
-}
-
-.laporan-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 16px;
-	flex-wrap: wrap;
-	margin-bottom: 0;
-}
-
 .tab-btn {
 	display: inline-flex;
 	align-items: center;

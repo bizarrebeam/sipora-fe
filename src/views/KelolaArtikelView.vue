@@ -188,14 +188,12 @@ watch(searchQuery, () => { currentPage.value = 1 })
     - Each article is shown as a card with image, title, summary, and detail navigation.
     - Handles loading, empty state, and paginated display.
   -->
-  <div class="artikel-page">
-    <div class="artikel-container">
-
-      <!-- Header section with title and description -->
-      <div class="artikel-header">
-        <div>
-          <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">Portal Artikel</h1>
-          <p class="text-gray-500 mb-6 font-display text-sm">
+  <div class="stf-page">
+    <div class="stf-container">
+      <div class="stf-header">
+        <div class="stf-header-text">
+          <h1 class="stf-page-title">Portal Artikel</h1>
+          <p class="stf-page-subtitle">
               Portal artikel berisi materi edukasi untuk siswa SMP Desa Mulia Putra.<br>
               Temukan tips menghadapi bullying, cara menjaga kesehatan mental, dan informasi penting lainnya.
           </p>
@@ -292,7 +290,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
           <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <p class="empty-title">Tidak ada artikel</p>
+          <p class="stf-page-title">Tidak ada artikel</p>
           <p class="empty-desc">Belum ada artikel di kategori ini.</p>
         </div>
 
@@ -348,41 +346,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
 </template>
 
 <style scoped>
-.artikel-page {
-	min-height: calc(100vh - 64px);
-	background: var(--color-general-frame);
-	padding: 24px 16px;
-}
-
-.artikel-container {
-	max-width: 1100px;
-	margin: 0 auto;
-}
-
-.artikel-title {
-	font-family: var(--font-be-vietnam);
-	font-weight: 700;
-	font-size: 24px;
-	color: var(--color-general-black);
-	margin-bottom: 4px;
-}
-
-.artikel-subtitle {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-neutral-500);
-	margin-bottom: 24px;
-}
-
-.artikel-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 16px;
-	flex-wrap: wrap;
-	margin-bottom: 0;
-}
-
 .toggle-container {
 	position: relative;
 	display: inline-flex;

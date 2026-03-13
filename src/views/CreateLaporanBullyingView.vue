@@ -160,7 +160,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-    <div class="create-laporan-page">
+    <div class="stf-page">
         <!-- SAlert overlay -->
         <Teleport to="body">
             <Transition name="fade">

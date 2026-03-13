@@ -9,6 +9,7 @@ const auth = useAuthStore()
 const router = useRouter()
 const mobileMenuOpen = ref(false)
 const showLogoutModal = ref(false)
+const profileMenuOpen = ref(false)
 
 const isLoggedIn = computed(() => auth.isAuthenticated)
 const namaDepan = computed(() => auth.namaDepan)
@@ -32,6 +33,7 @@ function closeMobile() {
 function openLogoutModal() {
   showLogoutModal.value = true
   closeMobile()
+  profileMenuOpen.value = false
 }
 
 async function confirmLogout() {
@@ -68,19 +70,29 @@ async function confirmLogout() {
 
       <div class="navbar-auth">
         <template v-if="isLoggedIn">
-          <RouterLink to="/profil" class="auth-user-link">
-            <div class="auth-user-info">
-              <span class="auth-name">{{ namaDepan }}</span>
-              <span class="auth-badge">{{ roleBadge }}</span>
-            </div>
-            <div class="auth-user-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
+          <div class="auth-dropdown" @mouseenter="profileMenuOpen = true" @mouseleave="profileMenuOpen = false">
+            <button class="auth-user-link" @click="profileMenuOpen = !profileMenuOpen">
+              <div class="auth-user-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" class="feather-user" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div class="auth-user-info">
+                <span class="auth-name">{{ namaDepan }}</span>
+                <span class="auth-badge">{{ roleBadge }}</span>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron" :class="{'chevron-up': profileMenuOpen}">
+                <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
-            </div>
-          </RouterLink>
-          <button class="auth-btn auth-btn--logout" @click="openLogoutModal">Logout</button>
+            </button>
+            <Transition name="dropdown">
+              <div v-show="profileMenuOpen" class="auth-dropdown-menu">
+                <RouterLink to="/profil" class="dropdown-item" @click="profileMenuOpen = false">Manajemen Profil</RouterLink>
+                <button class="dropdown-item dropdown-item--logout" @click="openLogoutModal">Logout</button>
+              </div>
+            </Transition>
+          </div>
         </template>
         <template v-else>
           <RouterLink to="/login" class="auth-btn auth-btn--login">Login</RouterLink>
@@ -153,12 +165,13 @@ async function confirmLogout() {
 }
 
 .navbar-inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0 48px;
+  padding: 0 24px;
   height: 64px;
 }
 
@@ -167,7 +180,6 @@ async function confirmLogout() {
   display: flex;
   align-items: center;
   text-decoration: none;
-  flex-shrink: 0;
 }
 
 .navbar-logo-img {
@@ -177,22 +189,24 @@ async function confirmLogout() {
 
 /* ── Desktop Nav Links ── */
 .navbar-links {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 32px;
-  margin-left: auto;
-  margin-right: 32px;
+  gap: 24px;
 }
 
 .nav-link {
   color: var(--color-blue-50);
   font-family: "Be Vietnam Pro", sans-serif;
-  font-weight: 600;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 13.5px;
   text-decoration: none;
   padding: 8px 4px;
   position: relative;
   transition: color 0.2s ease;
+  white-space: nowrap;
 }
 
 .nav-link::after {
@@ -219,63 +233,65 @@ async function confirmLogout() {
 .navbar-auth {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
+}
+
+.auth-dropdown {
+  position: relative;
 }
 
 .auth-user-link {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   text-decoration: none;
-  padding: 6px 12px;
-  border-radius: 8px;
-  transition: background 0.2s;
+  padding: 4px 14px 4px 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .auth-user-link:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.auth-user-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-  gap: 2px;
-}
-
-.auth-name {
-  color: white;
-  font-family: "Be Vietnam Pro", sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 1.2;
-}
-
-.auth-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
   background: rgba(255, 255, 255, 0.2);
-  color: var(--color-blue-50);
-  font-family: var(--font-be-vietnam);
-  font-weight: 600;
-  font-size: 11px;
-  border-radius: 100px;
-  letter-spacing: 0.3px;
-  line-height: 1.2;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .auth-user-icon {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: white;
+  color: var(--color-blue-600);
+  flex-shrink: 0;
+}
+
+.auth-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0px;
+}
+
+.auth-name {
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.auth-badge {
+  color: var(--color-blue-100);
+  font-family: var(--font-be-vietnam);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .auth-btn {
@@ -315,23 +331,73 @@ async function confirmLogout() {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.auth-btn--logout {
-  background: transparent;
-  color: var(--color-blue-100);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  font-family: "Be Vietnam Pro", sans-serif;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 8px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.dropdown-chevron {
+  color: white;
+  transition: transform 0.2s ease;
+  margin-left: 2px;
+  margin-right: -4px;
 }
 
-.auth-btn--logout:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: white;
-  color: white;
+.chevron-up {
+  transform: rotate(180deg);
+}
+
+.auth-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  z-index: 100;
+  border: 1px solid var(--color-general-border, #E5E7EB);
+}
+
+.dropdown-item {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  padding: 10px 16px;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-general-black, #1F2937);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--color-blue-50);
+  color: var(--color-blue-600);
+}
+
+.dropdown-item--logout {
+  color: #DC2626;
+  margin-top: 4px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.dropdown-item--logout:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+/* Transition for dropdown */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 /* ── Hamburger ── */
@@ -467,7 +533,7 @@ async function confirmLogout() {
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .navbar-links,
   .navbar-auth {
     display: none;

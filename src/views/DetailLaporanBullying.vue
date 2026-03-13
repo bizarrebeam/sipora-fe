@@ -115,7 +115,7 @@ async function handleSelesai() {
 </script>
 
 <template>
-  <div class="detail-page">
+  <div class="stf-page">
     <div class="detail-inner">
 
       <!-- ── Header ── -->
@@ -124,7 +124,7 @@ async function handleSelesai() {
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <div class="header-text">
-          <h1 class="header-title">Detail Laporan Bullying</h1>
+          <h1 class="stf-page-title">Detail Laporan Bullying</h1>
           <p class="header-sub">Lihat detail dan tanggapi laporan bullying di bawah ini.</p>
         </div>
       </div>
@@ -182,7 +182,7 @@ async function handleSelesai() {
 
             <!-- Card: Bukti Pendukung -->
             <SCard class="card-section">
-              <h3 class="card-subtitle">
+              <h3 class="stf-page-subtitle">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-blue"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
                 Bukti Pendukung
               </h3>
@@ -197,7 +197,7 @@ async function handleSelesai() {
 
             <!-- Card: Riwayat Status -->
             <SCard class="card-section">
-              <h3 class="card-subtitle">
+              <h3 class="stf-page-subtitle">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-blue"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Riwayat Status
               </h3>
@@ -232,7 +232,7 @@ async function handleSelesai() {
 
             <!-- Card: Info Pelapor -->
             <SCard class="card-section">
-              <h3 class="card-subtitle">
+              <h3 class="stf-page-subtitle">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-blue"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Informasi Pelapor
               </h3>

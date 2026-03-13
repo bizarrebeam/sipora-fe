@@ -151,13 +151,16 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="log-page">
-    <div class="log-container max-w-5xl mx-auto w-full max-h-[calc(100vh-64px)] flex flex-col">
-      <div class="py-6 px-4 md:px-0">
-        <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">Log Aktivitas</h1>
-        <p class="text-gray-500 mb-6 font-display text-sm">
-          Pantau seluruh aktivitas krusial pengguna di dalam sistem Sipora secara real-time.
-        </p>
+  <div class="stf-page">
+    <div class="stf-container">
+      <div class="stf-header">
+        <div class="stf-header-text">
+          <h1 class="stf-page-title">Log Aktivitas</h1>
+          <p class="stf-page-subtitle">
+            Pantau seluruh aktivitas krusial pengguna di dalam sistem Sipora secara real-time.
+          </p>
+        </div>
+      </div>
 
         <!-- Tabs -->
         <div class="flex flex-wrap gap-2 mb-6">
@@ -233,16 +236,9 @@ onMounted(() => {
 
       </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
-.log-page {
-  min-height: calc(100vh - 64px);
-  background: var(--color-general-frame);
-  padding: 24px 16px;
-}
-
 .font-display {
   font-family: "Be Vietnam Pro", sans-serif;
 }

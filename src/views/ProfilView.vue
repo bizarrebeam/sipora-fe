@@ -130,9 +130,9 @@ async function handleUbahPassword() {
 </script>
 
 <template>
-  <div class="profil-page">
+  <div class="stf-page">
     <div class="profil-container">
-      <h1 class="profil-title">Manajemen Profil</h1>
+      <h1 class="stf-page-title">Manajemen Profil</h1>
 
       <!-- Profile Info Card -->
       <SCard class="profil-card">
@@ -173,7 +173,7 @@ async function handleUbahPassword() {
 
       <!-- Edit Profile (Siswa: kelas, Guru: mapel) -->
       <SCard v-if="isSiswa || isGuru" class="profil-card">
-        <h3 class="section-title">Ubah Detail Profil</h3>
+        <h3 class="stf-page-title">Ubah Detail Profil</h3>
 
         <!-- Siswa: kelas dropdown -->
         <div v-if="isSiswa" class="edit-field">
@@ -220,7 +220,7 @@ async function handleUbahPassword() {
 
       <!-- Change Password -->
       <SCard class="profil-card">
-        <h3 class="section-title">Ganti Password</h3>
+        <h3 class="stf-page-title">Ganti Password</h3>
         <div class="password-form">
           <STextField
             label="Password Lama"

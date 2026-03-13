@@ -211,10 +211,16 @@ onMounted(fetchDaftar)
 </script>
 
 <template>
-  <div class="admin-page">
-    <div class="admin-container">
-      <h1 class="admin-title">Manajemen Akun</h1>
-
+  <div class="stf-page">
+    <div class="stf-container">
+      <div class="stf-header">
+        <div class="stf-header-text">
+          <h1 class="stf-page-title">Manajemen Akun</h1>
+          <p class="stf-page-subtitle">
+            Kelola data akun siswa, guru, dan admin di dalam sistem Sipora.
+          </p>
+        </div>
+      </div>
       <div class="search-bar">
         <STextField
           label=""
@@ -233,7 +239,7 @@ onMounted(fetchDaftar)
         <SCard class="section-card">
           <div class="section-header">
             <div>
-              <h3 class="section-title">Siswa</h3>
+              <h3 class="stf-page-title">Siswa</h3>
               <span class="section-count">{{ siswaTotal }} akun terdaftar</span>
             </div>
           </div>
@@ -265,7 +271,7 @@ onMounted(fetchDaftar)
         <SCard class="section-card" v-if="isKemahasiswaan">
           <div class="section-header">
             <div>
-              <h3 class="section-title">Guru</h3>
+              <h3 class="stf-page-title">Guru</h3>
               <span class="section-count">{{ guruTotal }} akun terdaftar</span>
             </div>
             <SButton label="+ Buat Akun Guru" variant="primary" @click="openCreateDialog('guru')" />
@@ -298,7 +304,7 @@ onMounted(fetchDaftar)
         <SCard class="section-card" v-if="isKemahasiswaan">
           <div class="section-header">
             <div>
-              <h3 class="section-title">Guru BK</h3>
+              <h3 class="stf-page-title">Guru BK</h3>
               <span class="section-count">{{ guruBkTotal }} akun terdaftar</span>
             </div>
             <SButton label="+ Buat Akun Guru BK" variant="primary" @click="openCreateDialog('guru_bk')" />
@@ -391,25 +397,6 @@ onMounted(fetchDaftar)
 </template>
 
 <style scoped>
-.admin-page {
-  min-height: calc(100vh - 64px);
-  background: var(--color-general-frame);
-  padding: 24px 16px;
-}
-
-.admin-container {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.admin-title {
-  font-family: var(--font-be-vietnam);
-  font-weight: 700;
-  font-size: 24px;
-  color: var(--color-general-black);
-  margin-bottom: 20px;
-}
-
 .search-bar {
   margin-bottom: 20px;
 }

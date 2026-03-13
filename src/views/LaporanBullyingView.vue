@@ -178,14 +178,12 @@ onMounted(() => { fetchData() })
 </script>
 
 <template>
-    <div class="laporan-page">
-        <div class="laporan-container">
-
-            <!-- ── Page Header ── -->
-            <div class="laporan-header">
-                <div class="header-text">
-                    <h1 class="laporan-title">Laporan Bullying</h1>
-                    <p class="laporan-subtitle">
+    <div class="stf-page">
+        <div class="stf-container">
+            <div class="stf-header">
+                <div class="stf-header-text">
+                    <h1 class="stf-page-title">Laporan Bullying</h1>
+                    <p class="stf-page-subtitle">
                         {{ isAdmin ? 'Kelola dan pantau seluruh laporan bullying yang masuk dari siswa.' : 'Pantau status laporan bullying yang telah kamu kirim.' }}
                     </p>
                 </div>
@@ -254,7 +252,7 @@ onMounted(() => { fetchData() })
                 <SCard class="section-card">
                     <div class="section-header">
                         <div>
-                            <h3 class="section-title">Daftar Laporan</h3>
+                            <h3 class="stf-page-title">Daftar Laporan</h3>
                             <span class="section-count">{{ totalData }} laporan ditemukan</span>
                         </div>
                     </div>
@@ -316,7 +314,7 @@ onMounted(() => { fetchData() })
                     <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <p class="empty-title">Belum ada laporan</p>
+                    <p class="stf-page-title">Belum ada laporan</p>
                     <p class="empty-desc">Laporan bullying yang kamu buat akan muncul di sini.</p>
                 </div>
 
@@ -361,7 +359,7 @@ onMounted(() => { fetchData() })
             <div v-if="showFilterDrawer" class="drawer-overlay" @click.self="showFilterDrawer = false">
                 <div class="drawer">
                     <div class="drawer-header">
-                        <span class="drawer-title">Filter & Urutan</span>
+                        <span class="stf-page-title">Filter & Urutan</span>
                         <button class="drawer-close" @click="showFilterDrawer = false" aria-label="Tutup">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
@@ -400,36 +398,6 @@ onMounted(() => { fetchData() })
 * { font-family: "Be Vietnam Pro", sans-serif; }
 
 /* ─── Page shell ─── */
-.laporan-page {
-    min-height: calc(100vh - 64px);
-    background: var(--color-general-frame);
-    padding: 24px 16px;
-}
-.laporan-container {
-    max-width: 1100px;
-    margin: 0 auto;
-}
-
-/* ─── Header ─── */
-.laporan-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-.laporan-title {
-    font-weight: 700;
-    font-size: 24px;
-    color: var(--color-general-black);
-    margin: 0 0 4px;
-}
-.laporan-subtitle {
-    font-size: 14px;
-    color: var(--color-neutral-500);
-    margin: 0;
-}
 
 /* ─── Tabs ─── */
 .tabs-wrapper {
@@ -756,7 +724,7 @@ onMounted(() => { fetchData() })
 /* ── Mobile (≤ 600px) ── */
 @media (max-width: 600px) {
     /* Shell */
-    .laporan-page {
+    .stf-page {
         padding: 0 0 env(safe-area-inset-bottom, 24px);
         background: var(--color-general-frame);
     }
@@ -770,8 +738,6 @@ onMounted(() => { fetchData() })
         border-bottom: 1px solid #f3f4f6;
         gap: 10px;
     }
-    .laporan-title { font-size: 17px; }
-    .laporan-subtitle { font-size: 12px; }
 
     /* Tabs: full-bleed scroll */
     .tabs-wrapper {

@@ -233,7 +233,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="create-laporan-page">
+    <div class="stf-page">
         <Teleport to="body">
             <Transition name="fade">
                 <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
