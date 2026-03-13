@@ -224,11 +224,14 @@ onMounted(() => {
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">
-				<button v-for="tab in statusTabs" :key="tab.value" @click="handleTabChange(tab.value)" class="tab-btn"
-					:class="selectedStatus === tab.value ? tabActiveClass(tab.value) : 'tab-btn--inactive'">
+				<button v-for="tab in statusTabs" :key="tab.value" @click="handleTabChange(tab.value)" class="stf-tab-btn"
+					:class="[
+						selectedStatus === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
+						selectedStatus === tab.value ? `stf-tab--${tab.value}` : ''
+					]">
 					{{ tab.label }}
-					<span class="tab-badge"
-						:class="selectedStatus === tab.value ? 'tab-badge--active' : 'tab-badge--inactive'">
+					<span class="stf-tab-badge"
+						:class="selectedStatus === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
 						{{ statusCounts[tab.value as keyof typeof statusCounts] }}
 					</span>
 				</button>
@@ -253,7 +256,7 @@ onMounted(() => {
 				<SCard class="section-card">
 					<div class="section-header">
 						<div>
-							<h3 class="stf-page-title">Daftar Laporan</h3>
+							<h3 class="stf-section-title">Daftar Laporan</h3>
 							<span class="section-count">{{ totalData }} laporan ditemukan</span>
 						</div>
 					</div>
@@ -320,7 +323,7 @@ onMounted(() => {
 					<svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 					</svg>
-					<p class="stf-page-title">Belum ada laporan</p>
+					<p class="stf-section-title">Belum ada laporan</p>
 					<p class="empty-desc">Laporan kerusakan yang kamu buat akan muncul di sini.</p>
 				</div>
 
@@ -427,84 +430,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.tab-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 8px 16px;
-	border-radius: 9999px;
-	font-size: 14px;
-	font-weight: 600;
-	font-family: "Be Vietnam Pro", sans-serif;
-	transition: all 0.2s;
-	white-space: nowrap;
-	cursor: pointer;
-	border: none;
-}
-
-.tab-btn--active {
-	color: white;
-}
-
-.tab-btn--active-semua {
-	background: var(--color-blue-600);
-	border-color: var(--color-blue-600);
-	box-shadow: 0 2px 8px rgba(46, 48, 148, 0.25);
-}
-
-.tab-btn--active-menunggu {
-	background: #F59E0B;
-	border-color: #F59E0B;
-	box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-}
-
-.tab-btn--active-diproses {
-	background: var(--color-neutral-400, #9CA3AF);
-	border-color: var(--color-neutral-400, #9CA3AF);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-
-.tab-btn--active-selesai {
-	background: #2E7D32;
-	border-color: #2E7D32;
-	box-shadow: 0 2px 8px rgba(46, 125, 50, 0.25);
-}
-
-.tab-btn--active-ditolak {
-	background: #DC2626;
-	border-color: #DC2626;
-	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-}
-
-.tab-btn--active-dibatalkan {
-	background: #DC2626;
-	border-color: #DC2626;
-	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-}
-
-.tab-btn--inactive {
-	background: white;
-	color: var(--color-neutral-500);
-	border: 1px solid var(--color-general-border);
-}
-
-.tab-btn--inactive:hover {
-	background: var(--color-neutral-50);
-}
-
-.tab-badge {
-	font-size: 11px;
-	font-weight: 700;
-	padding: 1px 7px;
-	border-radius: 9999px;
-	line-height: 1.4;
-}
-
-.tab-badge--active {
-	background: rgba(255, 255, 255, 0.25);
-	color: white;
-}
-
 .tab-badge--inactive {
 	background: var(--color-neutral-100);
 	color: var(--color-neutral-500);

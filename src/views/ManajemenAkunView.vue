@@ -54,6 +54,23 @@ const sortState = ref({
   guruBk: { key: '', order: 'desc' as 'asc' | 'desc' }
 })
 
+const activeTab = ref('siswa')
+
+const accountTabs = computed(() => {
+  const tabs = [{ value: 'siswa', label: 'Siswa', count: siswaTotal.value }]
+  if (isKemahasiswaan.value) {
+    tabs.push(
+      { value: 'guru', label: 'Guru', count: guruTotal.value },
+      { value: 'guru_bk', label: 'Guru BK', count: guruBkTotal.value }
+    )
+  }
+  return tabs
+})
+
+function handleTabChange(tab: string) {
+  activeTab.value = tab
+}
+
 const siswaColumns = [
   { key: 'nama_lengkap', label: 'Nama', sortable: true },
   { key: 'nisn', label: 'NISN', sortable: true },
@@ -220,7 +237,38 @@ onMounted(fetchDaftar)
             Kelola data akun siswa, guru, dan admin di dalam sistem Sipora.
           </p>
         </div>
+        <div v-if="isKemahasiswaan">
+          <SButton 
+            v-if="activeTab === 'guru'" 
+            label="+ Buat Akun Guru" 
+            variant="primary" 
+            @click="openCreateDialog('guru')" 
+          />
+          <SButton 
+            v-if="activeTab === 'guru_bk'" 
+            label="+ Buat Akun Guru BK" 
+            variant="primary" 
+            @click="openCreateDialog('guru_bk')" 
+          />
+        </div>
       </div>
+
+      <!-- Tabs (Only show if kemahasiswaan, otherwise only Siswa exists) -->
+      <div v-if="isKemahasiswaan" class="flex flex-wrap gap-2 mb-6">
+        <button 
+          v-for="tab in accountTabs" 
+          :key="tab.value"
+          @click="handleTabChange(tab.value)"
+          class="stf-tab-btn"
+          :class="activeTab === tab.value ? 'stf-tab--semua stf-tab-btn--active' : 'stf-tab-btn--inactive'"
+        >
+          {{ tab.label }}
+          <span class="stf-tab-badge" :class="activeTab === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
+            {{ tab.count }}
+          </span>
+        </button>
+      </div>
+
       <div class="search-bar">
         <STextField
           label=""
@@ -236,10 +284,11 @@ onMounted(fetchDaftar)
       </div>
 
       <template v-else>
-        <SCard class="section-card">
+        <!-- SISWA TAB -->
+        <SCard v-if="activeTab === 'siswa'" class="section-card">
           <div class="section-header">
             <div>
-              <h3 class="stf-page-title">Siswa</h3>
+              <h3 class="stf-section-title">Siswa</h3>
               <span class="section-count">{{ siswaTotal }} akun terdaftar</span>
             </div>
           </div>
@@ -268,13 +317,13 @@ onMounted(fetchDaftar)
           </div>
         </SCard>
 
-        <SCard class="section-card" v-if="isKemahasiswaan">
+        <!-- GURU TAB -->
+        <SCard v-if="activeTab === 'guru' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
-              <h3 class="stf-page-title">Guru</h3>
+              <h3 class="stf-section-title">Guru</h3>
               <span class="section-count">{{ guruTotal }} akun terdaftar</span>
             </div>
-            <SButton label="+ Buat Akun Guru" variant="primary" @click="openCreateDialog('guru')" />
           </div>
           <div class="table-wrapper">
             <STable
@@ -301,13 +350,13 @@ onMounted(fetchDaftar)
           </div>
         </SCard>
 
-        <SCard class="section-card" v-if="isKemahasiswaan">
+        <!-- GURU BK TAB -->
+        <SCard v-if="activeTab === 'guru_bk' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
-              <h3 class="stf-page-title">Guru BK</h3>
+              <h3 class="stf-section-title">Guru BK</h3>
               <span class="section-count">{{ guruBkTotal }} akun terdaftar</span>
             </div>
-            <SButton label="+ Buat Akun Guru BK" variant="primary" @click="openCreateDialog('guru_bk')" />
           </div>
           <div class="table-wrapper">
             <STable
@@ -413,20 +462,7 @@ onMounted(fetchDaftar)
 }
 
 .section-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 4px;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-family: var(--font-be-vietnam);
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--color-general-black);
-  margin: 0;
+  margin-bottom: 24px;
 }
 
 .section-count {

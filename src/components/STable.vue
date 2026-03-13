@@ -117,8 +117,8 @@ function onPageSizeChange(e: Event) {
       </div>
       
       <!-- Bottom Pagination -->
-      <div v-show="!loading" class="px-6 py-4 border-t border-gray-100 flex flex-col items-center gap-4">
-        <div v-if="totalPages > 1 && data.length > 0" class="w-full flex justify-center">
+      <div v-if="!loading && totalPages > 1 && data.length > 0" class="px-6 py-4 border-t border-gray-100 flex flex-col items-center gap-4">
+        <div class="w-full flex justify-center">
           <SPagination 
             :modelValue="currentPage"
             :totalPages="totalPages"

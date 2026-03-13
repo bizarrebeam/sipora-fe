@@ -262,11 +262,14 @@ onMounted(() => {
 
 			<div class="flex flex-wrap gap-2 mb-6">
 				<!-- Kategori tabs untuk semua role -->
-					<button v-for="tab in kategoriTabs" :key="tab.value" @click="() => handleKategoriSelect(tab.value)" class="tab-btn"
-						:class="selectedKategori === tab.value ? tabActiveClass(tab.value) : 'tab-btn--inactive'">
+					<button v-for="tab in kategoriTabs" :key="tab.value" @click="() => handleKategoriSelect(tab.value)" class="stf-tab-btn"
+						:class="[
+							selectedKategori === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
+							selectedKategori === tab.value ? (tab.value === 'semua' ? 'stf-tab--semua' : 'stf-tab--sarana') : ''
+						]">
 					{{ tab.label }}
-					<span class="tab-badge"
-						:class="selectedKategori === tab.value ? 'tab-badge--active' : 'tab-badge--inactive'">
+					<span class="stf-tab-badge"
+						:class="selectedKategori === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
 						{{ kategoriCounts[tab.value as keyof typeof kategoriCounts] }}
 					</span>
 				</button>
@@ -275,11 +278,14 @@ onMounted(() => {
 			<div class="flex flex-wrap gap-2 mb-6">
 				<!-- Status tabs only for kemahasiswaan -->
 				<template v-if="isAdmin">
-					<button v-for="tab in statusTabs" :key="tab.value" @click="() => handleStatusSelect(tab.value)" class="tab-btn"
-						:class="selectedStatus === tab.value ? tabActiveClass(tab.value) : 'tab-btn--inactive'">
+					<button v-for="tab in statusTabs" :key="tab.value" @click="() => handleStatusSelect(tab.value)" class="stf-tab-btn"
+						:class="[
+							selectedStatus === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
+							selectedStatus === tab.value ? (tab.value === 'semua' ? 'stf-tab--semua' : 'stf-tab--sarana') : ''
+						]">
 						{{ tab.label }}
-						<span class="tab-badge"
-							:class="selectedStatus === tab.value  ? ['tab-badge--active', `tab-badge--active-${tab.value}`] : 'tab-badge--inactive'">
+						<span class="stf-tab-badge"
+							:class="selectedStatus === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
 							{{ statusCounts[tab.value as keyof typeof statusCounts] }}
 						</span>
 					</button>
@@ -305,7 +311,7 @@ onMounted(() => {
 				<SCard class="section-card">
 					<div class="section-header">
 						<div>
-							<h3 class="stf-page-title">Daftar Aspirasi</h3>
+							<h3 class="stf-section-title">Daftar Aspirasi</h3>
 							<span class="section-count">{{ totalData }} Aspirasi ditemukan</span>
 						</div>
 					</div>
@@ -457,112 +463,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.tab-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 8px 16px;
-	border-radius: 9999px;
-	font-size: 14px;
-	font-weight: 600;
-	font-family: "Be Vietnam Pro", sans-serif;
-	transition: all 0.2s;
-	white-space: nowrap;
-	cursor: pointer;
-	border: none;
-}
-
-.tab-btn--active {
-	color: white;
-}
-
-.tab-btn--active-semua {
-	background: var(--color-blue-600);
-	border-color: var(--color-blue-600);
-	box-shadow: 0 2px 8px rgba(46, 48, 148, 0.25);
-}
-
-.tab-btn--active-sarana {
-	background: var(--color-blue-100);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-
-.tab-btn--active-kurikulum {
-	background: var(--color-blue-100);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-
-.tab-btn--active-layanan {
-	background: var(--color-blue-100);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-.tab-btn--active-ekstrakulikuler{
-	background: var(--color-blue-100);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-
-.tab-btn--active-kesehatan{
-	background: var(--color-blue-100);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-
-.tab-btn--active-lainnya{
-	background: var(--color-blue-100);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-
-.tab-btn--inactive {
-	background: white;
-	color: var(--color-neutral-500);
-	border: 1px solid var(--color-general-border);
-}
-
-.tab-btn--inactive:hover {
-	background: var(--color-neutral-50);
-}
-
-.tab-badge {
-	font-size: 11px;
-	font-weight: 700;
-	padding: 1px 7px;
-	border-radius: 9999px;
-	line-height: 1.4;
-}
-
-.tab-badge--active {
-	background: rgba(255, 255, 255, 0.25);
-	color: white;
-}
-
-.tab-btn--active-ditandai {
-    background: #F59E0B  ;
-    color: #FFF8E1 ;
-    border: 1px solid #F59E0B ;
-}
-
-.tab-btn--active-tidak_ditandai {
-    background: var(--color-neutral-100);
-    color: var(--color-neutral-800);
-    border: 1px solid var(--color-general-border);
-}
-
-.tab-badge--active-tidak_ditandai {
-    background: var(--color-neutral-600);
-	color: white;
-    border: 1px solid var(--color-neutral-300);
-}
 .tab-badge--inactive {
 	background: var(--color-neutral-100);
 	color: var(--color-neutral-500);

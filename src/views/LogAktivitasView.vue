@@ -168,8 +168,8 @@ onMounted(() => {
             v-for="tab in moduleTabs" 
             :key="tab.value"
             @click="handleTabChange(tab.value)"
-            class="px-4 py-2 rounded-full text-sm font-semibold font-display transition-colors whitespace-nowrap"
-            :class="selectedModule === tab.value ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'"
+            class="stf-tab-btn"
+            :class="selectedModule === tab.value ? 'stf-tab--semua stf-tab-btn--active' : 'stf-tab-btn--inactive'"
           >
             {{ tab.label }}
           </button>

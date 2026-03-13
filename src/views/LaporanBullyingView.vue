@@ -190,22 +190,23 @@ onMounted(() => { fetchData() })
                 <SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary" @click="$router.push({ name: 'createLaporanBullying' })" />
             </div>
 
-            <!-- ── Status Tabs (scrollable on mobile) ── -->
-            <div class="tabs-wrapper">
-                <div class="tabs-scroll">
-                    <button
-                        v-for="tab in statusTabs"
-                        :key="tab.value"
-                        @click="handleTabChange(tab.value)"
-                        class="tab-btn"
-                        :class="selectedStatus === tab.value ? 'tab-btn--active' : 'tab-btn--inactive'"
-                    >
-                        {{ tab.label }}
-                        <span class="tab-badge" :class="selectedStatus === tab.value ? 'tab-badge--active' : 'tab-badge--inactive'">
-                            {{ statusCounts[tab.value as keyof typeof statusCounts] || 0 }}
-                        </span>
-                    </button>
-                </div>
+            <!-- ── Status Tabs ── -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button
+                    v-for="tab in statusTabs"
+                    :key="tab.value"
+                    @click="handleTabChange(tab.value)"
+                    class="stf-tab-btn"
+                    :class="[
+                        selectedStatus === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
+                        selectedStatus === tab.value ? `stf-tab--${tab.value}` : ''
+                    ]"
+                >
+                    {{ tab.label }}
+                    <span class="stf-tab-badge" :class="selectedStatus === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
+                        {{ statusCounts[tab.value as keyof typeof statusCounts] || 0 }}
+                    </span>
+                </button>
             </div>
 
             <!-- ── Filters Row ── -->
@@ -252,7 +253,7 @@ onMounted(() => { fetchData() })
                 <SCard class="section-card">
                     <div class="section-header">
                         <div>
-                            <h3 class="stf-page-title">Daftar Laporan</h3>
+                            <h3 class="stf-section-title">Daftar Laporan</h3>
                             <span class="section-count">{{ totalData }} laporan ditemukan</span>
                         </div>
                     </div>
@@ -314,7 +315,7 @@ onMounted(() => { fetchData() })
                     <svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <p class="stf-page-title">Belum ada laporan</p>
+                    <p class="stf-section-title">Belum ada laporan</p>
                     <p class="empty-desc">Laporan bullying yang kamu buat akan muncul di sini.</p>
                 </div>
 
@@ -359,7 +360,7 @@ onMounted(() => { fetchData() })
             <div v-if="showFilterDrawer" class="drawer-overlay" @click.self="showFilterDrawer = false">
                 <div class="drawer">
                     <div class="drawer-header">
-                        <span class="stf-page-title">Filter & Urutan</span>
+                        <span class="stf-section-title">Filter & Urutan</span>
                         <button class="drawer-close" @click="showFilterDrawer = false" aria-label="Tutup">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
