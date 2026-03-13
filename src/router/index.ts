@@ -11,6 +11,8 @@ import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
 import EditLaporanKerusakanView from '@/views/EditLaporanKerusakanView.vue'
+import AspirasiView from '@/views/AspirasiView.vue'
+import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -85,6 +87,18 @@ const router = createRouter({
       path: '/laporan-kerusakan/:id/edit',
       name: 'editLaporanKerusakan',
       component: EditLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/aspirasi',
+      name: 'aspirasi',
+      component: AspirasiView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-aspirasi',
+      name: 'createAspirasi',
+      component: CreateAspirasiView,
       meta: { requiresAuth: true },
     },
   ],
