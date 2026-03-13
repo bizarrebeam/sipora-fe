@@ -195,7 +195,7 @@ const submitArticle = async (status: 'draft' | 'published') => {
     data.append('status', status)
 
     if (selectedFile.value) {
-      data.append('gambar', selectedFile.value)
+      data.append('foto_artikel', selectedFile.value)
     }
 
     if (isEditMode.value && articleId) {

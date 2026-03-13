@@ -38,12 +38,6 @@ onMounted(async () => {
   }
 })
 
-const formatTanggal = (dateString: string) => {
-  if (!dateString) return ''
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-  return new Date(dateString).toLocaleDateString('id-ID', options)
-}
-
 const formatTanggalDanJam = (dateString: string) => {
   if (!dateString) return ''
   const date = new Date(dateString)
