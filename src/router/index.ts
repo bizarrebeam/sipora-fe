@@ -6,6 +6,7 @@ import ProfilView from '../views/ProfilView.vue'
 import ManajemenAkunView from '../views/ManajemenAkunView.vue'
 import LogAktivitasView from '../views/LogAktivitasView.vue'
 import LoginGuruView from '../views/LoginGuruView.vue'
+import LoginBKView from '../views/LoginBKView.vue'
 import LoginAdminView from '../views/LoginAdminView.vue'
 import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
@@ -59,7 +60,13 @@ const router = createRouter({
     },
     {
       path: '/internal/login-bk',
-      name: 'loginPtk',
+      name: 'loginBK',
+      component: LoginBKView,
+      meta: { guest: true },
+    },
+    {
+      path: '/internal/login-guru',
+      name: 'loginGuru',
       component: LoginGuruView,
       meta: { guest: true },
     },

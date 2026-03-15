@@ -22,7 +22,8 @@ async function handleLogin() {
   }
   loading.value = true
   try {
-    await auth.login(identifier.value, password.value, ['guru', 'guru_bk'])
+    // Specifically for Guru
+    await auth.login(identifier.value, password.value, ['guru'])
     router.push('/')
   } catch (err: any) {
     errorMsg.value = err.message || 'Login gagal. Periksa kredensial Anda.'
@@ -38,7 +39,7 @@ async function handleLogin() {
       <!-- Header with logo -->
       <div class="login-header">
         <img :src="SiporaLogo" alt="SIPORA" class="login-logo" />
-        <p class="login-tagline">Portal Guru & Tenaga Kependidikan.<br/>Masuk untuk mengelola laporan dan komunikasi internal.</p>
+        <p class="login-tagline">Masuk untuk mengelola laporan mata pelajaran dan akademik siswa.</p>
       </div>
 
       <!-- Error -->
@@ -51,13 +52,14 @@ async function handleLogin() {
       <form @submit.prevent="handleLogin" class="login-form">
         <div class="nisn-field">
           <STextField
-            label="Username / NUPTK"
-            placeholder="Masukkan username atau NUPTK"
+            label="NUPTK"
+            placeholder="Masukkan 16 digit NUPTK"
             variant="text"
             v-model="identifier"
             :required="true"
             maxlength="16"
             digitGuide="16"
+            digitGroup="4"
           />
         </div>
         <STextField

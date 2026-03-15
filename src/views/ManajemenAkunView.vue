@@ -66,6 +66,7 @@ const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const showCreateDialog = ref(false)
 const createType = ref<'guru' | 'guru_bk'>('guru')
 const createNuptk = ref('')
+const createUsername = ref('')
 const createNama = ref('')
 const createMapels = ref<string[]>([''])
 const createPassword = ref('')
@@ -239,6 +240,7 @@ async function confirmVerify() {
 function openCreateDialog(type: 'guru' | 'guru_bk') {
   createType.value = type
   createNuptk.value = ''
+  createUsername.value = ''
   createNama.value = ''
   createMapels.value = ['']
   createPassword.value = ''
@@ -246,7 +248,11 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 }
 
 async function handleCreate() {
-  if (!createNuptk.value || !createNama.value || !createPassword.value) {
+  if (createType.value === 'guru_bk' && !createUsername.value) {
+    toast.error('Username wajib diisi untuk Guru BK.')
+    return
+  }
+  if (!createNama.value || !createPassword.value) {
     toast.error('Harap isi semua field wajib.')
     return
   }
@@ -254,8 +260,15 @@ async function handleCreate() {
     toast.error('Password harus minimal 8 karakter dan mengandung huruf serta angka.')
     return
   }
-  if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
-    toast.error('NUPTK harus terdiri dari 16 digit angka.')
+  
+  // NUPTK is only mandatory for 'guru', optional for 'guru_bk'
+  if (createType.value === 'guru') {
+    if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
+      toast.error('NUPTK harus terdiri dari 16 digit angka.')
+      return
+    }
+  } else if (createNuptk.value && (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value))) {
+    toast.error('Jika diisi, NUPTK harus terdiri dari 16 digit angka.')
     return
   }
   if (createType.value === 'guru') {
@@ -274,6 +287,7 @@ async function handleCreate() {
   try {
     const payload: Record<string, string> = {
       role_type: createType.value,
+      username: createType.value === 'guru_bk' ? createUsername.value : createNuptk.value,
       nuptk: createNuptk.value,
       nama_lengkap: createNama.value,
       password: createPassword.value,
@@ -516,15 +530,25 @@ onMounted(fetchDaftar)
       @close="showCreateDialog = false"
     >
       <div class="create-form">
+        <STextField
+          v-if="createType === 'guru_bk'"
+          label="Username"
+          placeholder="Ketik username (cth: gurubk_budi)"
+          variant="text"
+          v-model="createUsername"
+          :required="true"
+          maxlength="50"
+        />
         <div class="nuptk-field">
           <STextField
-            label="NUPTK"
-            placeholder="Masukkan 16 digit NUPTK"
+            :label="createType === 'guru' ? 'NUPTK' : 'NUPTK (Opsional)'"
+            :placeholder="createType === 'guru' ? 'Masukkan 16 digit NUPTK' : 'Boleh dikosongkan'"
             variant="text"
             v-model="createNuptk"
-            :required="true"
+            :required="createType === 'guru'"
             maxlength="16"
-            digitGuide="16"
+            :digitGuide="createType === 'guru' ? '16' : ''"
+            digitGroup="4"
           />
           <a href="https://gtk.belajar.kemendikdasmen.go.id/akun/ptk" target="_blank" rel="noopener noreferrer" class="nuptk-help">Cek NUPTK</a>
         </div>
