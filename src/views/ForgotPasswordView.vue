@@ -52,11 +52,11 @@ async function handleForgot() {
       </div>
 
       <!-- Success Message -->
-      <div v-if="successMsg" class="forgot-success">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <div v-if="successMsg" class="forgot-success-solid">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         <div>
-          <p class="success-text">{{ successMsg }}</p>
-          <p class="success-hint">Periksa folder inbox atau spam email kamu.</p>
+          <p class="success-text-solid">{{ successMsg }}</p>
+          <p class="success-hint-solid">Periksa folder inbox atau spam email kamu.</p>
         </div>
       </div>
 
@@ -147,36 +147,32 @@ async function handleForgot() {
   color: var(--color-neutral-500);
 }
 
-/* Success */
-.forgot-success {
+/* Success Solid Style */
+.forgot-success-solid {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  border-radius: 10px;
-  color: #059669;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 16px;
+  background: #10B981;
+  color: white;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
-.forgot-success svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.success-text {
+.success-text-solid {
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  line-height: 1.4;
 }
 
-.success-hint {
+.success-hint-solid {
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
-  font-weight: 400;
-  color: #047857;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
 /* Error */

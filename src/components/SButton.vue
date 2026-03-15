@@ -1,18 +1,34 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   label?: string
-  variant?: 'primary' | 'secondary' | 'ghost' | 'tertiary' | 'danger'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'tertiary' | 'danger' | 'action'
+  size?: 'small' | 'medium' | 'large'
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
-}>()
+}>(), {
+  variant: 'primary',
+  size: 'large'
+})
 
 defineEmits<{
   (e: 'click', event: MouseEvent): void
 }>()
 
-const baseClasses = 'inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 sm:px-5 sm:py-4 text-sm sm:text-base transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-semibold'
+const baseClasses = 'inline-flex items-center justify-center gap-2 rounded-lg transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed font-semibold'
+
+const sizeClasses = computed(() => {
+  switch (props.size) {
+    case 'small':
+      return 'px-3 py-1.5 text-xs'
+    case 'medium':
+      return 'px-4 py-2 text-sm'
+    case 'large':
+    default:
+      return 'px-4 py-2.5 sm:px-5 sm:py-4 text-sm sm:text-base'
+  }
+})
 
 const variantClasses = computed(() => {
   switch (props.variant) {
@@ -24,6 +40,8 @@ const variantClasses = computed(() => {
       return 'bg-transparent border border-transparent text-general-black hover:border-general-black active:bg-neutral-50'
     case 'danger':
       return 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700'
+    case 'action':
+      return 'bg-blue-600 text-blue-50 hover:bg-blue-700 active:bg-blue-800 shadow-sm'
     case 'primary':
     default:
       return 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700'
@@ -33,7 +51,7 @@ const variantClasses = computed(() => {
 
 <template>
   <button
-    :class="[baseClasses, variantClasses]"
+    :class="[baseClasses, sizeClasses, variantClasses]"
     :type="type || 'button'"
     :disabled="disabled"
     @click="$emit('click', $event)"

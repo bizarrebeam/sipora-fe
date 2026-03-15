@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import STextField from '@/components/STextField.vue'
 import SToggle from '@/components/SToggle.vue'
 import SButton from '@/components/SButton.vue'
 import SAlert from '@/components/SAlert.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
 import { useLaporanBullyingStore } from '@/stores/laporanBullying'
 
 const router = useRouter()
@@ -31,7 +32,8 @@ function handleAlertPrimary() {
 
 const judul = ref('')
 const tanggalKejadian = ref('')
-const tanggalInputRef = ref<HTMLInputElement | null>(null)
+const tanggalKejadianObj = ref<Date | null>(null)
+const showDatePicker = ref(false)
 const lokasi = ref('')
 const jenisBullying = ref('')
 const deskripsi = ref('')
@@ -39,6 +41,17 @@ const anonimitas = ref(false)
 const buktiPendukung = ref<File[]>([])
 const buktiError = ref('')
 const buktiInputRef = ref<HTMLInputElement | null>(null)
+
+watch(tanggalKejadianObj, (newVal) => {
+  if (newVal) {
+    const yyyy = newVal.getFullYear()
+    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+    const dd = String(newVal.getDate()).padStart(2, '0')
+    tanggalKejadian.value = `${yyyy}-${mm}-${dd}`
+    showDatePicker.value = false
+    validate()
+  }
+})
 
 const jenisBullyingOptions = [
     { value: 'verbal', label: 'Bullying Verbal' },
@@ -203,23 +216,18 @@ async function handleSubmit() {
                         <span class="custom-asterisk">*</span>
                     </div>
                     <div class="relative w-full">
-                        <input
-                            ref="tanggalInputRef"
-                            type="date"
-                            v-model="tanggalKejadian"
-                            class="visually-hidden-date"
-                            @change="validate"
-                            required
-                            tabindex="-1"
-                        />
                         <button
                             type="button"
-                            class="date-picker-btn"
-                            @click="() => { if (tanggalInputRef?.showPicker) tanggalInputRef.showPicker(); else tanggalInputRef?.click(); }"
+                            class="date-picker-btn flex items-center gap-2"
+                            @click="showDatePicker = !showDatePicker"
                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-neutral-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                             <span v-if="tanggalKejadian">{{ new Date(tanggalKejadian).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
-                            <span v-else class="placeholder-text">Pilih tanggal...</span>
+                            <span v-else class="placeholder-text text-neutral-300">Pilih tanggal kejadian...</span>
                         </button>
+                        <div v-show="showDatePicker" class="absolute left-0 top-[52px] z-50 shadow-2xl border rounded-2xl overflow-hidden scale-90 origin-top-left bg-white">
+                            <SDatePicker v-model="tanggalKejadianObj" />
+                        </div>
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                 </div>

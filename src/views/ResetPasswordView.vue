@@ -4,6 +4,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import STextField from '@/components/STextField.vue'
 import SButton from '@/components/SButton.vue'
+import SChip from '@/components/SChip.vue'
 import SiporaLogo from '@/assets/sipora-logo.svg'
 
 const auth = useAuthStore()
@@ -68,11 +69,8 @@ async function handleReset() {
       </div>
 
       <!-- Success -->
-      <div v-if="successMsg" class="reset-success">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        <div>
-          <p class="success-text">{{ successMsg }}</p>
-        </div>
+      <div v-if="successMsg" class="mb-6 flex justify-center">
+        <SChip :label="successMsg" tone="success" size="medium" />
       </div>
 
       <!-- Error -->

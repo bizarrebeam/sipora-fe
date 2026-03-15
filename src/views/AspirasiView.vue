@@ -6,6 +6,8 @@ import STextField from '@/components/STextField.vue'
 import STable from '@/components/STable.vue'
 import SDialog from '@/components/SDialog.vue'
 import SPagination from '@/components/SPagination.vue'
+import SChip from '@/components/SChip.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAspirasiStore } from '@/stores/aspirasi'
 
@@ -42,8 +44,23 @@ const search = ref('')
 const selectedStatus = ref('semua')
 const selectedKategori = ref('semua')
 const selectedDate = ref('')
+const selectedDateObj = ref<Date | null>(null)
+const showDatePicker = ref(false)
 
-const sortKey = ref('')
+watch(selectedDateObj, (newVal) => {
+  if (newVal) {
+    const yyyy = newVal.getFullYear()
+    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+    const dd = String(newVal.getDate()).padStart(2, '0')
+    selectedDate.value = `${yyyy}-${mm}-${dd}`
+  } else {
+    selectedDate.value = ''
+  }
+  currentPage.value = 1
+  showDatePicker.value = false
+})
+
+const sortKey = ref('no_laporan')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
@@ -106,9 +123,9 @@ function tabActiveClass(value: string) {
 
 const columns = [
 	{ key: 'no_laporan', label: 'No. Laporan', sortable: true },
+	{ key: 'pengirim', label: 'Pengirim', sortable: true, tdClass: 'min-w-[200px]' },
 	{ key: 'judul', label: 'Judul', sortable: true },
 	{ key: 'kategori', label: 'Kategori', sortable: true },
-	{ key: 'pengirim', label: 'Pengirim', sortable: true },
 	{ key: 'status_ditandai', label: 'Ditandai', sortable: true },
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
@@ -124,6 +141,16 @@ const filteredList = computed(() => {
 		list = list.filter(l => l.status_ditandai === selectedStatus.value)
 	}
 
+	if (selectedDate.value) {
+		list = list.filter(l => {
+			const d = new Date(l.tanggal_aspirasi)
+			const yyyy = d.getFullYear()
+			const mm = String(d.getMonth() + 1).padStart(2, '0')
+			const dd = String(d.getDate()).padStart(2, '0')
+			return `${yyyy}-${mm}-${dd}` === selectedDate.value
+		})
+	}
+
 	if (search.value && search.value.trim()) {
 		const q = search.value.toLowerCase()
 		list = list.filter(l => {
@@ -136,30 +163,35 @@ const filteredList = computed(() => {
 		})
 	}
 
+	if (sortKey.value) {
+		list.sort((a, b) => {
+			let valA = a[sortKey.value as keyof typeof a]
+			let valB = b[sortKey.value as keyof typeof b]
+			
+			// Handle date sorting specifically
+			if (sortKey.value === 'tanggal_aspirasi') {
+				const dateA = new Date(valA as string).getTime()
+				const dateB = new Date(valB as string).getTime()
+				return sortOrder.value === 'asc' ? dateA - dateB : dateB - dateA
+			}
+
+			if (valA == null) return 1
+			if (valB == null) return -1
+			if (typeof valA === 'string') {
+				return sortOrder.value === 'asc' ? valA.localeCompare(valB as string) : (valB as string).localeCompare(valA)
+			}
+			return sortOrder.value === 'asc' ? (valA as any) - (valB as any) : (valB as any) - (valA as any)
+		})
+	}
+
 	return list
-})
-
-const sortedList = computed(() => {
-	const list = filteredList.value.slice()
-	if (!sortKey.value) return list.sort((a,b) => (new Date(b.tanggal_aspirasi).getTime() - new Date(a.tanggal_aspirasi).getTime()))
-
-	return list.sort((a:any,b:any) => {
-		const ak = a[sortKey.value]
-		const bk = b[sortKey.value]
-		if (ak == null) return 1
-		if (bk == null) return -1
-		if (typeof ak === 'string') {
-			return sortOrder.value === 'asc' ? ak.localeCompare(bk) : bk.localeCompare(ak)
-		}
-		return sortOrder.value === 'asc' ? (ak - bk) : (bk - ak)
-	})
 })
 
 const totalData = computed(() => filteredList.value.length)
 const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
 const paginatedList = computed(() => {
 	const start = (currentPage.value - 1) * pageSize.value
-	return sortedList.value.slice(start, start + pageSize.value)
+	return filteredList.value.slice(start, start + pageSize.value)
 })
 
 function formatDate(dateStr: string) {
@@ -233,8 +265,11 @@ function confirmStatusUpdate() {
 	statusTarget.value = null
 }
 
-watch([search], () => {
-    fetchData()
+watch([search, selectedKategori, selectedStatus, selectedDate, sortKey, sortOrder], () => {
+    // No need to refetch data from API for every filter change if filtering is client-side
+    // If filtering is server-side, then fetchData() should be called here.
+    // For now, assuming client-side filtering based on the computed properties.
+    currentPage.value = 1; // Reset page on filter/sort change
 }, { immediate: false })
 
 async function fetchData() {
@@ -298,13 +333,29 @@ onMounted(() => {
 				</template>
 			</div>
 
-			<div class="flex flex-col md:flex-row gap-4 mb-6">
-				<div class="flex-1">
+			<div class="filters-row">
+				<div class="filter-search">
 					<STextField v-model="search" placeholder="Cari no. laporan, judul, kategori, deskripsi..."
 						variant="text" @input="onSearchInput" />
 				</div>
-				<div>
-					<input type="date" :value="selectedDate" class="date-input" @change="handleDateChange" />
+				<div class="filter-extras">
+					<div class="relative">
+						<button 
+							type="button"
+							class="filter-input flex items-center gap-2 bg-white"
+							@click="showDatePicker = !showDatePicker"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+							{{ selectedDate || 'Pilih Tanggal' }}
+						</button>
+						<div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+							<SDatePicker v-model="selectedDateObj" />
+						</div>
+					</div>
+					<select v-model="sortOrder" class="filter-input" @change="currentPage = 1">
+						<option value="desc">Terbaru</option>
+						<option value="asc">Terlama</option>
+					</select>
 				</div>
 			</div>
 
@@ -339,39 +390,45 @@ onMounted(() => {
 							</template>
 
 							<template #body-cell-kategori="{ row }">
-								<span class="status-badge" :class="`status-badge--kategori`">
-									{{ kategoriLabel(row.kategori) }}
-								</span>
-
-							</template> 
+								<SChip :label="kategoriLabel(row.kategori)" tone="info" size="small" />
+							</template>
 
 							<template #body-cell-deskripsi="{ row }">
 								<div class="deskripsi-cell">{{ row.deskripsi }}</div>
 							</template>
 
 							<template #body-cell-pengirim="{ row }">
-								<div class="flex items-center gap-1.5 flex-wrap">
-									<span class="text-sm font-medium text-gray-700">
-										{{ row.pelapor_info?.nama_lengkap || row.nama_lengkap || row.pengirim_username || '-' }}
-									</span>
-									<span v-if="row.akun_terverifikasi" title="Terverifikasi" class="flex-shrink-0 text-green-600">
-										<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-									</span>
+								<div class="flex flex-col items-start gap-1">
+									<span class="font-semibold text-gray-800">{{ row.pelapor_info?.nama_lengkap || '-' }}</span>
+									<SChip
+										v-if="row.akun_terverifikasi !== undefined"
+										:label="row.akun_terverifikasi ? 'Terverifikasi' : 'Belum Terverifikasi'"
+										:tone="row.akun_terverifikasi ? 'success' : 'warning'"
+										size="small"
+									/>
 								</div>
 							</template>
 
 							<template #body-cell-status_ditandai="{ row }">
-								<span class="status-badge" :class="`status-badge--${row.status_ditandai}`">
-									{{ statusLabel(row.status_ditandai) }}
-								</span>
+								<SChip 
+									:label="statusLabel(row.status_ditandai)" 
+									:tone="row.status_ditandai === 'ditandai' ? 'warning' : 'neutral'" 
+									size="small" 
+								/>
 							</template>
 
 							<template #body-cell-aksi="{ row }">
 								<div class="flex items-center gap-2">
-									<button class="aksi-btn aksi-btn--detail"
-										@click="$router.push({ name: 'detailAspirasi', params: { id: row.id } })"> 
-										Detail
-									</button>
+									<SButton 
+                                    label="Detail" 
+                                    variant="action" 
+                                    size="small" 
+                                    @click="openDetail(row)" 
+                                >
+                                    <template #left-icon>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </template>
+                                </SButton>
 								</div>
 							</template>
 						</STable>
@@ -393,8 +450,7 @@ onMounted(() => {
 				<div v-else class="card-grid">
 					<div v-for="item in paginatedList" :key="item.id" class="report-card" @click="$router.push({ name: 'detailAspirasi', params: { id: item.id } })">
 						<div class="report-card__top">
-								<span class="status-badge" :class="`status-badge--kategori`">
-								{{ kategoriLabel(item.kategori) }}</span>
+								<SChip :label="kategoriLabel(item.kategori)" tone="info" size="small" />
 							<span class="report-card__date">{{ formatDate(item.tanggal_aspirasi) }}</span>
 						</div>
 
@@ -413,9 +469,12 @@ onMounted(() => {
 						<p class="report-card__desc">{{ item.deskripsi }}</p>
 
 						<div class="report-card__footer">
-							<button class="aksi-btn aksi-btn--detail" @click.stop="$router.push({ name: 'detailAspirasi', params: { id: item.id } })">
-								Detail
-							</button>
+							<SButton 
+								label="Detail" 
+								variant="action" 
+								size="small" 
+								@click.stop="$router.push({ name: 'detailAspirasi', params: { id: item.id } })" 
+							/>
 						</div>
 					</div>
 				</div>
@@ -917,10 +976,46 @@ onMounted(() => {
 	.report-card__detail-link {
 		font-size: 12px;
 	}
+
 	.laporan-header {
 		flex-direction: column;
 		gap: 8px;
 		margin-bottom: 16px;
 	}
+}
+
+.filters-row {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 24px;
+	align-items: stretch;
+}
+.filter-search { flex: 1; min-width: 0; }
+.filter-extras {
+	display: flex;
+	gap: 12px;
+}
+.filter-input {
+	border: 1px solid var(--color-general-border);
+	border-radius: 8px;
+	padding: 10px 40px 10px 14px;
+	height: 48px;
+	font-size: 14px;
+	color: var(--color-general-black);
+	background: white;
+	transition: border-color 0.2s;
+	min-width: 140px;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	cursor: pointer;
+}
+.filter-input:focus {
+	outline: none;
+	border-color: var(--color-blue-500);
+	box-shadow: 0 0 0 3px rgba(46,48,148,.08);
 }
 </style>

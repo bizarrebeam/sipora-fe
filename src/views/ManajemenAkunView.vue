@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { apiAuthGet, apiAuthPost } from '@/services/api'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
@@ -29,6 +29,31 @@ const siswaTotal = ref(0)
 const guruTotal = ref(0)
 const guruBkTotal = ref(0)
 const search = ref('')
+const selectedDate = ref('')
+const selectedDateObj = ref<Date | null>(null)
+const showDatePicker = ref(false)
+
+watch(selectedDateObj, (newVal: Date | null) => {
+  if (newVal) {
+    const yyyy = newVal.getFullYear()
+    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+    const dd = String(newVal.getDate()).padStart(2, '0')
+    selectedDate.value = `${yyyy}-${mm}-${dd}`
+  } else {
+    selectedDate.value = ''
+  }
+  showDatePicker.value = false
+})
+
+const sortOrder = ref<'asc' | 'desc'>('desc')
+watch(sortOrder, (val: 'asc' | 'desc') => {
+  sortState.value.siswa.key = 'date_joined'
+  sortState.value.siswa.order = val
+  sortState.value.guru.key = 'date_joined'
+  sortState.value.guru.order = val
+  sortState.value.guruBk.key = 'date_joined'
+  sortState.value.guruBk.order = val
+})
 const loading = ref(false)
 
 const isPasswordLengthValid = computed(() => createPassword.value.length >= 8)
@@ -81,10 +106,9 @@ function handleTabChange(tab: string) {
 }
 
 const siswaColumns = [
-  { key: 'nama_lengkap', label: 'Nama', sortable: true },
+  { key: 'nama_lengkap', label: 'Nama', sortable: true, tdClass: 'min-w-[200px]' },
   { key: 'nis', label: 'NIS', sortable: true },
   { key: 'kelas', label: 'Kelas', sortable: true },
-  { key: 'is_verified', label: 'Status Verifikasi', sortable: true },
   { key: 'date_joined', label: 'Terdaftar Pada', sortable: true },
   { key: 'action', label: 'Aksi', sortable: false }
 ]
@@ -131,9 +155,17 @@ function getSortedList(list: AkunItem[], type: 'siswa' | 'guru' | 'guruBk') {
   })
 }
 
-const siswaSorted = computed(() => getSortedList(siswaList.value, 'siswa'))
-const guruSorted = computed(() => getSortedList(guruList.value, 'guru'))
-const guruBkSorted = computed(() => getSortedList(guruBkList.value, 'guruBk'))
+function applyDateFilter(list: AkunItem[]) {
+  if (!selectedDate.value) return list
+  return list.filter(item => {
+    if (!item.date_joined) return false
+    return item.date_joined.startsWith(selectedDate.value)
+  })
+}
+
+const siswaSorted = computed(() => getSortedList(applyDateFilter(siswaList.value), 'siswa'))
+const guruSorted = computed(() => getSortedList(applyDateFilter(guruList.value), 'guru'))
+const guruBkSorted = computed(() => getSortedList(applyDateFilter(guruBkList.value), 'guruBk'))
 
 const paginatedSiswaList = computed(() => {
   const start = (pagination.value.siswa.page - 1) * pagination.value.siswa.pageSize
@@ -319,14 +351,35 @@ onMounted(fetchDaftar)
         </button>
       </div>
 
-      <div class="search-bar">
-        <STextField
-          label=""
-          placeholder="Cari berdasarkan nama, NIS, atau NUPTK..."
-          variant="text"
-          v-model="search"
-          @input="onSearchInput"
-        />
+      <div class="filters-row">
+        <div class="filter-search">
+          <STextField
+            label=""
+            placeholder="Cari berdasarkan nama, NIS, atau NUPTK..."
+            variant="text"
+            v-model="search"
+            @input="onSearchInput"
+          />
+        </div>
+        <div class="filter-extras">
+          <div class="relative">
+            <button 
+              type="button"
+              class="filter-input flex items-center gap-2 bg-white"
+              @click="showDatePicker = !showDatePicker"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              {{ selectedDate || 'Pilih Tanggal' }}
+            </button>
+            <div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+              <SDatePicker v-model="selectedDateObj" />
+            </div>
+          </div>
+          <select v-model="sortOrder" class="filter-input">
+            <option value="desc">Terbaru</option>
+            <option value="asc">Terlama</option>
+          </select>
+        </div>
       </div>
 
       <div v-if="loading" class="admin-loading">
@@ -359,13 +412,15 @@ onMounted(fetchDaftar)
               <template #body-cell-kelas="{ row }">
                 {{ row.kelas || '-' }}
               </template>
-              <template #body-cell-is_verified="{ row }">
-                <SChip
-                  :label="row.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'"
-                  :tone="row.is_verified ? 'success' : 'warning'"
-                  variant="light"
-                  size="small"
-                />
+              <template #body-cell-nama_lengkap="{ row }">
+                <div class="flex flex-col items-start gap-1">
+                  <span class="font-semibold">{{ row.nama_lengkap || '-' }}</span>
+                  <SChip
+                    :label="row.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'"
+                    :tone="row.is_verified ? 'success' : 'warning'"
+                    size="small"
+                  />
+                </div>
               </template>
               <template #body-cell-date_joined="{ row }">
                 {{ formatDate(row.date_joined) }}
@@ -374,9 +429,14 @@ onMounted(fetchDaftar)
                 <SButton
                   v-if="!row.is_verified && isKemahasiswaan"
                   label="Verifikasi"
-                  variant="secondary"
+                  variant="action"
+                  size="medium"
                   @click="openVerifyDialog(row)"
-                />
+                >
+                  <template #left-icon>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </template>
+                </SButton>
               </template>
             </STable>
           </div>
@@ -555,9 +615,43 @@ onMounted(fetchDaftar)
 
 .admin-loading {
   text-align: center;
-  padding: 40px 0;
-  color: var(--color-neutral-500);
-  font-family: "Be Vietnam Pro", sans-serif;
+  padding: 40px;
+  color: #666;
+}
+
+.filters-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+.filter-search { flex: 1; min-width: 0; }
+.filter-extras {
+  display: flex;
+  gap: 12px;
+}
+.filter-input {
+  border: 1px solid var(--color-general-border);
+  border-radius: 8px;
+  padding: 10px 40px 10px 14px;
+  height: 48px;
+  font-size: 14px;
+  color: var(--color-general-black);
+  background: white;
+  transition: border-color 0.2s;
+  min-width: 140px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+.filter-input:focus {
+  outline: none;
+  border-color: var(--color-blue-500);
+  box-shadow: 0 0 0 3px rgba(46,48,148,.08);
 }
 
 .section-card {

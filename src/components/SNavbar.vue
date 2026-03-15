@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import SDialog from '@/components/SDialog.vue'
+import SChip from '@/components/SChip.vue'
 import SiporaLogo from '@/assets/sipora-logo-light.svg'
 
 const auth = useAuthStore()
@@ -14,6 +15,7 @@ const profileMenuOpen = ref(false)
 const isLoggedIn = computed(() => auth.isAuthenticated)
 const namaDepan = computed(() => auth.namaDepan)
 const roleBadge = computed(() => auth.roleBadge)
+const isVerified = computed(() => auth.isVerified)
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 const canManageAkun = computed(() => isAdmin.value || auth.user?.role === 'guru_bk')
 
@@ -80,7 +82,15 @@ async function confirmLogout() {
               </div>
               <div class="auth-user-info">
                 <span class="auth-name">{{ namaDepan }}</span>
-                <span class="auth-badge">{{ roleBadge }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="auth-badge">{{ roleBadge }}</span>
+                  <SChip 
+                    v-if="auth.user?.role === 'siswa' && !isVerified" 
+                    label="Belum Terverifikasi" 
+                    tone="warning" 
+                    size="medium" 
+                  />
+                </div>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron" :class="{'chevron-up': profileMenuOpen}">
                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -126,7 +136,15 @@ async function confirmLogout() {
           <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">
             <div class="mobile-user-info">
               <span class="mobile-user-name">{{ namaDepan }}</span>
-              <span class="mobile-badge">{{ roleBadge }}</span>
+              <div class="flex items-center gap-2">
+                <span class="mobile-badge">{{ roleBadge }}</span>
+                <SChip 
+                  v-if="auth.user?.role === 'siswa' && !isVerified" 
+                  label="Belum Terverifikasi" 
+                  tone="warning" 
+                  size="medium" 
+                />
+              </div>
             </div>
           </RouterLink>
           <RouterLink to="/profil" class="mobile-link" @click="closeMobile">Manajemen Profil</RouterLink>

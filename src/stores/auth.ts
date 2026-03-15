@@ -47,12 +47,10 @@ export const useAuthStore = defineStore('auth', () => {
       guru_bk: 'Guru BK',
       kemahasiswaan: 'Kemahasiswaan',
     }
-    const roleStr = map[user.value.role] || user.value.role
-    if (user.value.role === 'siswa' && !user.value.is_verified) {
-      return `${roleStr} • Belum Terverifikasi`
-    }
-    return roleStr
+    return map[user.value.role] || user.value.role
   })
+
+  const isVerified = computed(() => !!user.value?.is_verified)
 
   const verificationLabel = computed(() => {
     if (!user.value || user.value.role !== 'siswa') return ''
@@ -188,6 +186,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     namaDepan,
     roleBadge,
+    isVerified,
     verificationLabel,
     login,
     registerSiswa,

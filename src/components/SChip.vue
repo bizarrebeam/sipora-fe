@@ -3,24 +3,26 @@ import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{
   label: string
-  variant?: 'outline' | 'outline-filled' | 'solid' | 'light'
+  variant?: 'solid' | 'light'
   size?: 'small' | 'medium' | 'large'
+  tone?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'neutral'
 }>(), {
-  variant: 'outline',
-  size: 'large'
+  variant: 'solid',
+  size: 'large',
+  tone: 'default'
 })
 
-const baseClasses = 'inline-flex items-center justify-center rounded-full cursor-pointer transition-all duration-200'
+const baseClasses = 'inline-flex items-center justify-center rounded-xl transition-all duration-200 font-semibold'
 
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'small':
-      return 'px-2 py-1 gap-0.5 subheading-s9'
+      return 'px-2 py-0.5 gap-0.5 text-[11px]'
     case 'medium':
-      return 'px-3 py-2 gap-1 subheading-s8'
+      return 'px-3 py-1 gap-1 text-[13px]'
     case 'large':
     default:
-      return 'px-4 py-2 gap-2 subheading-s7'
+      return 'px-4 py-2 gap-2 text-[14px]'
   }
 })
 
@@ -29,17 +31,29 @@ const iconSizeClasses = computed(() => {
 })
 
 const variantClasses = computed(() => {
-  switch (props.variant) {
-    case 'outline-filled':
-      return 'border border-blue-500 bg-blue-50 text-blue-500 hover:bg-blue-100'
-    case 'solid':
-      return 'border border-transparent bg-blue-500 text-white hover:bg-blue-600'
-    case 'light':
-      return 'border border-transparent bg-blue-50 text-blue-600 hover:bg-blue-100'
-    case 'outline':
-    default:
-      return 'border border-blue-500 bg-transparent text-blue-500 hover:bg-blue-50'
+  const tones: Record<string, string> = {
+    default: 'bg-blue-600 text-white hover:bg-blue-700',
+    success: 'bg-green-600 text-white hover:bg-green-700',
+    warning: 'bg-yellow-500 text-white hover:bg-yellow-600',
+    danger: 'bg-red-600 text-white hover:bg-red-700',
+    info: 'bg-blue-400 text-white hover:bg-blue-500',
+    neutral: 'bg-neutral-600 text-white hover:bg-neutral-700'
   }
+
+  const lights: Record<string, string> = {
+    default: 'bg-blue-50 text-blue-700 hover:bg-blue-100',
+    success: 'bg-green-50 text-green-700 hover:bg-green-100',
+    warning: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100',
+    danger: 'bg-red-50 text-red-700 hover:bg-red-100',
+    info: 'bg-blue-50 text-blue-500 hover:bg-blue-100',
+    neutral: 'bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
+  }
+
+  if (props.variant === 'light') {
+    return lights[props.tone || 'default']
+  }
+  
+  return tones[props.tone || 'default']
 })
 </script>
 

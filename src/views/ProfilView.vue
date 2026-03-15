@@ -354,8 +354,8 @@ async function handleUbahPassword() {
 }
 
 .badge--semester {
-  background: #f0fdf4;
-  color: #15803d;
+  background: var(--color-blue-50);
+  color: var(--color-blue-600);
 }
 
 .badge--verify-true {

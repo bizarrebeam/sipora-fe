@@ -6,6 +6,8 @@ import STextField from '@/components/STextField.vue'
 import STable from '@/components/STable.vue'
 import SDialog from '@/components/SDialog.vue'
 import SPagination from '@/components/SPagination.vue'
+import SChip from '@/components/SChip.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 
@@ -36,8 +38,23 @@ const loading = ref(false)
 const search = ref('')
 const selectedStatus = ref('semua')
 const selectedDate = ref('')
+const selectedDateObj = ref<Date | null>(null)
+const showDatePicker = ref(false)
 
-const sortKey = ref('')
+watch(selectedDateObj, (newVal) => {
+  if (newVal) {
+    const yyyy = newVal.getFullYear()
+    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+    const dd = String(newVal.getDate()).padStart(2, '0')
+    selectedDate.value = `${yyyy}-${mm}-${dd}`
+  } else {
+    selectedDate.value = ''
+  }
+  currentPage.value = 1
+  showDatePicker.value = false
+})
+
+const sortKey = ref('tanggal_kejadian')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
@@ -64,13 +81,12 @@ function tabActiveClass(value: string) {
 }
 
 const columns = [
-	{ key: 'id', label: 'ID Internal', sortable: false },
 	{ key: 'no_laporan', label: 'No. Laporan', sortable: true },
+	{ key: 'pengirim', label: 'Pengirim', sortable: true, tdClass: 'min-w-[200px]' },
 	{ key: 'judul', label: 'Judul Laporan', sortable: true },
 	{ key: 'lokasi', label: 'Lokasi', sortable: true },
 	{ key: 'deskripsi', label: 'Deskripsi Kerusakan', sortable: false },
 	{ key: 'tanggal_kejadian', label: 'Tanggal Kejadian', sortable: true },
-	{ key: 'pengirim', label: 'Pengirim', sortable: true },
 	{ key: 'status', label: 'Status', sortable: true },
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
@@ -238,13 +254,29 @@ onMounted(() => {
 				</button>
 			</div>
 
-			<div class="flex flex-col md:flex-row gap-4 mb-6">
-				<div class="flex-1">
+			<div class="filters-row">
+				<div class="filter-search">
 					<STextField v-model="search" placeholder="Cari no. laporan, judul, lokasi, deskripsi..."
 						variant="text" @input="onSearchInput" />
 				</div>
-				<div>
-					<input type="date" :value="selectedDate" class="date-input" @change="handleDateChange" />
+				<div class="filter-extras">
+					<div class="relative">
+						<button 
+							type="button"
+							class="filter-input flex items-center gap-2 bg-white"
+							@click="showDatePicker = !showDatePicker"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+							{{ selectedDate || 'Pilih Tanggal' }}
+						</button>
+						<div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+							<SDatePicker v-model="selectedDateObj" />
+						</div>
+					</div>
+					<select v-model="sortOrder" class="filter-input" @change="currentPage = 1">
+						<option value="desc">Terbaru</option>
+						<option value="asc">Terlama</option>
+					</select>
 				</div>
 			</div>
 
@@ -291,30 +323,39 @@ onMounted(() => {
 							</template>
 
 							<template #body-cell-pengirim="{ row }">
-								<div class="flex items-center gap-1.5 flex-wrap">
-									<span class="text-sm text-gray-700 font-medium">
-										{{ row.nama_lengkap || row.pengirim_username || '-' }}
-									</span>
-									<span v-if="row.akun_terverifikasi" title="Terverifikasi" class="flex-shrink-0 text-green-600">
-										<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-									</span>
-								</div>
-							</template>
-
-							<template #body-cell-status="{ row }">
-								<span class="status-badge" :class="`status-badge--${row.status}`">
-									{{ statusLabel(row.status) }}
-								</span>
+								<div class="flex flex-col items-start gap-1">
+                  <span class="font-semibold text-gray-800">{{ row.pelapor_info?.nama_lengkap || '-' }}</span>
+                  <SChip
+                    v-if="row.akun_terverifikasi !== undefined"
+                    :label="row.akun_terverifikasi ? 'Terverifikasi' : 'Belum Terverifikasi'"
+                    :tone="row.akun_terverifikasi ? 'success' : 'warning'"
+                    size="small"
+                  />
+                </div>
 							</template>
 
 							<template #body-cell-aksi="{ row }">
-								<div class="flex items-center gap-2">
-									<button class="aksi-btn aksi-btn--detail"
-										@click="$router.push({ name: 'detailLaporanKerusakan', params: { id: row.id } })">
-										Detail
-									</button>
-								</div>
+								<SButton 
+                                    label="Detail" 
+                                    variant="action" 
+                                    size="small" 
+                                    @click="openDetail(row)" 
+                                >
+                                    <template #left-icon>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </template>
+                                </SButton>
 							</template>
+
+							<template #body-cell-status="{ row }">
+								<SChip 
+									:label="statusLabel(row.status)" 
+									:tone="row.status === 'selesai' ? 'success' : (row.status === 'diproses' ? 'info' : (row.status === 'menunggu' ? 'warning' : 'danger'))" 
+									size="small" 
+								/>
+							</template>
+
+
 						</STable>
 					</div>
 				</SCard>
@@ -334,9 +375,11 @@ onMounted(() => {
 				<div v-else class="card-grid">
 					<div v-for="item in paginatedList" :key="item.id" class="report-card" @click="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })">
 						<div class="report-card__top">
-							<span class="status-badge" :class="`status-badge--${item.status}`">
-								{{ statusLabel(item.status) }}
-							</span>
+							<SChip 
+								:label="statusLabel(item.status)" 
+								:tone="item.status === 'selesai' ? 'success' : (item.status === 'diproses' ? 'info' : (item.status === 'menunggu' ? 'warning' : 'danger'))" 
+								size="small" 
+							/>
 							<span class="report-card__date">{{ formatDate(item.tanggal_kejadian) }}</span>
 						</div>
 
@@ -361,9 +404,13 @@ onMounted(() => {
 						<p class="report-card__desc">{{ item.deskripsi }}</p>
 
 						<div class="report-card__footer">
-							<button class="aksi-btn aksi-btn--detail" @click.stop="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })">
-								Detail
-							</button>
+							<SButton 
+								label="Detail" 
+								variant="action" 
+								size="small" 
+								class="w-full"
+								@click.stop="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })" 
+							/>
 						</div>
 					</div>
 				</div>
@@ -964,5 +1011,40 @@ onMounted(() => {
 		gap: 8px;
 		margin-bottom: 16px;
 	}
+}
+
+.filters-row {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 24px;
+	align-items: stretch;
+}
+.filter-search { flex: 1; min-width: 0; }
+.filter-extras {
+	display: flex;
+	gap: 12px;
+}
+.filter-input {
+	border: 1px solid var(--color-general-border);
+	border-radius: 8px;
+	padding: 10px 40px 10px 14px;
+	height: 48px;
+	font-size: 14px;
+	color: var(--color-general-black);
+	background: white;
+	transition: border-color 0.2s;
+	min-width: 140px;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	cursor: pointer;
+}
+.filter-input:focus {
+	outline: none;
+	border-color: var(--color-blue-500);
+	box-shadow: 0 0 0 3px rgba(46,48,148,.08);
 }
 </style>
