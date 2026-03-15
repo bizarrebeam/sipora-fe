@@ -256,9 +256,18 @@ onMounted(() => {
               :tone="row.pengguna?.is_verified ? 'success' : 'warning'"
               size="small"
             />
-            <span v-else class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-600 whitespace-nowrap border border-transparent">
-              {{ row.pengguna ? formatRole(row.pengguna?.role) : (row.deskripsi?.startsWith('Anonim') ? 'Anonim' : 'Sistem') }}
-            </span>
+            <SChip
+              v-else-if="row.pengguna?.role"
+              :label="formatRole(row.pengguna.role)"
+              tone="neutral"
+              size="small"
+            />
+            <SChip
+              v-else
+              :label="row.deskripsi?.startsWith('Anonim') ? 'Anonim' : 'Sistem'"
+              tone="neutral"
+              size="small"
+            />
           </template>
           
           <template #body-cell-aksi="{ row }">

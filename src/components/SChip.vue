@@ -32,12 +32,12 @@ const iconSizeClasses = computed(() => {
 
 const variantClasses = computed(() => {
   const tones: Record<string, string> = {
-    default: 'bg-blue-600 text-white hover:bg-blue-700',
-    success: 'bg-green-600 text-white hover:bg-green-700',
-    warning: 'bg-yellow-500 text-white hover:bg-yellow-600',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
-    info: 'bg-blue-400 text-white hover:bg-blue-500',
-    neutral: 'bg-neutral-600 text-white hover:bg-neutral-700'
+    default: 'bg-blue-50 border border-blue-500 text-blue-700 hover:bg-blue-100',
+    success: 'bg-green-50 border border-green-500 text-green-700 hover:bg-green-100',
+    warning: 'bg-yellow-50 border border-yellow-500 text-yellow-700 hover:bg-yellow-100',
+    danger: 'bg-red-50 border border-red-500 text-red-700 hover:bg-red-100',
+    info: 'bg-blue-50 border border-blue-400 text-blue-600 hover:bg-blue-100',
+    neutral: 'bg-neutral-50 border border-neutral-400 text-neutral-700 hover:bg-neutral-100'
   }
 
   const lights: Record<string, string> = {

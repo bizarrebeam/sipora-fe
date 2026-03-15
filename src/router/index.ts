@@ -32,7 +32,6 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { requiresAuth: true },
     },
     {
       path: '/login',
@@ -161,7 +160,7 @@ const router = createRouter({
       // No auth required - anyone can read articles
     },
     {
-      path: '/kelola-artikel',
+      path: '/artikel',
       name: 'kelolaArtikel',
       component: KelolaArtikelView,
       // No auth required - guests can read articles, admins can manage

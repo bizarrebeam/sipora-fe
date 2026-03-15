@@ -8,6 +8,7 @@ import SDialog from '@/components/SDialog.vue'
 import SPagination from '@/components/SPagination.vue'
 import SChip from '@/components/SChip.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
+import SReportCard from '@/components/SReportCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 
@@ -373,46 +374,17 @@ onMounted(() => {
 				</div>
 
 				<div v-else class="card-grid">
-					<div v-for="item in paginatedList" :key="item.id" class="report-card" @click="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })">
-						<div class="report-card__top">
-							<SChip 
-								:label="statusLabel(item.status)" 
-								:tone="item.status === 'selesai' ? 'success' : (item.status === 'diproses' ? 'info' : (item.status === 'menunggu' ? 'warning' : 'danger'))" 
-								size="small" 
-							/>
-							<span class="report-card__date">{{ formatDate(item.tanggal_kejadian) }}</span>
-						</div>
-
-						<h4 class="report-card__no">{{ item.judul }}</h4>
-
-						<div class="report-card__info">
-							<div class="report-card__info-row">
-								<svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-								</svg>
-								<span>{{ item.lokasi }}</span>
-							</div>
-							<div class="report-card__info-row">
-								<svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h6M8 15h8M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-								</svg>
-								<span>{{ item.no_laporan }}</span>
-							</div>
-						</div>
-
-						<p class="report-card__desc">{{ item.deskripsi }}</p>
-
-						<div class="report-card__footer">
-							<SButton 
-								label="Detail" 
-								variant="action" 
-								size="small" 
-								class="w-full"
-								@click.stop="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })" 
-							/>
-						</div>
-					</div>
+					<SReportCard
+						v-for="item in paginatedList" 
+						:key="item.id"
+						:status="item.status"
+						:date="formatDate(item.tanggal_kejadian)"
+						:title="item.judul"
+						:location="item.lokasi"
+						:report-number="item.no_laporan"
+						@click-card="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })"
+						@click-detail="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })"
+					/>
 				</div>
 
 				<div v-if="totalPages > 1" class="card-pagination">

@@ -31,7 +31,7 @@ onMounted(async () => {
     artikel.value = data
   } catch (error) {
     console.error("Gagal memuat detail artikel:", error)
-    router.push('/kelola-artikel')
+    router.push('/artikel')
   } finally {
     isLoading.value = false
   }
@@ -94,7 +94,7 @@ const decodeHtmlEntities = (text: string) => {
       <!-- Top Action Bar -->
       <div class="flex justify-between items-center w-full">
         <button
-          @click="router.push('/kelola-artikel')"
+          @click="router.push('/artikel')"
           class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
         >
           <span>&larr;</span> Kembali ke Portal

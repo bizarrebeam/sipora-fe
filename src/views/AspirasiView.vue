@@ -8,6 +8,7 @@ import SDialog from '@/components/SDialog.vue'
 import SPagination from '@/components/SPagination.vue'
 import SChip from '@/components/SChip.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
+import SReportCard from '@/components/SReportCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAspirasiStore } from '@/stores/aspirasi'
 
@@ -448,35 +449,17 @@ onMounted(() => {
 				</div>
 
 				<div v-else class="card-grid">
-					<div v-for="item in paginatedList" :key="item.id" class="report-card" @click="$router.push({ name: 'detailAspirasi', params: { id: item.id } })">
-						<div class="report-card__top">
-								<SChip :label="kategoriLabel(item.kategori)" tone="info" size="small" />
-							<span class="report-card__date">{{ formatDate(item.tanggal_aspirasi) }}</span>
-						</div>
-
-						<h4 class="report-card__no">{{ item.judul }}</h4>
-
-						<div class="report-card__info">
-
-							<div class="report-card__info-row">
-								<svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h6M8 15h8M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-								</svg>
-								<span>{{ item.no_laporan }}</span>
-							</div>
-						</div>
-
-						<p class="report-card__desc">{{ item.deskripsi }}</p>
-
-						<div class="report-card__footer">
-							<SButton 
-								label="Detail" 
-								variant="action" 
-								size="small" 
-								@click.stop="$router.push({ name: 'detailAspirasi', params: { id: item.id } })" 
-							/>
-						</div>
-					</div>
+					<SReportCard
+						v-for="item in paginatedList" 
+						:key="item.id"
+						:chip-label="kategoriLabel(item.kategori)"
+                        chip-tone="info"
+						:date="formatDate(item.tanggal_aspirasi)"
+						:title="item.judul"
+						:report-number="item.no_laporan"
+						@click-card="$router.push({ name: 'detailAspirasi', params: { id: item.id } })"
+						@click-detail="$router.push({ name: 'detailAspirasi', params: { id: item.id } })"
+					/>
 				</div>
 
 				<div v-if="totalPages > 1" class="card-pagination">

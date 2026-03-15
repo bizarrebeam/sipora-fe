@@ -444,7 +444,7 @@ onMounted(fetchDaftar)
                   v-if="!row.is_verified && isKemahasiswaan"
                   label="Verifikasi"
                   variant="action"
-                  size="medium"
+                  size="small"
                   @click="openVerifyDialog(row)"
                 >
                   <template #left-icon>

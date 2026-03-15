@@ -212,9 +212,29 @@ async function handleSubmit() {
             </Transition>
         </Teleport>
 
-        <h4 class="form-title stf-header">Edit Laporan Bullying</h4>
+        <div class="form-page-container">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <button
+                    @click="router.back()"
+                    class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
+                >
+                    <span>&larr;</span> Kembali
+                </button>
+            </div>
 
-        <div class="form-container">
+            <!-- Header -->
+            <div class="form-header mb-8">
+                <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">
+                    Edit Laporan Bullying
+                </h1>
+                <p class="text-gray-500 font-display text-sm">
+                    Perbarui informasi laporan jika diperlukan.<br>
+                    Data yang akurat sangat membantu sekolah dalam menangani setiap kasus dengan adil.
+                </p>
+            </div>
+
+            <div class="form-wrapper">
             <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
 
                 <!-- Judul -->
@@ -381,6 +401,7 @@ async function handleSubmit() {
             </form>
         </div>
     </div>
+</div>
 </template>
 
 <style scoped>
@@ -430,28 +451,18 @@ async function handleSubmit() {
 }
 
 /* ─── Card ─── */
-.form-container {
-    max-width: 700px;
+.form-page-container {
+    max-width: 800px;
     margin: 0 auto;
-    background: var(--color-blue-50);
-    border-radius: 20px;
-    box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.10);
-    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
 }
 
-/* ─── Title ─── */
-.form-title.stf-header {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-weight: 700;
-    font-size: 22px;
-    margin-bottom: 32px;
-    color: var(--color-blue-500);
-    text-align: center;
-    letter-spacing: 0.01em;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0 16px;
+.form-wrapper {
+    background: var(--color-blue-50);
+    border-radius: 20px;
+    box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.1);
+    padding: 48px 40px;
 }
 
 /* ─── Form layout ─── */

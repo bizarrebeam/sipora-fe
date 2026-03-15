@@ -29,6 +29,10 @@ const searchQuery = ref('')
  */
 const statusFilter = ref<'published' | 'draft'>('published')
 /**
+ * Sorting for displaying articles
+ */
+const sortOrder = ref<'terbaru' | 'terlama'>('terbaru')
+/**
  * Current page for pagination
  */
 const currentPage = ref(1)
@@ -122,6 +126,11 @@ const filteredData = computed(() => {
         ? (artikel.status || '').toLowerCase() === statusFilter.value.toLowerCase()
         : true;
     return matchesSearch && matchesStatus
+  }).sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime()
+    const dateB = new Date(b.created_at).getTime()
+    if (sortOrder.value === 'terbaru') return dateB - dateA
+    return dateA - dateB
   })
 })
 
@@ -182,7 +191,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 <template>
   <div class="stf-page">
     <div class="stf-container">
-      <div class="stf-header">
+      <div class="stf-header flex justify-between items-start gap-4">
         <div class="stf-header-text">
           <h1 class="stf-page-title">Portal Artikel</h1>
           <p class="stf-page-subtitle">
@@ -190,6 +199,22 @@ watch(searchQuery, () => { currentPage.value = 1 })
               Temukan tips menghadapi bullying, cara menjaga kesehatan mental, dan informasi penting lainnya.
           </p>
         </div>
+        
+        <SButton
+          v-if="isAdmin"
+          label="Buat Artikel"
+          variant="primary"
+          @click="$router.push({ name: 'createArtikel' })"
+          class="shrink-0 mt-2"
+        >
+          <template #left-icon>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
+              <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19 8V14M16 11H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </template>
+        </SButton>
       </div>
 
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative">
@@ -211,54 +236,27 @@ watch(searchQuery, () => { currentPage.value = 1 })
           </button>
         </div>
 
-        <div class="flex-1 w-full max-w-[581px] search-container">
+        <div class="flex-1 w-full search-container relative">
           <STextField
             v-model="searchQuery"
             placeholder="Cari artikel berdasarkan judul..."
             variant="text"
+            class="w-full"
           />
         </div>
 
-        <SButton
-          v-if="isAdmin"
-          label="Buat Artikel"
-          variant="primary"
-          @click="$router.push({ name: 'createArtikel' })"
-        >
-          <template #left-icon>
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-5 h-5 sm:w-6 sm:h-6"
-            >
-              <path
-                d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19v2"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M19 8V14M16 11H22"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </template>
-        </SButton>
-
+        <div class="shrink-0 search-container flex items-center h-[52px] border-[1.5px] border-general-border rounded-lg bg-white px-2 cursor-pointer hover:border-blue-500 transition-colors">
+          <select 
+            v-model="sortOrder"
+            class="h-full bg-transparent border-none outline-none text-general-black font-['Be_Vietnam_Pro'] text-base pr-8 pl-2 w-[140px] appearance-none"
+          >
+            <option value="terbaru">Terbaru</option>
+            <option value="terlama">Terlama</option>
+          </select>
+          <div class="absolute right-4 pointer-events-none text-neutral-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+        </div>
       </div>
 
       <div v-if="totalPages > 1" class="card-pagination">

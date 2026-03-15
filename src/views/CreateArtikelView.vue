@@ -250,7 +250,7 @@ const submitArticle = async (status: 'draft' | 'published') => {
       await artikelStore.simpanArtikel(data)
       toast.success(`Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`)
     }
-    router.push('/kelola-artikel')
+    router.push('/artikel')
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Gagal menyimpan artikel'
     toast.error(errorMessage)
@@ -284,7 +284,7 @@ onMounted(async () => {
     } catch (error) {
       console.error(error)
       toast.error('Gagal mengambil data artikel')
-      router.push('/kelola-artikel')
+      router.push('/artikel')
     }
   }
   isLoading.value = false
@@ -293,7 +293,7 @@ onMounted(async () => {
 
 <template>
   <div class="stf-page">
-    <div class="artikel-container">
+    <div class="form-page-container">
       <div v-if="isLoading" class="flex justify-center items-center h-64">
         <SLoading />
       </div>
@@ -302,7 +302,7 @@ onMounted(async () => {
         <!-- Back Button -->
         <div>
           <button
-            @click="router.push('/kelola-artikel')"
+            @click="router.push('/artikel')"
             class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
           >
             <span>&larr;</span> Kembali
@@ -310,20 +310,18 @@ onMounted(async () => {
         </div>
 
         <!-- Header -->
-        <div class="artikel-header">
-          <div>
-            <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">
-              {{ isEditMode ? 'Edit Artikel' : 'Menyusun Artikel' }}
-            </h1>
-            <p class="text-gray-500 mb-6 font-display text-sm">
-              {{ isEditMode ? 'Perbarui detail artikel yang sudah dibuat.' : 'Masukan detail publikasi yang akan dibagikan ke portal siswa.' }}<br>
-              Berikan informasi berkualitas dan bermanfaat untuk siswa SMP Desa Mulia Putra.
-            </p>
-          </div>
+        <div class="form-header mb-8">
+          <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">
+            {{ isEditMode ? 'Edit Artikel' : 'Menyusun Artikel' }}
+          </h1>
+          <p class="text-gray-500 font-display text-sm">
+            {{ isEditMode ? 'Perbarui detail artikel yang sudah dibuat.' : 'Masukan detail publikasi yang akan dibagikan ke portal siswa.' }}<br>
+            Berikan informasi berkualitas dan bermanfaat untuk siswa SMP Desa Mulia Putra.
+          </p>
         </div>
 
         <!-- Form Container -->
-        <div class="bg-[#eaeaf4] rounded-[16px] p-6 md:p-10 flex flex-col gap-8">
+        <div class="form-wrapper">
 
         <!-- Upload Cover -->
         <div class="flex flex-col gap-2">
@@ -535,24 +533,21 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.artikel-page {
-  min-height: calc(100vh - 64px);
-  background: var(--color-general-frame, #f5f5f5);
-  padding: 24px 16px;
-}
-
-.artikel-container {
+.form-page-container {
   max-width: 1100px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
 }
 
-.artikel-header {
+.form-wrapper {
+  background: var(--color-blue-50);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.1);
+  padding: 48px 40px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 32px;
 }
+
 </style>

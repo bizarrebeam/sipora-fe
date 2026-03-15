@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: Date | null): void
+  (e: 'close'): void
 }>()
 
 const currentDate = ref(props.modelValue || new Date())
@@ -109,13 +110,51 @@ const formattedSelectedDate = computed(() => {
   return `${dayName}, ${monthName} ${day}`
 })
 
+import { onMounted, onUnmounted } from 'vue'
+
+const datePickerRef = ref<HTMLElement | null>(null)
+const handleClickOutside = (event: MouseEvent) => {
+  if (datePickerRef.value && !datePickerRef.value.contains(event.target as Node)) {
+    emit('close')
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', handleClickOutside)
+})
+
+const selectToday = () => {
+  const today = new Date()
+  if (props.time && props.modelValue) {
+    today.setHours(props.modelValue.getHours())
+    today.setMinutes(props.modelValue.getMinutes())
+  }
+  emit('update:modelValue', today)
+  emit('close')
+}
+
 </script>
 
 <template>
-  <div 
-    class="flex h-[453px] items-start rounded-2xl border border-general-border bg-white p-8"
-    :class="time ? 'w-[715px] gap-6' : 'w-[426px]'"
-  >
+  <Transition name="picker-fade">
+    <div 
+      ref="datePickerRef"
+      class="flex items-start rounded-2xl border border-general-border bg-white p-8 shadow-sm relative"
+      :class="time ? 'w-[715px] gap-6 h-[453px]' : 'w-[426px] h-auto pb-6'"
+    >
+    <!-- Close Button -->
+    <button 
+      type="button" 
+      class="absolute top-4 right-4 p-2 rounded-full hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors"
+      @click="$emit('close')"
+      aria-label="Tutup"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
     <!-- Calendar Section -->
     <div class="flex w-[351px] shrink-0 flex-col items-start gap-6">
       <h3 class="w-full text-general-black heading-h6">Select a Date {{ time ? '& Time' : '' }}</h3>
@@ -171,6 +210,17 @@ const formattedSelectedDate = computed(() => {
             </div>
           </div>
         </div>
+
+        <!-- Hari Ini Button -->
+        <div class="flex w-full justify-center mt-2">
+          <button 
+            type="button" 
+            class="text-blue-500 hover:text-blue-700 font-semibold text-[14px] transition-colors font-['Be_Vietnam_Pro']"
+            @click="selectToday"
+          >
+            Pilih Hari Ini
+          </button>
+        </div>
       </div>
     </div>
 
@@ -194,7 +244,8 @@ const formattedSelectedDate = computed(() => {
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </Transition>
 </template>
 
 <style scoped>
@@ -207,5 +258,17 @@ const formattedSelectedDate = computed(() => {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--color-general-border, #D9D9D9);
   border-radius: 4px;
+}
+
+/* Animations */
+.picker-fade-enter-active,
+.picker-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.picker-fade-enter-from,
+.picker-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateY(-10px);
 }
 </style>

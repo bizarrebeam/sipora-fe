@@ -60,14 +60,16 @@ async function confirmLogout() {
         <img :src="SiporaLogo" alt="SIPORA" class="navbar-logo-img" />
       </RouterLink>
 
-      <div v-if="isLoggedIn" class="navbar-links">
+      <div class="navbar-links">
         <RouterLink to="/" class="nav-link">Beranda</RouterLink>
-        <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
-        <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
-        <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
-        <RouterLink to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
-        <RouterLink to="/aspirasi" class="nav-link">Aspirasi</RouterLink>
-        <RouterLink to="/kelola-artikel" class="nav-link">{{ artikelLabel }}</RouterLink>
+        <template v-if="isLoggedIn">
+          <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
+          <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
+          <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
+          <RouterLink to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
+          <RouterLink to="/aspirasi" class="nav-link">Aspirasi</RouterLink>
+        </template>
+        <RouterLink to="/artikel" class="nav-link">{{ artikelLabel }}</RouterLink>
       </div>
 
       <div class="navbar-auth">
@@ -84,12 +86,23 @@ async function confirmLogout() {
                 <span class="auth-name">{{ namaDepan }}</span>
                 <div class="flex items-center gap-2">
                   <span class="auth-badge">{{ roleBadge }}</span>
-                  <SChip 
+                  <div 
                     v-if="auth.user?.role === 'siswa' && !isVerified" 
-                    label="Belum Terverifikasi" 
-                    tone="warning" 
-                    size="medium" 
-                  />
+                    class="group relative flex items-center justify-center shrink-0 cursor-help"
+                  >
+                    <!-- Warning Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" class="text-yellow-400 group-hover:text-yellow-300 transition-colors" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="16" x2="12" y2="12"></line>
+                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    
+                    <!-- Tooltip -->
+                    <div class="absolute bottom-full mb-2 left-[50%] -translate-x-[50%] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap bg-general-black text-white text-[11px] font-semibold font-['Be_Vietnam_Pro'] px-3 py-1.5 rounded shadow-lg z-50 pointer-events-none">
+                      Belum Terverifikasi
+                      <div class="absolute top-full left-[50%] -translate-x-[50%] border-4 border-transparent border-t-general-black"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron" :class="{'chevron-up': profileMenuOpen}">
@@ -124,26 +137,33 @@ async function confirmLogout() {
 
     <div class="mobile-menu-wrapper" :class="{ 'mobile-menu-wrapper--open': mobileMenuOpen }">
       <div class="mobile-menu">
+        <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
         <template v-if="isLoggedIn">
-          <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
           <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
           <RouterLink to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
           <RouterLink to="/aspirasi" class="mobile-link" @click="closeMobile">Aspirasi</RouterLink>
-          <RouterLink to="/kelola-artikel" class="mobile-link" @click="closeMobile">{{ artikelLabel }}</RouterLink>
-          <div class="mobile-divider"></div>
+        </template>
+        <RouterLink to="/artikel" class="mobile-link" @click="closeMobile">{{ artikelLabel }}</RouterLink>
+        <div class="mobile-divider"></div>
+        <template v-if="isLoggedIn">
           <RouterLink to="/profil" class="mobile-user-row" @click="closeMobile">
             <div class="mobile-user-info">
               <span class="mobile-user-name">{{ namaDepan }}</span>
               <div class="flex items-center gap-2">
                 <span class="mobile-badge">{{ roleBadge }}</span>
-                <SChip 
+                <div 
                   v-if="auth.user?.role === 'siswa' && !isVerified" 
-                  label="Belum Terverifikasi" 
-                  tone="warning" 
-                  size="medium" 
-                />
+                  class="flex items-center gap-1.5 bg-yellow-400/20 px-2.5 py-1 rounded-full border border-yellow-400/30"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" class="text-yellow-400" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <span class="text-[10px] font-bold text-yellow-400 font-['Be_Vietnam_Pro'] tracking-wide">PENDING</span>
+                </div>
               </div>
             </div>
           </RouterLink>
@@ -151,8 +171,10 @@ async function confirmLogout() {
           <button class="mobile-link mobile-link--logout" @click="openLogoutModal">Logout</button>
         </template>
         <template v-else>
-          <RouterLink to="/login" class="mobile-link" @click="closeMobile">Login</RouterLink>
-          <RouterLink to="/register" class="mobile-link" @click="closeMobile">Daftar</RouterLink>
+          <div class="flex flex-col gap-2 mt-4 pb-4">
+            <RouterLink to="/login" class="auth-btn auth-btn--login w-full text-center" @click="closeMobile">Login</RouterLink>
+            <RouterLink to="/register" class="auth-btn auth-btn--register w-full text-center" @click="closeMobile">Daftar</RouterLink>
+          </div>
         </template>
       </div>
     </div>

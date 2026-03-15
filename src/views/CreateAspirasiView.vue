@@ -177,8 +177,29 @@ async function handleSubmit() {
             </Transition>
         </Teleport>
 
-        <h4 class="form-title stf-header">Tambah Aspirasi</h4>
-        <div class="form-container">
+        <div class="form-page-container">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <button
+                    @click="router.back()"
+                    class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
+                >
+                    <span>&larr;</span> Kembali
+                </button>
+            </div>
+
+            <!-- Header -->
+            <div class="form-header mb-8">
+                <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">
+                    Tambah Aspirasi
+                </h1>
+                <p class="text-gray-500 font-display text-sm">
+                    Sampaikan aspirasi Anda untuk kemajuan SMP Desa Mulia Putra.<br>
+                    Suara Anda sangat berarti bagi pengembangan fasilitas dan layanan sekolah kita.
+                </p>
+            </div>
+
+            <div class="form-wrapper">
             <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
                 <div class="form-group">
                     <STextField
@@ -287,6 +308,7 @@ async function handleSubmit() {
             </form>
         </div>
     </div>
+</div>
 </template>
 
 <style scoped>
@@ -319,41 +341,18 @@ async function handleSubmit() {
     margin-left: 2px;
     font-family: "Be Vietnam Pro", sans-serif;
 }
-.create-laporan-page {
-    min-height: 100vh;
-    background: var(--color-general-frame, #f7f8fa);
-    padding: 32px 0;
-}
-.form-container {
-    max-width: 700px;
+.form-page-container {
+    max-width: 800px;
     margin: 0 auto;
-    background: var(--color-blue-50);
-    border-radius: 20px;
-    box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.10);
-    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
 }
 
-.input-date-native[type='date'] {
-    font-family: inherit;
-    font-size: inherit;
-    color: inherit;
-    background: inherit;
-    border: none;
-    outline: none;
-    width: 100%;
-    padding: 0;
-    -webkit-appearance: auto;
-    -moz-appearance: auto;
-    appearance: auto;
-}
-.form-title.stf-header {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-weight: 700;
-    font-size: 22px;
-    margin-bottom: 32px;
-    color: var(--color-blue-500);
-    text-align: center;
-    letter-spacing: 0.01em;
+.form-wrapper {
+    background: var(--color-blue-50);
+    border-radius: 20px;
+    box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.1);
+    padding: 48px 40px;
 }
 .stf-label--bold {
     font-weight: 700;
