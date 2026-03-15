@@ -21,6 +21,7 @@ interface User {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
+  const isSessionExpired = ref(false)
 
   const isAuthenticated = computed(() => !!user.value)
 
@@ -69,6 +70,13 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('user')
   }
 
+  function setSessionExpired(value: boolean) {
+    isSessionExpired.value = value
+    if (value) {
+      clearAuth()
+    }
+  }
+
   async function login(identifier: string, password: string, allowedRoles?: string[]) {
     const loader = useLoadingStore()
     loader.show('Sedang masuk...')
@@ -78,6 +86,8 @@ export const useAuthStore = defineStore('auth', () => {
       if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(data.role)) {
         throw new Error('Akun Anda tidak memiliki akses ke portal ini.')
       }
+
+      isSessionExpired.value = false
 
       setUser({
         username: data.username,
@@ -183,6 +193,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user,
+    isSessionExpired,
     isAuthenticated,
     namaDepan,
     roleBadge,
@@ -197,5 +208,6 @@ export const useAuthStore = defineStore('auth', () => {
     editProfil,
     ubahPassword,
     clearAuth,
+    setSessionExpired,
   }
 })
