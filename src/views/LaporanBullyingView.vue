@@ -112,6 +112,13 @@ function statusLabel(status: string) {
     return map[status] || status
 }
 
+function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
+    if (status === 'menunggu') return 'warning'
+    if (status === 'diproses') return 'info'
+    if (status === 'selesai') return 'success'
+    return 'danger'
+}
+
 function handleTabChange(value: string) {
     selectedStatus.value = value
     currentPage.value = 1
@@ -567,20 +574,7 @@ onMounted(() => { fetchData() })
 .cell-no    { font-weight: 600; color: #2563eb; font-size: 13px; }
 .cell-bold  { font-weight: 600; font-size: 13px; }
 
-/* ─── Status badges ─── */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 12px;
-    border-radius: 9999px;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-.status-badge--menunggu  { background:#fff8e1; color:#f59e0b; border:1px solid #f59e0b; }
-.status-badge--diproses  { background:var(--color-blue-50); color:var(--color-blue-600); border:1px solid var(--color-blue-400); }
-.status-badge--selesai   { background:#e8f5e9; color:#2e7d32; border:1px solid #2e7d32; }
-.status-badge--dibatalkan{ background:var(--color-red-50); color:#dc2626; border:1px solid #dc2626; }
+/* ─── Status badges removed ─── */
 
 /* ─── Action button ─── */
 .aksi-btn {
@@ -799,7 +793,7 @@ onMounted(() => { fetchData() })
     .report-card:hover { transform: none; }
     .report-card__title { font-size: 14px; }
     .report-card__date  { font-size: 10px; }
-    .status-badge { font-size: 10px; padding: 3px 10px; }
+    /* Badge removed */
 
     /* Pagination */
     .card-pagination { margin-top: 16px; padding-bottom: 16px; }

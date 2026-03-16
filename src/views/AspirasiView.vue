@@ -503,9 +503,7 @@ onMounted(() => {
 				</div>
 				<div v-if="isAdmin" class="detail-row">
 					<span class="detail-label">Status</span>
-					<span class="status-badge" :class="`status-badge--${selectedLaporan.status_ditandai}`">
-						{{ statusLabel(selectedLaporan.status_ditandai) }}
-					</span>
+					<SChip size="large" variant="solid" :tone="selectedLaporan.status_ditandai === 'ditandai' ? 'warning' : 'neutral'" :label="statusLabel(selectedLaporan.status_ditandai)" />
 				</div>
 				<div class="detail-row detail-row--full">
 					<span class="detail-label">Deskripsi Aspirasi</span>
@@ -591,34 +589,7 @@ onMounted(() => {
 	line-height: 1.5;
 }
 
-.status-badge {
-	display: inline-flex;
-	align-items: center;
-	padding: 4px 12px;
-	border-radius: 9999px;
-	font-size: 12px;
-	font-weight: 600;
-	font-family: "Be Vietnam Pro", sans-serif;
-	white-space: nowrap;
-}
-
-.status-badge--kategori {
-	background: var(--color-blue-50);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-}
-
-.status-badge--ditandai {
-	background: #FFF8E1;
-	color: #F59E0B;
-	border: 1px solid #F59E0B;
-}
-
-.status-badge--tidak_ditandai {
-	background: var(--color-neutral-100);
-	color: var(--color-neutral-800);
-	border: 1px solid var(--color-neutral-600);
-}
+/* Status badges removed */
 
 .aksi-btn {
 	padding: 4px 12px;

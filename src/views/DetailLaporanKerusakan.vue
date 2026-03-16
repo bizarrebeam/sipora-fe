@@ -8,6 +8,7 @@ import SModal from '@/components/SModal.vue'
 import SDialog from '@/components/SDialog.vue'
 import STextField from '@/components/STextField.vue'
 import SAlert from '@/components/SAlert.vue'
+import SChip from '@/components/SChip.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 
@@ -105,6 +106,13 @@ function statusLabel(s: string) {
     return map[s] || s
 }
 
+function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
+    if (status === 'menunggu') return 'warning'
+    if (status === 'diproses') return 'info'
+    if (status === 'selesai') return 'success'
+    return 'danger'
+}
+
 function formatDate(d: string) {
     if (!d) return '-'
     return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -190,9 +198,7 @@ onMounted(async () => {
                 <SCard class="section-card">
                     <h3 class="stf-section-title">Status</h3>
                     <div class="status-row">
-                        <span class="status-badge" :class="`status-badge--${laporan.status}`">
-                            {{ statusLabel(laporan.status) }}
-                        </span>
+                        <SChip size="large" variant="solid" :tone="statusTone(laporan.status)" :label="statusLabel(laporan.status)" />
                         <span class="status-updated">Terakhir diperbarui: {{ formatDatetime(laporan.updated_at || laporan.tanggal_laporan) }}</span>
                     </div>
                 </SCard>
@@ -287,9 +293,7 @@ onMounted(async () => {
                             <div class="riwayat-dot" :class="`dot--${r.status}`"></div>
                             <div class="riwayat-connector" v-if="(idx as number) < laporan.riwayat_status.length - 1"></div>
                             <div class="riwayat-content">
-                                <span class="status-badge status-badge--sm" :class="`status-badge--${r.status}`">
-                                    {{ statusLabel(r.status) }}
-                                </span>
+                                <SChip size="small" variant="solid" :tone="statusTone(r.status)" :label="statusLabel(r.status)" />
                                 <p class="riwayat-catatan" v-if="r.catatan">{{ r.catatan }}</p>
                                 <div class="riwayat-meta">
                                     <span>{{ formatDatetime(r.waktu) }}</span>
@@ -659,52 +663,7 @@ onMounted(async () => {
     border-color: #f87171 !important;
 }
 
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 14px;
-    border-radius: 9999px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: "Be Vietnam Pro", sans-serif;
-    width: fit-content;     
-    white-space: nowrap;
-}
-
-.status-badge--sm {
-    padding: 2px 8px;
-    font-size: 11px;
-}
-
-.status-badge--menunggu {
-    background: #FFF8E1;
-    color: #F59E0B;
-    border: 1px solid #F59E0B;
-}
-
-.status-badge--dibatalkan {
-    background: #FEF2F2;
-    color: #DC2626;
-    border: 1px solid #DC2626;
-}
-
-.status-badge--diproses {
-    background: var(--color-blue-50, #EAEAF4);
-    color: var(--color-blue-500, #2E3094);
-    border: 1px solid var(--color-blue-500, #2E3094);
-}
-
-.status-badge--selesai {
-    background: #E8F5E9;
-    color: #2E7D32;
-    border: 1px solid #2E7D32;
-}
-
-.status-badge--ditolak {
-    background: #FEF2F2;
-    color: #DC2626;
-    border: 1px solid #DC2626;
-}
+/* Status badges removed */
 
 .feedback-state {
     display: flex;

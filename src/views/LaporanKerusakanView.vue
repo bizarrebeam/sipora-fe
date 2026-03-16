@@ -146,6 +146,13 @@ function anonimitasLabel(value: boolean) {
 	return value ? 'Ya' : 'Tidak'
 }
 
+function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
+    if (status === 'menunggu') return 'warning'
+    if (status === 'diproses') return 'info'
+    if (status === 'selesai') return 'success'
+    return 'danger'
+}
+
 
 
 function handleTabChange(value: string) {
@@ -431,9 +438,7 @@ onMounted(() => {
 				</div>
 				<div class="detail-row">
 					<span class="detail-label">Status</span>
-					<span class="status-badge" :class="`status-badge--${selectedLaporan.status}`">
-						{{ statusLabel(selectedLaporan.status) }}
-					</span>
+					<SChip size="large" variant="solid" :tone="statusTone(selectedLaporan.status)" :label="statusLabel(selectedLaporan.status)" />
 				</div>
 				<div class="detail-row detail-row--full">
 					<span class="detail-label">Deskripsi Kerusakan</span>
@@ -530,46 +535,7 @@ onMounted(() => {
 	line-height: 1.5;
 }
 
-.status-badge {
-	display: inline-flex;
-	align-items: center;
-	padding: 4px 12px;
-	border-radius: 9999px;
-	font-size: 12px;
-	font-weight: 600;
-	font-family: "Be Vietnam Pro", sans-serif;
-	white-space: nowrap;
-}
-
-.status-badge--menunggu {
-	background: #FFF8E1;
-	color: #F59E0B;
-	border: 1px solid #F59E0B;
-}
-
-.status-badge--diproses {
-	background: var(--color-blue-50);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-}
-
-.status-badge--selesai {
-	background: #E8F5E9;
-	color: #2E7D32;
-	border: 1px solid #2E7D32;
-}
-
-.status-badge--ditolak {
-	background: var(--color-red-50);
-	color: #DC2626;
-	border: 1px solid #DC2626;
-}
-
-.status-badge--dibatalkan {
-	background: #FEF2F2;
-	color: #DC2626;
-	border: 1px solid #DC2626;
-}
+/* Status badges removed */
 
 .aksi-btn {
 	padding: 4px 12px;

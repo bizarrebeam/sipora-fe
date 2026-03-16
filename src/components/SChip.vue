@@ -22,7 +22,7 @@ const sizeClasses = computed(() => {
       return 'px-3 py-1 gap-1 text-[13px]'
     case 'large':
     default:
-      return 'px-4 py-2 gap-2 text-[14px]'
+      return 'px-3.5 py-1.5 gap-2 text-[13px]'
   }
 })
 
@@ -32,20 +32,20 @@ const iconSizeClasses = computed(() => {
 
 const variantClasses = computed(() => {
   const tones: Record<string, string> = {
-    default: 'bg-blue-50 border border-blue-500 text-blue-700 hover:bg-blue-100',
-    success: 'bg-green-50 border border-green-500 text-green-700 hover:bg-green-100',
-    warning: 'bg-yellow-50 border border-yellow-500 text-yellow-700 hover:bg-yellow-100',
-    danger: 'bg-red-50 border border-red-500 text-red-700 hover:bg-red-100',
-    info: 'bg-blue-50 border border-blue-400 text-blue-600 hover:bg-blue-100',
+    default: 'bg-blue-50 border border-[#2E3094] border-opacity-50 text-[#2E3094] hover:bg-blue-100', // diproses
+    success: 'bg-[#E8F5E9] border border-[#2E7D32] text-[#2E7D32] hover:bg-[#c8e6c9]', // selesai
+    warning: 'bg-[#FFF8E1] border border-[#F59E0B] text-[#F59E0B] hover:bg-[#ffecb3]', // menunggu
+    danger: 'bg-[#FEF2F2] border border-[#DC2626] text-[#DC2626] hover:bg-[#fecaca]', // ditolak/dibatalkan
+    info: 'bg-[#EAEAF4] border border-[#2E3094] text-[#2E3094] hover:bg-[#d0d0f0]', // diproses
     neutral: 'bg-neutral-50 border border-neutral-400 text-neutral-700 hover:bg-neutral-100'
   }
 
   const lights: Record<string, string> = {
-    default: 'bg-blue-50 text-blue-700 hover:bg-blue-100',
-    success: 'bg-green-50 text-green-700 hover:bg-green-100',
-    warning: 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100',
-    danger: 'bg-red-50 text-red-700 hover:bg-red-100',
-    info: 'bg-blue-50 text-blue-500 hover:bg-blue-100',
+    default: 'bg-blue-50 text-[#2E3094] hover:bg-blue-100',
+    success: 'bg-[#E8F5E9] text-[#2E7D32] hover:bg-[#c8e6c9]',
+    warning: 'bg-[#FFF8E1] text-[#F59E0B] hover:bg-[#ffecb3]',
+    danger: 'bg-[#FEF2F2] text-[#DC2626] hover:bg-[#fecaca]',
+    info: 'bg-[#EAEAF4] text-[#2E3094] hover:bg-[#d0d0f0]',
     neutral: 'bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
   }
 

@@ -7,6 +7,7 @@ import { toast } from 'vue-sonner'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SDialog from '@/components/SDialog.vue'
+import SChip from '@/components/SChip.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -70,6 +71,13 @@ function statusLabel(status: string) {
         ditolak: 'Ditolak'
     }
     return map[status] || status
+}
+
+function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
+    if (status === 'menunggu') return 'warning'
+    if (status === 'diproses') return 'info'
+    if (status === 'selesai') return 'success'
+    return 'danger'
 }
 
 async function handleBatalkan() {
@@ -148,9 +156,7 @@ async function handleSelesai() {
                   <h2 class="laporan-judul">{{ laporan.judul }}</h2>
                   <p class="laporan-no">{{ laporan.no_laporan }}</p>
                 </div>
-                <span class="status-badge" :class="`status-badge--${laporan.status}`">
-                  {{ statusLabel(laporan.status) }}
-                </span>
+                <SChip size="large" variant="solid" :tone="statusTone(laporan.status)" :label="statusLabel(laporan.status)" />
               </div>
 
               <div class="section-body">
@@ -608,22 +614,7 @@ async function handleSelesai() {
 /* ─── Action card ─── */
 .action-note { font-size: 13px; color: #6b7280; font-style: italic; line-height: 1.5; }
 
-/* ─── Status badges ─── */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 14px;
-    border-radius: 9999px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-.status-badge--menunggu  { background: #fff8e1; color: #f59e0b; border: 1px solid #f59e0b; }
-.status-badge--diproses  { background: var(--color-blue-50); color: var(--color-blue-600); border: 1px solid var(--color-blue-400); }
-.status-badge--selesai   { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
-.status-badge--dibatalkan,
-.status-badge--ditolak   { background: var(--color-red-50); color: #dc2626; border: 1px solid #dc2626; }
+/* ─── Status badges removed ─── */
 
 /* ─── Dialog ─── */
 .dialog-body   { display: flex; flex-direction: column; gap: 12px; }
@@ -775,8 +766,7 @@ async function handleSelesai() {
     .info-value { font-size: 12px; }
     .anon-banner { font-size: 11px; }
 
-    /* Badge */
-    .status-badge { font-size: 11px; padding: 4px 12px; }
+    /* Badge removed */
 
     /* Dialog actions: full width stack */
     .dialog-actions {
