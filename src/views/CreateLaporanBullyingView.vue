@@ -141,7 +141,7 @@ async function handleSubmit() {
     if (!isFormValid.value) return
 
     try {
-        await laporanStore.buatLaporan({
+        const result = await laporanStore.buatLaporan({
             judul: judul.value.trim(),
             deskripsi: deskripsi.value.trim(),
             lokasi: lokasi.value.trim(),
@@ -161,7 +161,20 @@ async function handleSubmit() {
         buktiError.value = ''
         Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
         
-        router.push('/laporan-bullying')
+        Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
+        
+        showAlert({
+            type: 'default',
+            title: 'Laporan Terkirim',
+            description: 'Laporan berhasil dibuat',
+            onPrimary: () => {
+                if (result && result.id) {
+                    router.push(`/laporan-bullying/${result.id}`)
+                } else {
+                    router.push('/laporan-bullying')
+                }
+            }
+        })
     } catch (error: any) {
         showAlert({
             type: 'warning',
@@ -290,9 +303,16 @@ async function handleSubmit() {
 
                 <!-- Deskripsi -->
                 <div class="form-group">
+                    <div class="custom-label-row flex justify-between w-full">
+                        <div>
+                            <label class="custom-label">Deskripsi Kejadian</label>
+                            <span class="custom-asterisk">*</span>
+                        </div>
+                        <span class="file-count">{{ deskripsi.length }} karakter</span>
+                    </div>
                     <STextField
                         v-model="deskripsi"
-                        label="Deskripsi Kejadian"
+                        label=""
                         :required="true"
                         :placeholder="'Ketik detail kejadian di sini...'"
                         :variant="'textarea'"
