@@ -285,3 +285,187 @@
   font-weight: 400;
   line-height: 16px;
 }
+
+/* =============================================================================
+   Standarisasi Container & Layout 
+   ============================================================================= */
+
+.stf-page {
+	min-height: calc(100vh - 64px);
+	background: var(--color-general-frame);
+	padding: 32px 16px 24px 16px;
+}
+
+@media (min-width: 768px) {
+  .stf-page {
+    padding: 40px 32px 32px 32px;
+  }
+}
+
+.stf-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.stf-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.stf-header-text {
+  flex: 1;
+}
+
+.stf-page-title {
+	font-family: var(--font-sans);
+	font-weight: 800;
+	font-size: 26px !important;
+	color: var(--color-general-black);
+	margin-bottom: 8px;
+	line-height: 1.3;
+}
+
+@media (min-width: 768px) {
+  .stf-page-title {
+    font-size: 32px !important;
+  }
+}
+
+.stf-page-subtitle {
+	font-family: var(--font-sans);
+	font-size: 15px !important;
+	color: var(--color-neutral-600);
+	margin-bottom: 0px;
+}
+
+.stf-section-title {
+	font-family: var(--font-sans);
+	font-weight: 800;
+	font-size: 20px !important;
+	color: var(--color-general-black);
+	margin-bottom: 12px;
+	line-height: 1.3;
+}
+
+@media (min-width: 768px) {
+  .stf-section-title {
+    font-size: 24px !important;
+  }
+}
+
+/* ── STF Tab Buttons (Filter Chips) ── */
+.stf-tab-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	border-radius: 9999px;
+	font-size: 14px;
+	font-weight: 600;
+	font-family: var(--font-sans);
+	transition: all 0.2s;
+	white-space: nowrap;
+	cursor: pointer;
+	border: none;
+}
+
+.stf-tab-btn--active {
+	color: white;
+}
+
+.stf-tab--semua.stf-tab-btn--active {
+	background: var(--color-blue-600);
+	box-shadow: 0 2px 8px rgba(46, 48, 148, 0.25);
+}
+
+.stf-tab--menunggu.stf-tab-btn--active {
+	background: #F59E0B;
+	box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.stf-tab--diproses.stf-tab-btn--active {
+	background: var(--color-neutral-400);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+
+.stf-tab--selesai.stf-tab-btn--active {
+	background: #2E7D32;
+	box-shadow: 0 2px 8px rgba(46, 125, 50, 0.25);
+}
+
+.stf-tab--ditolak.stf-tab-btn--active,
+.stf-tab--dibatalkan.stf-tab-btn--active {
+	background: #DC2626;
+	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+.stf-tab-btn--inactive {
+	background: white;
+	color: var(--color-neutral-500);
+	border: 1px solid var(--color-general-border);
+}
+
+.stf-tab-btn--inactive:hover {
+	background: var(--color-neutral-50);
+}
+
+.stf-tab-badge {
+	font-size: 11px;
+	font-weight: 700;
+	padding: 1px 7px;
+	border-radius: 9999px;
+	line-height: 1.4;
+}
+
+.stf-tab-badge--active {
+	background: rgba(255, 255, 255, 0.25);
+	color: white;
+}
+
+.stf-tab-badge--inactive {
+	background: var(--color-neutral-100);
+	color: var(--color-neutral-500);
+}
+
+/* =============================================================================
+   Standard Empty State
+   ============================================================================= */
+.s-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px;
+  text-align: center;
+  width: 100%;
+}
+
+.s-empty-state__icon {
+  width: 64px;
+  height: 64px;
+  color: var(--color-neutral-300, #CBD5E1);
+  margin-bottom: 16px;
+}
+
+.s-empty-state__title {
+  font-family: var(--font-sans, "Be Vietnam Pro", sans-serif);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--color-general-black, #333);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.s-empty-state__desc {
+  font-family: var(--font-sans, "Plus Jakarta Sans", sans-serif);
+  font-size: 14px;
+  color: var(--color-neutral-500, #64748B);
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}

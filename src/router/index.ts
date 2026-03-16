@@ -6,11 +6,24 @@ import ProfilView from '../views/ProfilView.vue'
 import ManajemenAkunView from '../views/ManajemenAkunView.vue'
 import LogAktivitasView from '../views/LogAktivitasView.vue'
 import LoginGuruView from '../views/LoginGuruView.vue'
+import LoginBKView from '../views/LoginBKView.vue'
 import LoginAdminView from '../views/LoginAdminView.vue'
 import LaporanKerusakanView from '@/views/LaporanKerusakanView.vue'
 import DetailLaporanKerusakanView from '@/views/DetailLaporanKerusakan.vue'
 import CreateLaporanKerusakanView from '@/views/CreateLaporanKerusakanView.vue'
+import LaporanBullyingView from '@/views/LaporanBullyingView.vue'
+import DetailLaporanBullyingView from '@/views/DetailLaporanBullying.vue'
+import CreateLaporanBullyingView from '@/views/CreateLaporanBullyingView.vue'
+import EditLaporanBullyingView from '@/views/EditLaporanBullying.vue'
 import EditLaporanKerusakanView from '@/views/EditLaporanKerusakanView.vue'
+import AspirasiView from '@/views/AspirasiView.vue'
+import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
+import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
+import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
+import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit artikel
+
+import ForgotPasswordView from '../views/ForgotPasswordView.vue'
+import ResetPasswordView from '../views/ResetPasswordView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -19,7 +32,6 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { requiresAuth: true },
     },
     {
       path: '/login',
@@ -34,8 +46,26 @@ const router = createRouter({
       meta: { guest: true },
     },
     {
+      path: '/forgot-password',
+      name: 'forgotPassword',
+      component: ForgotPasswordView,
+      meta: { guest: true },
+    },
+    {
+      path: '/reset-password/:uid/:token',
+      name: 'resetPassword',
+      component: ResetPasswordView,
+      meta: { guest: true },
+    },
+    {
       path: '/internal/login-bk',
-      name: 'loginPtk',
+      name: 'loginBK',
+      component: LoginBKView,
+      meta: { guest: true },
+    },
+    {
+      path: '/internal/login-guru',
+      name: 'loginGuru',
       component: LoginGuruView,
       meta: { guest: true },
     },
@@ -82,9 +112,69 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/laporan-bullying',
+      name: 'laporanBullying',
+      component: LaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-bullying/:id',
+      name: 'detailLaporanBullying',
+      component: DetailLaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-bullying',
+      name: 'createLaporanBullying',
+      component: CreateLaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/laporan-bullying/:id/edit',
+      name: 'editLaporanBullying',
+      component: EditLaporanBullyingView,
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/laporan-kerusakan/:id/edit',
       name: 'editLaporanKerusakan',
       component: EditLaporanKerusakanView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/aspirasi',
+      name: 'aspirasi',
+      component: AspirasiView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/create-aspirasi',
+      name: 'createAspirasi',
+      component: CreateAspirasiView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/artikel/:id',
+      name: 'detailArtikel',
+      component: DetailArtikelView,
+      // No auth required - anyone can read articles
+    },
+    {
+      path: '/artikel',
+      name: 'kelolaArtikel',
+      component: KelolaArtikelView,
+      // No auth required - guests can read articles, admins can manage
+    },
+    {
+      path: '/create-artikel',
+      name: 'createArtikel',
+      component: CreateArtikelView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/edit-artikel/:id',
+      name: 'editArtikel',
+      component: CreateArtikelView,
       meta: { requiresAuth: true },
     },
   ],

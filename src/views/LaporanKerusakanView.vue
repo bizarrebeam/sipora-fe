@@ -6,6 +6,9 @@ import STextField from '@/components/STextField.vue'
 import STable from '@/components/STable.vue'
 import SDialog from '@/components/SDialog.vue'
 import SPagination from '@/components/SPagination.vue'
+import SChip from '@/components/SChip.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
+import SReportCard from '@/components/SReportCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 
@@ -19,6 +22,7 @@ interface LaporanKerusakan {
 	anonimitas: boolean
 	pengirim_username?: string
 	nama_lengkap?: string
+	akun_terverifikasi?: boolean
 	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
 	foto_bukti?: Array<{ id: string; foto: string; uploaded_at: string }>
 	foto_pendukung?: string[]
@@ -35,8 +39,23 @@ const loading = ref(false)
 const search = ref('')
 const selectedStatus = ref('semua')
 const selectedDate = ref('')
+const selectedDateObj = ref<Date | null>(null)
+const showDatePicker = ref(false)
 
-const sortKey = ref('')
+watch(selectedDateObj, (newVal) => {
+  if (newVal) {
+    const yyyy = newVal.getFullYear()
+    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+    const dd = String(newVal.getDate()).padStart(2, '0')
+    selectedDate.value = `${yyyy}-${mm}-${dd}`
+  } else {
+    selectedDate.value = ''
+  }
+  currentPage.value = 1
+  showDatePicker.value = false
+})
+
+const sortKey = ref('tanggal_kejadian')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
@@ -63,13 +82,12 @@ function tabActiveClass(value: string) {
 }
 
 const columns = [
-	{ key: 'id', label: 'ID Internal', sortable: false },
 	{ key: 'no_laporan', label: 'No. Laporan', sortable: true },
+	{ key: 'pengirim', label: 'Pengirim', sortable: true, tdClass: 'min-w-[200px]' },
 	{ key: 'judul', label: 'Judul Laporan', sortable: true },
 	{ key: 'lokasi', label: 'Lokasi', sortable: true },
 	{ key: 'deskripsi', label: 'Deskripsi Kerusakan', sortable: false },
 	{ key: 'tanggal_kejadian', label: 'Tanggal Kejadian', sortable: true },
-	{ key: 'pengirim', label: 'Pengirim', sortable: true },
 	{ key: 'status', label: 'Status', sortable: true },
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
@@ -126,6 +144,13 @@ function statusLabel(status: string) {
 
 function anonimitasLabel(value: boolean) {
 	return value ? 'Ya' : 'Tidak'
+}
+
+function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
+    if (status === 'menunggu') return 'warning'
+    if (status === 'diproses') return 'info'
+    if (status === 'selesai') return 'success'
+    return 'danger'
 }
 
 
@@ -211,12 +236,12 @@ onMounted(() => {
 </script>
 
 <template>
-	<div class="laporan-page">
-		<div class="laporan-container">
-			<div class="laporan-header">
-				<div>
-					<h1 class="laporan-title">Laporan Kerusakan</h1>
-					<p class="laporan-subtitle">
+	<div class="stf-page">
+		<div class="stf-container">
+			<div class="stf-header">
+				<div class="stf-header-text">
+					<h1 class="stf-page-title">Laporan Kerusakan</h1>
+					<p class="stf-page-subtitle">
 						{{ isAdmin ? 'Kelola dan pantau seluruh laporan kerusakan fasilitas yang masuk dari siswa.' : 'Pantau status laporan kerusakan fasilitas yang telah kamu kirim.' }}
 					</p>
 				</div>
@@ -224,23 +249,42 @@ onMounted(() => {
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">
-				<button v-for="tab in statusTabs" :key="tab.value" @click="handleTabChange(tab.value)" class="tab-btn"
-					:class="selectedStatus === tab.value ? tabActiveClass(tab.value) : 'tab-btn--inactive'">
+				<button v-for="tab in statusTabs" :key="tab.value" @click="handleTabChange(tab.value)" class="stf-tab-btn"
+					:class="[
+						selectedStatus === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
+						selectedStatus === tab.value ? `stf-tab--${tab.value}` : ''
+					]">
 					{{ tab.label }}
-					<span class="tab-badge"
-						:class="selectedStatus === tab.value ? 'tab-badge--active' : 'tab-badge--inactive'">
+					<span class="stf-tab-badge"
+						:class="selectedStatus === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
 						{{ statusCounts[tab.value as keyof typeof statusCounts] }}
 					</span>
 				</button>
 			</div>
 
-			<div class="flex flex-col md:flex-row gap-4 mb-6">
-				<div class="flex-1">
+			<div class="filters-row">
+				<div class="filter-search">
 					<STextField v-model="search" placeholder="Cari no. laporan, judul, lokasi, deskripsi..."
 						variant="text" @input="onSearchInput" />
 				</div>
-				<div>
-					<input type="date" :value="selectedDate" class="date-input" @change="handleDateChange" />
+				<div class="filter-extras">
+					<div class="relative">
+						<button 
+							type="button"
+							class="filter-input flex items-center gap-2 bg-white"
+							@click="showDatePicker = !showDatePicker"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+							{{ selectedDate || 'Pilih Tanggal' }}
+						</button>
+						<div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+							<SDatePicker v-model="selectedDateObj" />
+						</div>
+					</div>
+					<select v-model="sortOrder" class="filter-input" @change="currentPage = 1">
+						<option value="desc">Terbaru</option>
+						<option value="asc">Terlama</option>
+					</select>
 				</div>
 			</div>
 
@@ -248,12 +292,11 @@ onMounted(() => {
 				<p>Memuat data...</p>
 			</div>
 
-			<!-- Admin: Table View -->
 			<template v-else-if="isAdmin">
 				<SCard class="section-card">
 					<div class="section-header">
 						<div>
-							<h3 class="section-title">Daftar Laporan</h3>
+							<h3 class="stf-section-title">Daftar Laporan</h3>
 							<span class="section-count">{{ totalData }} laporan ditemukan</span>
 						</div>
 					</div>
@@ -288,77 +331,67 @@ onMounted(() => {
 							</template>
 
 							<template #body-cell-pengirim="{ row }">
-								<span class="text-sm text-gray-500">
-									{{ row.nama_lengkap || row.pengirim_username || '-' }}
-								</span>
-							</template>
-
-							<template #body-cell-status="{ row }">
-								<span class="status-badge" :class="`status-badge--${row.status}`">
-									{{ statusLabel(row.status) }}
-								</span>
+								<div class="flex flex-col items-start gap-1">
+                  <span class="font-semibold text-gray-800">{{ row.pelapor_info?.nama_lengkap || '-' }}</span>
+                  <SChip
+                    v-if="row.akun_terverifikasi !== undefined"
+                    :label="row.akun_terverifikasi ? 'Terverifikasi' : 'Belum Terverifikasi'"
+                    :tone="row.akun_terverifikasi ? 'success' : 'warning'"
+                    size="small"
+                  />
+                </div>
 							</template>
 
 							<template #body-cell-aksi="{ row }">
-								<div class="flex items-center gap-2">
-									<button class="aksi-btn aksi-btn--detail"
-										@click="$router.push({ name: 'detailLaporanKerusakan', params: { id: row.id } })">
-										Detail
-									</button>
-								</div>
+								<SButton 
+                                    label="Detail" 
+                                    variant="action" 
+                                    size="small" 
+                                    @click="openDetail(row)" 
+                                >
+                                    <template #left-icon>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                    </template>
+                                </SButton>
 							</template>
+
+							<template #body-cell-status="{ row }">
+								<SChip 
+									:label="statusLabel(row.status)" 
+									:tone="row.status === 'selesai' ? 'success' : (row.status === 'diproses' ? 'info' : (row.status === 'menunggu' ? 'warning' : 'danger'))" 
+									size="small" 
+								/>
+							</template>
+
+
 						</STable>
 					</div>
 				</SCard>
 			</template>
 
-			<!-- Pelapor: Card View -->
 			<template v-else-if="isPelapor">
 				<p class="card-view-count">{{ totalData }} laporan ditemukan</p>
 
-				<div v-if="paginatedList.length === 0" class="empty-state">
-					<svg xmlns="http://www.w3.org/2000/svg" class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<div v-if="paginatedList.length === 0" class="s-empty-state">
+					<svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 					</svg>
-					<p class="empty-title">Belum ada laporan</p>
-					<p class="empty-desc">Laporan kerusakan yang kamu buat akan muncul di sini.</p>
+					<h3 class="s-empty-state__title">Belum ada laporan</h3>
+					<p class="s-empty-state__desc">Laporan kerusakan yang kamu buat akan muncul di sini.</p>
 				</div>
 
 				<div v-else class="card-grid">
-					<div v-for="item in paginatedList" :key="item.id" class="report-card" @click="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })">
-						<div class="report-card__top">
-							<span class="status-badge" :class="`status-badge--${item.status}`">
-								{{ statusLabel(item.status) }}
-							</span>
-							<span class="report-card__date">{{ formatDate(item.tanggal_kejadian) }}</span>
-						</div>
-
-						<h4 class="report-card__no">{{ item.judul }}</h4>
-
-						<div class="report-card__info">
-							<div class="report-card__info-row">
-								<svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-								</svg>
-								<span>{{ item.lokasi }}</span>
-							</div>
-							<div class="report-card__info-row">
-								<svg xmlns="http://www.w3.org/2000/svg" class="info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h6M8 15h8M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z" />
-								</svg>
-								<span>{{ item.no_laporan }}</span>
-							</div>
-						</div>
-
-						<p class="report-card__desc">{{ item.deskripsi }}</p>
-
-						<div class="report-card__footer">
-							<button class="aksi-btn aksi-btn--detail" @click.stop="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })">
-								Detail
-							</button>
-						</div>
-					</div>
+					<SReportCard
+						v-for="item in paginatedList" 
+						:key="item.id"
+						:status="item.status"
+						:date="formatDate(item.tanggal_kejadian)"
+						:title="item.judul"
+						:location="item.lokasi"
+						:report-number="item.no_laporan"
+						@click-card="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })"
+						@click-detail="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })"
+					/>
 				</div>
 
 				<div v-if="totalPages > 1" class="card-pagination">
@@ -367,7 +400,6 @@ onMounted(() => {
 			</template>
 		</div>
 
-		<!-- Detail Dialog -->
 		<SDialog :visible="showDetailDialog" variant="primary" title="Detail Laporan Kerusakan"
 			@update:visible="showDetailDialog = $event" @close="showDetailDialog = false">
 			<div v-if="selectedLaporan" class="detail-content">
@@ -383,6 +415,15 @@ onMounted(() => {
 					<span class="detail-label">Judul Laporan</span>
 					<span class="detail-value">{{ selectedLaporan.judul }}</span>
 				</div>
+				<div v-if="isAdmin && selectedLaporan" class="detail-row">
+					<span class="detail-label">Pengirim</span>
+					<div class="detail-value flex items-center gap-1.5">
+						<span>{{ selectedLaporan.nama_lengkap || selectedLaporan.pengirim_username || '-' }}</span>
+						<span v-if="selectedLaporan.akun_terverifikasi" title="Terverifikasi" class="text-green-600">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+						</span>
+					</div>
+				</div>
 				<div class="detail-row">
 					<span class="detail-label">Lokasi</span>
 					<span class="detail-value">{{ selectedLaporan.lokasi }}</span>
@@ -397,9 +438,7 @@ onMounted(() => {
 				</div>
 				<div class="detail-row">
 					<span class="detail-label">Status</span>
-					<span class="status-badge" :class="`status-badge--${selectedLaporan.status}`">
-						{{ statusLabel(selectedLaporan.status) }}
-					</span>
+					<SChip size="large" variant="solid" :tone="statusTone(selectedLaporan.status)" :label="statusLabel(selectedLaporan.status)" />
 				</div>
 				<div class="detail-row detail-row--full">
 					<span class="detail-label">Deskripsi Kerusakan</span>
@@ -416,7 +455,6 @@ onMounted(() => {
 			</template>
 		</SDialog>
 
-		<!-- Status Update Confirmation Dialog -->
 		<SDialog :visible="showStatusDialog" :variant="statusAction === 'ditolak' ? 'danger' : 'primary'"
 			:title="statusAction === 'diproses' ? 'Proses Laporan' : statusAction === 'selesai' ? 'Selesaikan Laporan' : 'Tolak Laporan'"
 			:message="`Apakah Anda yakin ingin ${statusAction === 'diproses' ? 'memproses' : statusAction === 'selesai' ? 'menyelesaikan' : 'menolak'} laporan ${statusTarget?.no_laporan}?`"
@@ -427,119 +465,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.laporan-page {
-	min-height: calc(100vh - 64px);
-	background: var(--color-general-frame);
-	padding: 24px 16px;
-}
-
-.laporan-container {
-	max-width: 1100px;
-	margin: 0 auto;
-}
-
-.laporan-title {
-	font-family: var(--font-be-vietnam);
-	font-weight: 700;
-	font-size: 24px;
-	color: var(--color-general-black);
-	margin-bottom: 4px;
-}
-
-.laporan-subtitle {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-neutral-500);
-	margin-bottom: 24px;
-}
-
-.laporan-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 16px;
-	flex-wrap: wrap;
-	margin-bottom: 0;
-}
-
-.tab-btn {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 8px 16px;
-	border-radius: 9999px;
-	font-size: 14px;
-	font-weight: 600;
-	font-family: "Be Vietnam Pro", sans-serif;
-	transition: all 0.2s;
-	white-space: nowrap;
-	cursor: pointer;
-	border: none;
-}
-
-.tab-btn--active {
-	color: white;
-}
-
-.tab-btn--active-semua {
-	background: var(--color-blue-600);
-	border-color: var(--color-blue-600);
-	box-shadow: 0 2px 8px rgba(46, 48, 148, 0.25);
-}
-
-.tab-btn--active-menunggu {
-	background: #F59E0B;
-	border-color: #F59E0B;
-	box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
-}
-
-.tab-btn--active-diproses {
-	background: var(--color-neutral-400, #9CA3AF);
-	border-color: var(--color-neutral-400, #9CA3AF);
-	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
-}
-
-.tab-btn--active-selesai {
-	background: #2E7D32;
-	border-color: #2E7D32;
-	box-shadow: 0 2px 8px rgba(46, 125, 50, 0.25);
-}
-
-.tab-btn--active-ditolak {
-	background: #DC2626;
-	border-color: #DC2626;
-	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-}
-
-.tab-btn--active-dibatalkan {
-	background: #DC2626;
-	border-color: #DC2626;
-	box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-}
-
-.tab-btn--inactive {
-	background: white;
-	color: var(--color-neutral-500);
-	border: 1px solid var(--color-general-border);
-}
-
-.tab-btn--inactive:hover {
-	background: var(--color-neutral-50);
-}
-
-.tab-badge {
-	font-size: 11px;
-	font-weight: 700;
-	padding: 1px 7px;
-	border-radius: 9999px;
-	line-height: 1.4;
-}
-
-.tab-badge--active {
-	background: rgba(255, 255, 255, 0.25);
-	color: white;
-}
-
 .tab-badge--inactive {
 	background: var(--color-neutral-100);
 	color: var(--color-neutral-500);
@@ -610,40 +535,7 @@ onMounted(() => {
 	line-height: 1.5;
 }
 
-.status-badge {
-	display: inline-flex;
-	align-items: center;
-	padding: 4px 12px;
-	border-radius: 9999px;
-	font-size: 12px;
-	font-weight: 600;
-	font-family: "Be Vietnam Pro", sans-serif;
-	white-space: nowrap;
-}
-
-.status-badge--menunggu {
-	background: #FFF8E1;
-	color: #F59E0B;
-	border: 1px solid #F59E0B;
-}
-
-.status-badge--diproses {
-	background: var(--color-blue-50);
-	color: var(--color-blue-600);
-	border: 1px solid var(--color-blue-400);
-}
-
-.status-badge--selesai {
-	background: #E8F5E9;
-	color: #2E7D32;
-	border: 1px solid #2E7D32;
-}
-
-.status-badge--ditolak {
-	background: var(--color-red-50);
-	color: #DC2626;
-	border: 1px solid #DC2626;
-}
+/* Status badges removed */
 
 .status-badge--dibatalkan {
 	background: #FEF2F2;
@@ -819,37 +711,6 @@ onMounted(() => {
 	font-size: 13px;
 	color: var(--color-neutral-400);
 	margin-bottom: 16px;
-}
-
-/* ── Empty State ── */
-.empty-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 60px 20px;
-	text-align: center;
-}
-
-.empty-icon {
-	width: 64px;
-	height: 64px;
-	color: var(--color-neutral-300);
-	margin-bottom: 16px;
-}
-
-.empty-title {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-weight: 700;
-	font-size: 18px;
-	color: var(--color-general-black);
-	margin-bottom: 4px;
-}
-
-.empty-desc {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-neutral-400);
 }
 
 /* ── Card Grid ── */
@@ -1094,5 +955,40 @@ onMounted(() => {
 		gap: 8px;
 		margin-bottom: 16px;
 	}
+}
+
+.filters-row {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 24px;
+	align-items: stretch;
+}
+.filter-search { flex: 1; min-width: 0; }
+.filter-extras {
+	display: flex;
+	gap: 12px;
+}
+.filter-input {
+	border: 1px solid var(--color-general-border);
+	border-radius: 8px;
+	padding: 10px 40px 10px 14px;
+	height: 48px;
+	font-size: 14px;
+	color: var(--color-general-black);
+	background: white;
+	transition: border-color 0.2s;
+	min-width: 140px;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	cursor: pointer;
+}
+.filter-input:focus {
+	outline: none;
+	border-color: var(--color-blue-500);
+	box-shadow: 0 0 0 3px rgba(46,48,148,.08);
 }
 </style>

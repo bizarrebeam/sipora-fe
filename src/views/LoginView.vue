@@ -50,29 +50,32 @@ async function handleLogin() {
 
       <!-- Form -->
       <form @submit.prevent="handleLogin" class="login-form">
-        <div class="nisn-field">
+        <div class="nis-field">
           <STextField
-            label="NISN"
-            placeholder="Masukkan NISN"
+            label="Nomor Induk Siswa (NIS)"
+            placeholder="Masukkan 4 digit NIS"
+            name="username"
+            autocomplete="username"
             variant="text"
             v-model="identifier"
             :required="true"
+            maxlength="4"
+            digitGuide="4"
           />
-          <a
-            href="https://nisn.data.kemdikbud.go.id/index.php/Cindex/formcaribynama/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="nisn-help"
-          >Cek NISN</a>
         </div>
         <STextField
           label="Password"
           placeholder="Masukkan password"
+          name="password"
+          autocomplete="current-password"
           variant="text"
           v-model="password"
           :required="true"
           input-type="password"
         />
+        <div class="forgot-password-row">
+          <RouterLink to="/forgot-password" class="forgot-link">Lupa Password?</RouterLink>
+        </div>
         <SButton
           :label="loading ? 'Memproses...' : 'Masuk'"
           variant="primary"
@@ -100,6 +103,8 @@ async function handleLogin() {
   min-height: calc(100vh - 64px);
   background: var(--color-general-frame);
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .login-card {
@@ -169,25 +174,27 @@ async function handleLogin() {
   margin-top: 4px;
 }
 
-/* ── NISN field wrapper ── */
-.nisn-field {
+/* ── NIS field wrapper ── */
+.nis-field {
   position: relative;
 }
 
-.nisn-help {
-  position: absolute;
-  top: 0;
-  right: 0;
+.forgot-password-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+}
+
+.forgot-link {
   font-family: "Be Vietnam Pro", sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--color-blue-400);
   text-decoration: none;
-  line-height: 24px;
   transition: color 0.2s;
 }
 
-.nisn-help:hover {
+.forgot-link:hover {
   color: var(--color-blue-600);
   text-decoration: underline;
 }
@@ -227,6 +234,23 @@ async function handleLogin() {
 
   .login-logo {
     height: 48px;
+  }
+}
+
+/* ── Tiny screens (iPhone SE ≤ 375px) ── */
+@media (max-width: 375px) {
+  .login-page {
+    padding: 12px;
+  }
+  .login-card {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+  .login-logo {
+    height: 36px;
+  }
+  .login-tagline {
+    font-size: 13px;
   }
 }
 </style>

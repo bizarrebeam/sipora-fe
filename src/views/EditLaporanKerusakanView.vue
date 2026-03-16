@@ -5,6 +5,7 @@ import STextField from '@/components/STextField.vue'
 import SToggle from '@/components/SToggle.vue'
 import SButton from '@/components/SButton.vue'
 import SAlert from '@/components/SAlert.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 import { useAuthStore } from '@/stores/auth'
 
@@ -35,12 +36,24 @@ function handleAlertPrimary() {
 const judul = ref('')
 const buktiInputRef = ref<HTMLInputElement | null>(null)
 const tanggalKejadian = ref('')
-const tanggalInputRef = ref<HTMLInputElement | null>(null)
+const tanggalKejadianObj = ref<Date | null>(null)
+const showDatePicker = ref(false)
 const lokasi = ref('')
 const deskripsi = ref('')
 const anonimitas = ref(false)
 const buktiPendukung = ref<File[]>([])
 const buktiError = ref('')
+
+watch(tanggalKejadianObj, (newVal) => {
+  if (newVal) {
+    const yyyy = newVal.getFullYear()
+    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+    const dd = String(newVal.getDate()).padStart(2, '0')
+    tanggalKejadian.value = `${yyyy}-${mm}-${dd}`
+    showDatePicker.value = false
+    validate()
+  }
+})
 
 const errors = ref({
     judul: '',
@@ -212,6 +225,9 @@ onMounted(async () => {
 
         judul.value = data.judul || ''
         tanggalKejadian.value = data.tanggal_kejadian || ''
+        if (data.tanggal_kejadian) {
+          tanggalKejadianObj.value = new Date(data.tanggal_kejadian)
+        }
         lokasi.value = data.lokasi || ''
         deskripsi.value = data.deskripsi || ''
         anonimitas.value = !!data.anonimitas
@@ -233,7 +249,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="create-laporan-page">
+    <div class="stf-page">
         <Teleport to="body">
             <Transition name="fade">
                 <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
@@ -249,8 +265,29 @@ onMounted(async () => {
             </Transition>
         </Teleport>
 
-        <h4 class="form-title stf-header">Ubah Laporan Kerusakan</h4>
-        <div class="form-container">
+        <div class="form-page-container">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <button
+                    @click="router.back()"
+                    class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
+                >
+                    <span>&larr;</span> Kembali
+                </button>
+            </div>
+
+            <!-- Header -->
+            <div class="form-header mb-8">
+                <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">
+                    Ubah Laporan Kerusakan
+                </h1>
+                <p class="text-gray-500 font-display text-sm">
+                    Perbarui rincian laporan jika terdapat kesalahan atau informasi tambahan.<br>
+                    Pastikan data yang Anda berikan tetap akurat untuk proses perbaikan.
+                </p>
+            </div>
+
+            <div class="form-wrapper">
             <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
                 <div class="form-group">
                     <STextField
@@ -271,23 +308,18 @@ onMounted(async () => {
                         <span class="custom-asterisk">*</span>
                     </div>
                     <div class="relative w-full">
-                        <input
-                            ref="tanggalInputRef"
-                            type="date"
-                            v-model="tanggalKejadian"
-                            class="visually-hidden-date"
-                            @change="validate"
-                            required
-                            tabindex="-1"
-                        />
                         <button
                             type="button"
-                            class="flex w-full items-center rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
-                            @click="() => { if (tanggalInputRef?.showPicker) tanggalInputRef.showPicker(); else tanggalInputRef?.click(); }"
+                            class="flex w-full items-center gap-2 rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                            @click="showDatePicker = !showDatePicker"
                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-neutral-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                             <span v-if="tanggalKejadian">{{ new Date(tanggalKejadian).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
                             <span v-else class="text-neutral-300">Pilih tanggal...</span>
                         </button>
+                        <div v-show="showDatePicker" class="absolute left-0 top-[52px] z-50 shadow-2xl border rounded-2xl overflow-hidden scale-90 origin-top-left bg-white">
+                            <SDatePicker v-model="tanggalKejadianObj" />
+                        </div>
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                 </div>
@@ -394,6 +426,7 @@ onMounted(async () => {
             </form>
         </div>
     </div>
+</div>
 </template>
 
 <style scoped>
@@ -426,41 +459,18 @@ onMounted(async () => {
     margin-left: 2px;
     font-family: "Be Vietnam Pro", sans-serif;
 }
-.create-laporan-page {
-    min-height: 100vh;
-    background: var(--color-general-frame, #f7f8fa);
-    padding: 32px 0;
-}
-.form-container {
-    max-width: 700px;
+.form-page-container {
+    max-width: 800px;
     margin: 0 auto;
-    background: var(--color-blue-50);
-    border-radius: 20px;
-    box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.10);
-    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
 }
 
-.input-date-native[type='date'] {
-    font-family: inherit;
-    font-size: inherit;
-    color: inherit;
-    background: inherit;
-    border: none;
-    outline: none;
-    width: 100%;
-    padding: 0;
-    -webkit-appearance: auto;
-    -moz-appearance: auto;
-    appearance: auto;
-}
-.form-title.stf-header {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-weight: 700;
-    font-size: 22px;
-    margin-bottom: 32px;
-    color: var(--color-blue-500);
-    text-align: center;
-    letter-spacing: 0.01em;
+.form-wrapper {
+    background: var(--color-blue-50);
+    border-radius: 20px;
+    box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.1);
+    padding: 48px 40px;
 }
 .stf-label--bold {
     font-weight: 700;

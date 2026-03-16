@@ -1,11 +1,25 @@
-School Reporting & Aspiration System
+# README
 
-DESKRIPSI
-Sistem ini dikembangkan untuk membantu sekolah dalam mengelola laporan kerusakan fasilitas, aspirasi siswa dan guru, serta monitoring laporan melalui dashboard. Sistem menggunakan UUID sebagai ID utama dan mendukung beberapa role: Siswa, Guru, Pelapor, dan Kemahasiswaan.
+## Identitas Mahasiswa
+
+Nama  : Rizki Hidayatul Laeli  
+Kelompok : B01  
+Proyek : Propenat (C2H5COOH)
+
+---
+
+## Fitur yang Dikerjakan
+
+Berikut adalah daftar fitur dan backlog (PBI) yang saya kerjakan berdasarkan Product Backlog Item (PBI) pada dokumen Propenat 2025/2026.
 
 FITUR YANG DIKERJAKAN
 
-MENGELOLA LAPORAN KERUSAKAN FASILITAS SEKOLAH
+### 1. PBI-38 — Mengelola Jadwal Ketersediaan Guru BK
+
+Backlog Title: Mengelola Jadwal Ketersediaan Guru BK  
+
+Deskripsi Singkat:  
+Fitur ini memungkinkan Guru BK untuk menambahkan, mengubah, dan menghapus jadwal ketersediaan konsultasi. Sistem melakukan validasi waktu serta mencegah bentrok jadwal agar slot yang tersedia valid dan dapat digunakan siswa untuk booking.
 
 1.1 Membuat Laporan Kerusakan (PBI-15)
 Tujuan:
@@ -19,7 +33,12 @@ lokasi
 jenis kerusakan
 foto bukti pendukung
 
-Aturan Backend:
+### 2. PBI-39 — Membuat Booking Jadwal Konsultasi BK
+
+Backlog Title: Membuat Booking Jadwal Konsultasi BK  
+
+Deskripsi Singkat:  
+Fitur ini memungkinkan siswa melakukan booking berdasarkan slot yang tersedia. Siswa wajib mengisi alasan konsultasi sebelum mengirim permintaan. Status awal booking adalah *Menunggu Konfirmasi*.
 
 Sistem menerima semua field yang dibutuhkan.
 ID laporan otomatis dibuat dengan format UUID.
@@ -28,196 +47,127 @@ Mengembalikan status 201 jika berhasil.
 Hanya role Pelapor yang dapat membuat laporan.
 Ketentuan Frontend:
 
-Form menampilkan semua field wajib.
-Tombol “Kirim Laporan” aktif jika semua field terisi.
-Setelah berhasil, muncul pesan sukses dan redirect ke halaman detail.
+### 3. PBI-40 — Mengonfirmasi Jadwal Booking
+
+Backlog Title: Mengonfirmasi Jadwal Booking  
+
+Deskripsi Singkat:  
+Fitur ini memungkinkan Guru BK untuk menerima atau menolak permintaan booking. Hanya booking dengan status *Menunggu Konfirmasi* yang dapat diproses. Jika ditolak, Guru BK dapat memberikan alasan penolakan.
 
 1.2 Mengedit Laporan Kerusakan (PBI-16)
 
-Tujuan:
-Pengguna dapat memperbarui laporan yang telah dibuat jika ada kesalahan atau tambahan informasi.
-Endpoint:
-PUT /api/laporan-kerusakan/{id}
+### 4. PBI-41 — Membatalkan Jadwal Booking Konsultasi
+
+Backlog Title: Membatalkan Jadwal Booking Konsultasi  
+
+Deskripsi Singkat:  
+Fitur ini memungkinkan siswa membatalkan booking selama masih berstatus *Menunggu Konfirmasi*. Sistem akan memperbarui status menjadi *Dibatalkan* setelah konfirmasi pembatalan dilakukan.
 
 Aturan Backend:
 Hanya pembuat laporan yang dapat mengedit.
 Laporan hanya bisa diedit jika status “Menunggu Konfirmasi”.
 Ketentuan Frontend:
 
-Form edit menampilkan data lama yang sudah tersimpan.
+### 5. PBI-42 — Reschedule Jadwal Booking Konsultasi
+
+Backlog Title: Reschedule Jadwal Booking Konsultasi  
+
+Deskripsi Singkat:  
+Fitur ini memungkinkan siswa mengubah jadwal booking ke slot lain yang masih tersedia tanpa membuat booking baru. Perubahan hanya dapat dilakukan sebelum booking dikonfirmasi.
 
 Tombol “Ubah Laporan” aktif jika semua field valid.
 
-Setelah berhasil, muncul pesan sukses dan redirect ke halaman detail.
+### 6. PBI-43 — Melihat Daftar Booking Konsultasi
+
+Backlog Title: Melihat Daftar Booking Konsultasi  
+
+Deskripsi Singkat:  
+Fitur ini menampilkan daftar booking sesuai peran pengguna. Guru BK dapat melihat seluruh booking yang ditujukan kepadanya, sedangkan siswa hanya dapat melihat booking miliknya sendiri.
 
 MENGELOLA ASPIRASI
 
-2.1 Membuat Aspirasi (PBI-24)
+### 7. PBI-47 — Membuat artikel kesehatan mental
+
+Backlog Title: Membuat artikel kesehatan mental
+
+Deskripsi Singkat:  
+Fitur membuat artikel kesehatan mental memungkinkan kemahasiswaan membuat sebuah artikel yang berkaitan dengan isu kesehatan mental bagi siswa-siswi SMP Budi Mulia Desa Putera
 
 Tujuan:
 Pelapor dapat menyampaikan pendapat, masukan, dan saran kepada pihak sekolah.
 
-Endpoint:
-POST /api/aspirasi
+### 8. PBI-48 — Mengedit artikel kesehatan mental
 
-Field:
+Backlog Title: Mengedit artikel kesehatan mental 
 
-judul
+Deskripsi Singkat:  
+Fitur mengedit artikel kesehatan mental memungkinkan kemahasiswaan mengedit sebuah artikel yang berkaitan dengan isu kesehatan mental  yang telah disimpan dalam sistem sebelumnya
 
-kategori
+---
 
-deskripsi
+### 9. PBI-50 — Membaca artikel kesehatan mental
 
-lampiran (optional)
+Backlog Title: Membaca artikel kesehatan mental
 
-Aturan Backend:
+Deskripsi Singkat:  
+Fitur membaca artikel kesehatan mental memungkinkan pelapor membaca sebuah artikel yang berkaitan dengan isu kesehatan mental
 
-ID menggunakan UUID.
+---
 
-Hanya siswa dan guru yang dapat membuat aspirasi.
+### 7. PBI-52 — Melihat daftar artikel yang dibuat
 
-Mengembalikan status 200 jika berhasil.
+Backlog Title: Melihat daftar artikel yang dibuat
 
-Ketentuan Frontend:
+Deskripsi Singkat:  
+Fitur melihat daftar artikel artikel kesehatan mental memungkinkan kemahasiswaan melihat daftar artikel yang berkaitan dengan isu kesehatan mentals
 
-Form input lengkap dengan field wajib.
+----------------------------------------
 
-Tombol “Kirim Aspirasi” aktif jika field wajib terisi.
+# sipora-fe
 
-Setelah berhasil, redirect ke halaman detail atau riwayat aspirasi.
+This template should help get you started developing with Vue 3 in Vite.
 
-2.2 Mengedit Aspirasi (PBI-25)
+## Recommended IDE Setup
 
-Tujuan:
-Pelapor dapat memperbaiki atau melengkapi aspirasi yang telah diajukan.
+[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-Endpoint:
-PUT /api/aspirasi/{id}
+## Recommended Browser Setup
 
-Aturan Backend:
+- Chromium-based browsers (Chrome, Edge, Brave, etc.):
+  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
+  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
+- Firefox:
+  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
+  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
 
-Hanya pemilik aspirasi yang dapat mengedit.
+## Type Support for `.vue` Imports in TS
 
-Mengembalikan status 200 jika berhasil.
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
 
-Ketentuan Frontend:
+## Customize configuration
 
-Form edit terisi otomatis dengan data lama.
+See [Vite Configuration Reference](https://vite.dev/config/).
 
-Tombol “Simpan Perubahan” aktif jika ada perubahan dan data valid.
+## Project Setup
 
-Menampilkan pesan sukses setelah berhasil.
+```sh
+npm install
+```
 
-2.3 Menandai Aspirasi (PBI-26)
+### Compile and Hot-Reload for Development
 
-Tujuan:
-Kemahasiswaan dapat menandai aspirasi yang menarik untuk dipertimbangkan.
+```sh
+npm run dev
+```
 
-Endpoint:
-GET /api/aspirasi/{id}
+### Type-Check, Compile and Minify for Production
 
-Aturan Backend:
+```sh
+npm run build
+```
 
-Mengembalikan status 200 jika berhasil ditandai.
+### Lint with [ESLint](https://eslint.org/)
 
-Ketentuan Frontend:
-
-Tersedia toggle “Ditandai”.
-
-Menampilkan pesan sukses setelah toggle diaktifkan.
-
-2.4 Melihat Daftar Aspirasi (PBI-27)
-
-Tujuan:
-Kemahasiswaan dapat melihat seluruh aspirasi.
-Pelapor dapat melihat aspirasi miliknya sendiri.
-
-Endpoint:
-GET /api/aspirasi
-
-Aturan Backend:
-
-Role kemahasiswaan melihat seluruh data.
-
-Role pelapor hanya melihat data miliknya.
-
-Ketentuan Frontend:
-
-Tampilan tabel untuk kemahasiswaan.
-
-Tampilan card/list untuk pelapor.
-
-Terdapat search bar berdasarkan kata kunci.
-
-Terdapat filter kategori.
-
-Terdapat pagination jika data banyak.
-
-Data diurutkan berdasarkan tanggal terbaru.
-
-Jika kosong, menampilkan pesan “belum ada aspirasi yang tersedia”.
-
-DASHBOARD MONITORING SEKOLAH
-
-3.1 Dashboard Rekap Konsultasi (PBI-28)
-
-Tujuan:
-Kemahasiswaan dapat memantau seluruh laporan secara terpusat dalam periode tertentu.
-
-Endpoint:
-GET /api/dashboard-konsultasi
-
-Fitur Backend:
-
-Mendukung filter rentang waktu.
-
-Mengembalikan total laporan.
-
-Mengembalikan jumlah laporan berdasarkan status.
-
-Mengembalikan statistik harian.
-
-Ketentuan Frontend:
-
-Ringkasan dalam bentuk cards.
-
-Pie chart berdasarkan status konsultasi.
-
-Bar chart distribusi per periode.
-
-Filter tanggal (mingguan/bulanan).
-
-Default: ringkasan bulanan dan chart tahunan.
-
-3.2 Dashboard Rekap Pelaporan dan Aspirasi (PBI-29)
-
-Tujuan:
-Kemahasiswaan dapat memantau jumlah, status, dan perkembangan laporan serta aspirasi secara keseluruhan.
-
-Endpoint:
-GET /api/dashboard-konsultasi
-
-Fitur Backend:
-
-Mendukung filter ascending dan descending.
-
-Mengembalikan total laporan.
-
-Mengembalikan jumlah berdasarkan status.
-
-Mengembalikan statistik kategori terbanyak.
-
-Ketentuan Frontend:
-
-Cards berdasarkan status laporan.
-
-Pie chart aspirasi per kategori.
-
-Bar chart distribusi laporan berdasarkan kategori.
-
-Statistik aspirasi per periode.
-
-Filter periode waktu.
-
-Default tampilan bulanan dan tahunan.
-
+```sh
+npm run lint
+```

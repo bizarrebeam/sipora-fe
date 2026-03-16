@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+import { useAuthStore } from '@/stores/auth'
 
 /**
  * All Django responses are wrapped by CoreJSONRenderer:
@@ -71,6 +72,8 @@ export async function apiAuthGet(endpoint: string) {
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
     if (response.status === 401) {
+      const authStore = useAuthStore()
+      authStore.setSessionExpired(true)
       throw new Error('Sesi telah berakhir. Silakan login kembali.')
     }
     throw new Error(parseError(json, response.status))
@@ -91,6 +94,8 @@ export async function apiAuthPost(endpoint: string, payload: object) {
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
     if (response.status === 401) {
+      const authStore = useAuthStore()
+      authStore.setSessionExpired(true)
       throw new Error('Sesi telah berakhir. Silakan login kembali.')
     }
     throw new Error(parseError(json, response.status))
@@ -111,6 +116,8 @@ export async function apiAuthPut(endpoint: string, payload: object) {
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
     if (response.status === 401) {
+      const authStore = useAuthStore()
+      authStore.setSessionExpired(true)
       throw new Error('Sesi telah berakhir. Silakan login kembali.')
     }
     throw new Error(parseError(json, response.status))

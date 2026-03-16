@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { apiAuthGet, apiAuthPost } from '@/services/api'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
+import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SDialog from '@/components/SDialog.vue'
 import STable from '@/components/STable.vue'
@@ -12,11 +13,12 @@ import { useAuthStore } from '@/stores/auth'
 interface AkunItem {
   id: string
   nama_lengkap: string
-  nisn?: string
+  nis?: string
   nuptk?: string
   kelas?: string
   mata_pelajaran?: string
   role: string
+  is_verified?: boolean
   date_joined: string
 }
 
@@ -27,7 +29,36 @@ const siswaTotal = ref(0)
 const guruTotal = ref(0)
 const guruBkTotal = ref(0)
 const search = ref('')
+const selectedDate = ref('')
+const selectedDateObj = ref<Date | null>(null)
+const showDatePicker = ref(false)
+
+watch(selectedDateObj, (newVal: Date | null) => {
+  if (newVal) {
+    const yyyy = newVal.getFullYear()
+    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+    const dd = String(newVal.getDate()).padStart(2, '0')
+    selectedDate.value = `${yyyy}-${mm}-${dd}`
+  } else {
+    selectedDate.value = ''
+  }
+  showDatePicker.value = false
+})
+
+const sortOrder = ref<'asc' | 'desc'>('desc')
+watch(sortOrder, (val: 'asc' | 'desc') => {
+  sortState.value.siswa.key = 'date_joined'
+  sortState.value.siswa.order = val
+  sortState.value.guru.key = 'date_joined'
+  sortState.value.guru.order = val
+  sortState.value.guruBk.key = 'date_joined'
+  sortState.value.guruBk.order = val
+})
 const loading = ref(false)
+
+const isPasswordLengthValid = computed(() => createPassword.value.length >= 8)
+const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.value) && /[0-9]/.test(createPassword.value))
+const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
 
 const auth = useAuthStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
@@ -35,10 +66,14 @@ const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const showCreateDialog = ref(false)
 const createType = ref<'guru' | 'guru_bk'>('guru')
 const createNuptk = ref('')
+const createUsername = ref('')
 const createNama = ref('')
 const createMapels = ref<string[]>([''])
 const createPassword = ref('')
 const createLoading = ref(false)
+const showVerifyDialog = ref(false)
+const verifyLoading = ref(false)
+const selectedSiswa = ref<AkunItem | null>(null)
 
 const createTitle = computed(() => createType.value === 'guru' ? 'Buat Akun Guru' : 'Buat Akun Guru BK')
 
@@ -54,11 +89,29 @@ const sortState = ref({
   guruBk: { key: '', order: 'desc' as 'asc' | 'desc' }
 })
 
+const activeTab = ref('siswa')
+
+const accountTabs = computed(() => {
+  const tabs = [{ value: 'siswa', label: 'Siswa', count: siswaTotal.value }]
+  if (isKemahasiswaan.value) {
+    tabs.push(
+      { value: 'guru', label: 'Guru', count: guruTotal.value },
+      { value: 'guru_bk', label: 'Guru BK', count: guruBkTotal.value }
+    )
+  }
+  return tabs
+})
+
+function handleTabChange(tab: string) {
+  activeTab.value = tab
+}
+
 const siswaColumns = [
-  { key: 'nama_lengkap', label: 'Nama', sortable: true },
-  { key: 'nisn', label: 'NISN', sortable: true },
+  { key: 'nama_lengkap', label: 'Nama', sortable: true, tdClass: 'min-w-[200px]' },
+  { key: 'nis', label: 'NIS', sortable: true },
   { key: 'kelas', label: 'Kelas', sortable: true },
-  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true }
+  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true },
+  { key: 'action', label: 'Aksi', sortable: false }
 ]
 
 const guruColumns = [
@@ -103,9 +156,17 @@ function getSortedList(list: AkunItem[], type: 'siswa' | 'guru' | 'guruBk') {
   })
 }
 
-const siswaSorted = computed(() => getSortedList(siswaList.value, 'siswa'))
-const guruSorted = computed(() => getSortedList(guruList.value, 'guru'))
-const guruBkSorted = computed(() => getSortedList(guruBkList.value, 'guruBk'))
+function applyDateFilter(list: AkunItem[]) {
+  if (!selectedDate.value) return list
+  return list.filter(item => {
+    if (!item.date_joined) return false
+    return item.date_joined.startsWith(selectedDate.value)
+  })
+}
+
+const siswaSorted = computed(() => getSortedList(applyDateFilter(siswaList.value), 'siswa'))
+const guruSorted = computed(() => getSortedList(applyDateFilter(guruList.value), 'guru'))
+const guruBkSorted = computed(() => getSortedList(applyDateFilter(guruBkList.value), 'guruBk'))
 
 const paginatedSiswaList = computed(() => {
   const start = (pagination.value.siswa.page - 1) * pagination.value.siswa.pageSize
@@ -140,9 +201,46 @@ async function fetchDaftar() {
   }
 }
 
+async function handleVerify(id: string) {
+  try {
+    await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
+    toast.success('Akun siswa berhasil diverifikasi.')
+    await fetchDaftar()
+  } catch (err: any) {
+    toast.error(err.message || 'Gagal memverifikasi akun.')
+  }
+}
+
+function openVerifyDialog(siswa: AkunItem) {
+  selectedSiswa.value = siswa
+  showVerifyDialog.value = true
+}
+
+function closeVerifyDialog() {
+  showVerifyDialog.value = false
+  selectedSiswa.value = null
+}
+
+const verifyMessage = computed(() => {
+  if (!selectedSiswa.value) return ''
+  return `Apakah Anda yakin memverifikasi bahwa siswa ${selectedSiswa.value.nama_lengkap} dengan NIS ${selectedSiswa.value.nis || '-'} adalah siswa kelas ${selectedSiswa.value.kelas || '-'} di SMP Desa Putera?`
+})
+
+async function confirmVerify() {
+  if (!selectedSiswa.value) return
+  verifyLoading.value = true
+  try {
+    await handleVerify(selectedSiswa.value.id)
+    closeVerifyDialog()
+  } finally {
+    verifyLoading.value = false
+  }
+}
+
 function openCreateDialog(type: 'guru' | 'guru_bk') {
   createType.value = type
   createNuptk.value = ''
+  createUsername.value = ''
   createNama.value = ''
   createMapels.value = ['']
   createPassword.value = ''
@@ -150,12 +248,27 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 }
 
 async function handleCreate() {
-  if (!createNuptk.value || !createNama.value || !createPassword.value) {
+  if (createType.value === 'guru_bk' && !createUsername.value) {
+    toast.error('Username wajib diisi untuk Guru BK.')
+    return
+  }
+  if (!createNama.value || !createPassword.value) {
     toast.error('Harap isi semua field wajib.')
     return
   }
-  if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
-    toast.error('NUPTK harus terdiri dari 16 digit angka.')
+  if (!isPasswordValid.value) {
+    toast.error('Password harus minimal 8 karakter dan mengandung huruf serta angka.')
+    return
+  }
+  
+  // NUPTK is only mandatory for 'guru', optional for 'guru_bk'
+  if (createType.value === 'guru') {
+    if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
+      toast.error('NUPTK harus terdiri dari 16 digit angka.')
+      return
+    }
+  } else if (createNuptk.value && (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value))) {
+    toast.error('Jika diisi, NUPTK harus terdiri dari 16 digit angka.')
     return
   }
   if (createType.value === 'guru') {
@@ -174,6 +287,7 @@ async function handleCreate() {
   try {
     const payload: Record<string, string> = {
       role_type: createType.value,
+      username: createType.value === 'guru_bk' ? createUsername.value : createNuptk.value,
       nuptk: createNuptk.value,
       nama_lengkap: createNama.value,
       password: createPassword.value,
@@ -211,18 +325,75 @@ onMounted(fetchDaftar)
 </script>
 
 <template>
-  <div class="admin-page">
-    <div class="admin-container">
-      <h1 class="admin-title">Manajemen Akun</h1>
+  <div class="stf-page">
+    <div class="stf-container">
+      <div class="stf-header">
+        <div class="stf-header-text">
+          <h1 class="stf-page-title">Manajemen Akun</h1>
+          <p class="stf-page-subtitle">
+            Kelola data akun siswa, guru, dan admin di dalam sistem Sipora.
+          </p>
+        </div>
+        <div v-if="isKemahasiswaan">
+          <SButton 
+            v-if="activeTab === 'guru'" 
+            label="+ Buat Akun Guru" 
+            variant="primary" 
+            @click="openCreateDialog('guru')" 
+          />
+          <SButton 
+            v-if="activeTab === 'guru_bk'" 
+            label="+ Buat Akun Guru BK" 
+            variant="primary" 
+            @click="openCreateDialog('guru_bk')" 
+          />
+        </div>
+      </div>
 
-      <div class="search-bar">
-        <STextField
-          label=""
-          placeholder="Cari berdasarkan nama, NISN, atau NUPTK..."
-          variant="text"
-          v-model="search"
-          @input="onSearchInput"
-        />
+      <div v-if="isKemahasiswaan" class="flex flex-wrap gap-2 mb-6">
+        <button 
+          v-for="tab in accountTabs" 
+          :key="tab.value"
+          @click="handleTabChange(tab.value)"
+          class="stf-tab-btn"
+          :class="activeTab === tab.value ? 'stf-tab--semua stf-tab-btn--active' : 'stf-tab-btn--inactive'"
+        >
+          {{ tab.label }}
+          <span class="stf-tab-badge" :class="activeTab === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
+            {{ tab.count }}
+          </span>
+        </button>
+      </div>
+
+      <div class="filters-row">
+        <div class="filter-search">
+          <STextField
+            label=""
+            placeholder="Cari berdasarkan nama, NIS, atau NUPTK..."
+            variant="text"
+            v-model="search"
+            @input="onSearchInput"
+          />
+        </div>
+        <div class="filter-extras">
+          <div class="relative">
+            <button 
+              type="button"
+              class="filter-input flex items-center gap-2 bg-white"
+              @click="showDatePicker = !showDatePicker"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              {{ selectedDate || 'Pilih Tanggal' }}
+            </button>
+            <div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+              <SDatePicker v-model="selectedDateObj" />
+            </div>
+          </div>
+          <select v-model="sortOrder" class="filter-input">
+            <option value="desc">Terbaru</option>
+            <option value="asc">Terlama</option>
+          </select>
+        </div>
       </div>
 
       <div v-if="loading" class="admin-loading">
@@ -230,10 +401,10 @@ onMounted(fetchDaftar)
       </div>
 
       <template v-else>
-        <SCard class="section-card">
+        <SCard v-if="activeTab === 'siswa'" class="section-card">
           <div class="section-header">
             <div>
-              <h3 class="section-title">Siswa</h3>
+              <h3 class="stf-section-title">Siswa</h3>
               <span class="section-count">{{ siswaTotal }} akun terdaftar</span>
             </div>
           </div>
@@ -249,26 +420,48 @@ onMounted(fetchDaftar)
               @sort="(k) => handleSort('siswa', k)"
               empty-message="Belum ada siswa yang terdaftar."
             >
-              <template #body-cell-nisn="{ row }">
-                {{ row.nisn || '-' }}
+              <template #body-cell-nis="{ row }">
+                {{ row.nis || '-' }}
               </template>
               <template #body-cell-kelas="{ row }">
                 {{ row.kelas || '-' }}
               </template>
+              <template #body-cell-nama_lengkap="{ row }">
+                <div class="flex flex-col items-start gap-1">
+                  <span class="font-semibold">{{ row.nama_lengkap || '-' }}</span>
+                  <SChip
+                    :label="row.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'"
+                    :tone="row.is_verified ? 'success' : 'warning'"
+                    size="small"
+                  />
+                </div>
+              </template>
               <template #body-cell-date_joined="{ row }">
                 {{ formatDate(row.date_joined) }}
+              </template>
+              <template #body-cell-action="{ row }">
+                <SButton
+                  v-if="!row.is_verified && isKemahasiswaan"
+                  label="Verifikasi"
+                  variant="action"
+                  size="small"
+                  @click="openVerifyDialog(row)"
+                >
+                  <template #left-icon>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  </template>
+                </SButton>
               </template>
             </STable>
           </div>
         </SCard>
 
-        <SCard class="section-card" v-if="isKemahasiswaan">
+        <SCard v-if="activeTab === 'guru' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
-              <h3 class="section-title">Guru</h3>
+              <h3 class="stf-section-title">Guru</h3>
               <span class="section-count">{{ guruTotal }} akun terdaftar</span>
             </div>
-            <SButton label="+ Buat Akun Guru" variant="primary" @click="openCreateDialog('guru')" />
           </div>
           <div class="table-wrapper">
             <STable
@@ -295,13 +488,12 @@ onMounted(fetchDaftar)
           </div>
         </SCard>
 
-        <SCard class="section-card" v-if="isKemahasiswaan">
+        <SCard v-if="activeTab === 'guru_bk' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
-              <h3 class="section-title">Guru BK</h3>
+              <h3 class="stf-section-title">Guru BK</h3>
               <span class="section-count">{{ guruBkTotal }} akun terdaftar</span>
             </div>
-            <SButton label="+ Buat Akun Guru BK" variant="primary" @click="openCreateDialog('guru_bk')" />
           </div>
           <div class="table-wrapper">
             <STable
@@ -338,13 +530,25 @@ onMounted(fetchDaftar)
       @close="showCreateDialog = false"
     >
       <div class="create-form">
+        <STextField
+          v-if="createType === 'guru_bk'"
+          label="Username"
+          placeholder="Ketik username (cth: gurubk_budi)"
+          variant="text"
+          v-model="createUsername"
+          :required="true"
+          maxlength="50"
+        />
         <div class="nuptk-field">
           <STextField
-            label="NUPTK"
-            placeholder="Masukkan 16 digit NUPTK"
+            :label="createType === 'guru' ? 'NUPTK' : 'NUPTK (Opsional)'"
+            :placeholder="createType === 'guru' ? 'Masukkan 16 digit NUPTK' : 'Boleh dikosongkan'"
             variant="text"
             v-model="createNuptk"
-            :required="true"
+            :required="createType === 'guru'"
+            maxlength="16"
+            :digitGuide="createType === 'guru' ? '16' : ''"
+            digitGroup="4"
           />
           <a href="https://gtk.belajar.kemendikdasmen.go.id/akun/ptk" target="_blank" rel="noopener noreferrer" class="nuptk-help">Cek NUPTK</a>
         </div>
@@ -379,7 +583,29 @@ onMounted(fetchDaftar)
           <span class="auto-value">Bimbingan Konseling</span>
           <span class="auto-note">(otomatis)</span>
         </div>
-        <STextField label="Password" placeholder="Min. 6 karakter" variant="text" v-model="createPassword" :required="true" input-type="password" />
+        
+        <div>
+          <STextField 
+            label="Password" 
+            placeholder="Min. 8 karakter + huruf & angka" 
+            variant="text" 
+            v-model="createPassword" 
+            :required="true" 
+            input-type="password" 
+          />
+          <div class="password-rules" v-if="createPassword.length > 0">
+            <div :class="['rule-item', isPasswordLengthValid ? 'valid' : 'invalid']">
+              <svg v-if="isPasswordLengthValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Minimal 8 karakter</span>
+            </div>
+            <div :class="['rule-item', isPasswordAlphanumeric ? 'valid' : 'invalid']">
+              <svg v-if="isPasswordAlphanumeric" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Terdapat kombinasi huruf dan angka</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <template #actions>
@@ -387,38 +613,69 @@ onMounted(fetchDaftar)
         <SButton :label="createLoading ? 'Membuat...' : 'Buat Akun'" variant="primary" :disabled="createLoading" @click="handleCreate" />
       </template>
     </SDialog>
+
+    <SDialog
+      :visible="showVerifyDialog"
+      variant="primary"
+      title="Verifikasi Siswa"
+      @update:visible="showVerifyDialog = $event"
+      @close="closeVerifyDialog"
+      @cancel="closeVerifyDialog"
+    >
+      <p class="verify-dialog-message">{{ verifyMessage }}</p>
+
+      <template #actions>
+        <SButton label="Batal" variant="secondary" @click="closeVerifyDialog" />
+        <SButton :label="verifyLoading ? 'Memverifikasi...' : 'Ya, Verifikasi'" variant="primary" :disabled="verifyLoading" @click="confirmVerify" />
+      </template>
+    </SDialog>
   </div>
 </template>
 
 <style scoped>
-.admin-page {
-  min-height: calc(100vh - 64px);
-  background: var(--color-general-frame);
-  padding: 24px 16px;
-}
-
-.admin-container {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.admin-title {
-  font-family: var(--font-be-vietnam);
-  font-weight: 700;
-  font-size: 24px;
-  color: var(--color-general-black);
-  margin-bottom: 20px;
-}
-
 .search-bar {
   margin-bottom: 20px;
 }
 
 .admin-loading {
   text-align: center;
-  padding: 40px 0;
-  color: var(--color-neutral-500);
-  font-family: "Be Vietnam Pro", sans-serif;
+  padding: 40px;
+  color: #666;
+}
+
+.filters-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+.filter-search { flex: 1; min-width: 0; }
+.filter-extras {
+  display: flex;
+  gap: 12px;
+}
+.filter-input {
+  border: 1px solid var(--color-general-border);
+  border-radius: 8px;
+  padding: 10px 40px 10px 14px;
+  height: 48px;
+  font-size: 14px;
+  color: var(--color-general-black);
+  background: white;
+  transition: border-color 0.2s;
+  min-width: 140px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+.filter-input:focus {
+  outline: none;
+  border-color: var(--color-blue-500);
+  box-shadow: 0 0 0 3px rgba(46,48,148,.08);
 }
 
 .section-card {
@@ -426,20 +683,7 @@ onMounted(fetchDaftar)
 }
 
 .section-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 4px;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-family: var(--font-be-vietnam);
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--color-general-black);
-  margin: 0;
+  margin-bottom: 12px;
 }
 
 .section-count {
@@ -449,12 +693,14 @@ onMounted(fetchDaftar)
   color: var(--color-neutral-400);
 }
 
-.empty-msg {
+.verify-dialog-message {
+  color: var(--color-general-black);
+  font-family: var(--font-be-vietnam);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 0;
   text-align: center;
-  padding: 20px 0;
-  color: var(--color-neutral-400);
-  font-family: "Be Vietnam Pro", sans-serif;
-  font-size: 14px;
 }
 
 .create-form {
@@ -513,12 +759,89 @@ onMounted(fetchDaftar)
   font-style: italic;
 }
 
+/* ── Password Rules ── */
+.password-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--color-general-frame);
+  border-radius: 8px;
+  border: 1px solid var(--color-general-border);
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.rule-item.valid {
+  color: #10B981; /* green-500 */
+}
+
+.rule-item.invalid {
+  color: #EF4444; /* red-500 */
+}
+
 @media (min-width: 480px) {
   .admin-page {
     padding: 32px 24px;
   }
   .admin-title {
     font-size: 28px;
+  }
+}
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .filter-extras {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-input {
+    flex: 1;
+    min-width: 120px;
+  }
+  .stf-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+/* ── Small Mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .filter-extras {
+    flex-direction: column;
+  }
+  .filter-input {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+/* ── iPhone SE (≤ 375px) ── */
+@media (max-width: 375px) {
+  .stf-page-title {
+    font-size: 18px;
+  }
+  .stf-page-subtitle {
+    font-size: 13px;
+  }
+  .stf-tab-btn {
+    font-size: 11px;
+    padding: 5px 10px;
   }
 }
 </style>
