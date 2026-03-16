@@ -282,7 +282,9 @@ async function handleUbahPassword() {
 .profil-page {
   min-height: calc(100vh - 64px);
   background: var(--color-general-frame);
-  padding: 24px 16px;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .profil-container {
@@ -511,6 +513,51 @@ async function handleUbahPassword() {
 
   .profil-title {
     font-size: 28px;
+  }
+}
+
+/* ── Mobile (≤ 600px) ── */
+@media (max-width: 600px) {
+  .profil-page {
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .profil-title {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+  .info-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .info-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+  .info-nama {
+    font-size: 15px;
+  }
+}
+
+/* ── Tiny (iPhone SE ≤ 375px) ── */
+@media (max-width: 375px) {
+  .profil-page {
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .profil-title {
+    font-size: 18px;
+  }
+  .info-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+  .kelas-select {
+    font-size: 14px;
+    padding: 10px 12px;
   }
 }
 </style>

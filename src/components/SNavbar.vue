@@ -587,4 +587,25 @@ async function confirmLogout() {
     display: grid;
   }
 }
+
+/* ── Safe-area for mobile menu ── */
+@media (max-width: 1024px) {
+  .mobile-menu-wrapper--open .mobile-menu {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ── iPhone SE (≤ 375px) ── */
+@media (max-width: 375px) {
+  .navbar-inner {
+    padding: 0 12px;
+  }
+  .mobile-link {
+    font-size: 14px;
+    padding: 10px 0;
+  }
+  .mobile-user-name {
+    font-size: 13px;
+  }
+}
 </style>

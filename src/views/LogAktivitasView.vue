@@ -323,4 +323,39 @@ onMounted(() => {
   border-color: var(--color-blue-500);
   box-shadow: 0 0 0 3px rgba(46,48,148,.08);
 }
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .filter-extras {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-input {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+/* ── Small Mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .filter-extras {
+    flex-direction: column;
+  }
+  .filter-input {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+/* ── iPhone SE (≤ 375px) ── */
+@media (max-width: 375px) {
+  .stf-page-title {
+    font-size: 18px;
+  }
+}
 </style>

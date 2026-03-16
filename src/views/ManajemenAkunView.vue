@@ -797,4 +797,51 @@ onMounted(fetchDaftar)
     font-size: 28px;
   }
 }
+
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .filter-extras {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-input {
+    flex: 1;
+    min-width: 120px;
+  }
+  .stf-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
+
+/* ── Small Mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .filter-extras {
+    flex-direction: column;
+  }
+  .filter-input {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+/* ── iPhone SE (≤ 375px) ── */
+@media (max-width: 375px) {
+  .stf-page-title {
+    font-size: 18px;
+  }
+  .stf-page-subtitle {
+    font-size: 13px;
+  }
+  .stf-tab-btn {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+}
 </style>

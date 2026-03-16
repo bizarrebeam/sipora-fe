@@ -221,6 +221,8 @@ async function handleRegister() {
   min-height: calc(100vh - 64px);
   background: var(--color-general-frame);
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .register-card {
@@ -465,6 +467,25 @@ async function handleRegister() {
 
   .register-btn {
     margin-top: 0;
+  }
+}
+
+@media (max-width: 375px) {
+  .register-page {
+    padding: 10px;
+  }
+  .register-card {
+    padding: 18px 12px;
+    border-radius: 16px;
+  }
+  .register-logo {
+    height: 34px;
+  }
+  .register-tagline {
+    font-size: 13px;
+  }
+  .register-form {
+    gap: 12px;
   }
 }
 </style>

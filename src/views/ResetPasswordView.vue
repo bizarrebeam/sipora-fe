@@ -136,6 +136,8 @@ async function handleReset() {
   min-height: calc(100vh - 64px);
   background: var(--color-general-frame);
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .reset-card {
@@ -295,6 +297,22 @@ async function handleReset() {
 @media (min-width: 480px) {
   .reset-card {
     padding: 40px 36px;
+  }
+}
+
+@media (max-width: 375px) {
+  .reset-page {
+    padding: 12px;
+  }
+  .reset-card {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+  .reset-logo {
+    height: 36px;
+  }
+  .reset-title {
+    font-size: 18px;
   }
 }
 </style>

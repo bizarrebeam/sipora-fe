@@ -103,6 +103,8 @@ async function handleLogin() {
   min-height: calc(100vh - 64px);
   background: var(--color-general-frame);
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .login-card {
@@ -232,6 +234,23 @@ async function handleLogin() {
 
   .login-logo {
     height: 48px;
+  }
+}
+
+/* ── Tiny screens (iPhone SE ≤ 375px) ── */
+@media (max-width: 375px) {
+  .login-page {
+    padding: 12px;
+  }
+  .login-card {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+  .login-logo {
+    height: 36px;
+  }
+  .login-tagline {
+    font-size: 13px;
   }
 }
 </style>

@@ -104,6 +104,8 @@ async function handleForgot() {
   min-height: calc(100vh - 64px);
   background: var(--color-general-frame);
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .forgot-card {
@@ -237,6 +239,25 @@ async function handleForgot() {
 @media (min-width: 480px) {
   .forgot-card {
     padding: 40px 36px;
+  }
+}
+
+@media (max-width: 375px) {
+  .forgot-page {
+    padding: 12px;
+  }
+  .forgot-card {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+  .forgot-logo {
+    height: 36px;
+  }
+  .forgot-title {
+    font-size: 18px;
+  }
+  .forgot-desc {
+    font-size: 13px;
   }
 }
 </style>
