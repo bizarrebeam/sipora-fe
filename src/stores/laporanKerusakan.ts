@@ -69,7 +69,12 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
 
     const loadingStore = useLoadingStore()
 
-    async function fetchLaporanKerusakan(params: { status?: string; search?: string }) {
+    async function fetchLaporanKerusakan(params: {
+        status?: string
+        search?: string
+        date?: string
+        sort?: 'asc' | 'desc'
+    }) {
         loadingStore.show('Memuat laporan kerusakan...')
         try {
             const queryParams: string[] = []
@@ -78,6 +83,12 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             }
             if (params.search) {
                 queryParams.push(`search=${encodeURIComponent(params.search)}`)
+            }
+            if (params.date) {
+                queryParams.push(`date=${params.date}`)
+            }
+            if (params.sort) {
+                queryParams.push(`sort=${params.sort}`)
             }
             
             const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : ''

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
@@ -14,6 +15,8 @@ import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 
 interface LaporanKerusakan {
 	id: string
+	tanggal_laporan?: string
+	created_at?: string
 	no_laporan: string
 	judul: string
 	lokasi: string
@@ -30,6 +33,7 @@ interface LaporanKerusakan {
 }
 
 const auth = useAuthStore()
+const router = useRouter()
 const laporanStore = useLaporanKerusakanStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isAdmin = computed(() => isKemahasiswaan.value)
@@ -43,26 +47,24 @@ const selectedDateObj = ref<Date | null>(null)
 const showDatePicker = ref(false)
 
 watch(selectedDateObj, (newVal) => {
-  if (newVal) {
-    const yyyy = newVal.getFullYear()
-    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
-    const dd = String(newVal.getDate()).padStart(2, '0')
-    selectedDate.value = `${yyyy}-${mm}-${dd}`
-  } else {
-    selectedDate.value = ''
-  }
-  currentPage.value = 1
-  showDatePicker.value = false
+	if (newVal) {
+		const yyyy = newVal.getFullYear()
+		const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+		const dd = String(newVal.getDate()).padStart(2, '0')
+		selectedDate.value = `${yyyy}-${mm}-${dd}`
+	} else {
+		selectedDate.value = ''
+	}
+	currentPage.value = 1
+	showDatePicker.value = false
 })
 
-const sortKey = ref('tanggal_kejadian')
 const sortOrder = ref<'asc' | 'desc'>('desc')
+const sortKey = ref('tanggal_laporan')
+const tableSortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
 const pageSize = ref(20)
-
-const showDetailDialog = ref(false)
-const selectedLaporan = ref<LaporanKerusakan | null>(null)
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<LaporanKerusakan | null>(null)
@@ -82,43 +84,44 @@ function tabActiveClass(value: string) {
 }
 
 const columns = [
-	{ key: 'no_laporan', label: 'No. Laporan', sortable: true },
+	{ key: 'tanggal_laporan', label: 'Timestamp', sortable: true },
 	{ key: 'pengirim', label: 'Pengirim', sortable: true, tdClass: 'min-w-[200px]' },
+	{ key: 'no_laporan', label: 'No. Laporan', sortable: true },
 	{ key: 'judul', label: 'Judul Laporan', sortable: true },
 	{ key: 'lokasi', label: 'Lokasi', sortable: true },
-	{ key: 'deskripsi', label: 'Deskripsi Kerusakan', sortable: false },
 	{ key: 'tanggal_kejadian', label: 'Tanggal Kejadian', sortable: true },
 	{ key: 'status', label: 'Status', sortable: true },
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
 
 const laporanList = computed(() => laporanStore.laporanList)
-const filteredList = computed(() => {
-	let list = laporanList.value
-
-	if (selectedDate.value) {
-		list = list.filter(item => {
-			const itemDate = new Date(item.tanggal_kejadian).toISOString().slice(0, 10)
-			return itemDate === selectedDate.value
-		})
-	}
-
-	return list
-})
-
 const sortedList = computed(() => {
-	if (!sortKey.value) return filteredList.value
+	const list = [...laporanList.value]
+	if (!sortKey.value) return list
 
-	return [...filteredList.value].sort((a: any, b: any) => {
-		let valA = a[sortKey.value]
-		let valB = b[sortKey.value]
-		if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
-		if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
+	return list.sort((first, second) => {
+		const getValue = (row: any) => {
+			if (sortKey.value === 'pengirim') {
+				if (row.anonimitas) return 'anonim'
+				return String(row.pelapor_info?.nama_lengkap || row.nama_lengkap || '').toLowerCase()
+			}
+
+			if (sortKey.value === 'tanggal_laporan') {
+				return row.tanggal_laporan || row.created_at || ''
+			}
+
+			return row[sortKey.value] ?? ''
+		}
+
+		const firstValue = getValue(first)
+		const secondValue = getValue(second)
+
+		if (firstValue < secondValue) return tableSortOrder.value === 'asc' ? -1 : 1
+		if (firstValue > secondValue) return tableSortOrder.value === 'asc' ? 1 : -1
 		return 0
 	})
 })
-
-const totalData = computed(() => filteredList.value.length)
+const totalData = computed(() => sortedList.value.length)
 const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
 const paginatedList = computed(() => {
 	const start = (currentPage.value - 1) * pageSize.value
@@ -129,6 +132,19 @@ function formatDate(dateStr: string) {
 	if (!dateStr) return '-'
 	const d = new Date(dateStr)
 	return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function formatDateTime(dateStr: string) {
+	if (!dateStr) return '-'
+	const d = new Date(dateStr)
+	return d.toLocaleString('id-ID', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	})
 }
 
 function statusLabel(status: string) {
@@ -147,10 +163,19 @@ function anonimitasLabel(value: boolean) {
 }
 
 function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
-    if (status === 'menunggu') return 'warning'
-    if (status === 'diproses') return 'info'
-    if (status === 'selesai') return 'success'
-    return 'danger'
+	if (status === 'menunggu') return 'warning'
+	if (status === 'diproses') return 'info'
+	if (status === 'selesai') return 'success'
+	return 'danger'
+}
+
+function handleSort(key: string) {
+	if (sortKey.value === key) {
+		tableSortOrder.value = tableSortOrder.value === 'desc' ? 'asc' : 'desc'
+	} else {
+		sortKey.value = key
+		tableSortOrder.value = 'desc'
+	}
 }
 
 
@@ -160,31 +185,13 @@ function handleTabChange(value: string) {
 	currentPage.value = 1
 }
 
-function handleDateChange(e: Event) {
-	selectedDate.value = (e.target as HTMLInputElement).value
-	currentPage.value = 1
-}
-
-function handleSort(key: string) {
-	if (sortKey.value === key) {
-		sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-	} else {
-		sortKey.value = key
-		sortOrder.value = 'asc'
-	}
-}
-
 let searchTimeout: ReturnType<typeof setTimeout>
 function onSearchInput() {
 	clearTimeout(searchTimeout)
 	searchTimeout = setTimeout(() => {
 		currentPage.value = 1
+		fetchData()
 	}, 400)
-}
-
-function openDetail(laporan: LaporanKerusakan) {
-	selectedLaporan.value = laporan
-	showDetailDialog.value = true
 }
 
 function openStatusUpdate(laporan: LaporanKerusakan, action: 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan') {
@@ -212,7 +219,8 @@ const statusCounts = computed(() => ({
 	dibatalkan: laporanList.value.filter(l => l.status === 'dibatalkan').length,
 }))
 
-watch([selectedStatus, search], () => {
+watch([selectedStatus, selectedDate, sortOrder], () => {
+	currentPage.value = 1
 	fetchData()
 }, { immediate: false })
 
@@ -221,7 +229,9 @@ async function fetchData() {
 	try {
 		await laporanStore.fetchLaporanKerusakan({
 			status: selectedStatus.value,
-			search: search.value,
+			search: search.value.trim(),
+			date: selectedDate.value || undefined,
+			sort: sortOrder.value,
 		})
 	} catch (error) {
 		console.error('Error fetching laporan:', error)
@@ -242,15 +252,17 @@ onMounted(() => {
 				<div class="stf-header-text">
 					<h1 class="stf-page-title">Laporan Kerusakan</h1>
 					<p class="stf-page-subtitle">
-						{{ isAdmin ? 'Kelola dan pantau seluruh laporan kerusakan fasilitas yang masuk dari siswa.' : 'Pantau status laporan kerusakan fasilitas yang telah kamu kirim.' }}
+						{{ isAdmin ? 'Kelola dan pantau seluruh laporan kerusakan fasilitas yang masuk dari siswa.' :
+						'Pantau status laporan kerusakan fasilitas yang telah kamu kirim.' }}
 					</p>
 				</div>
-				<SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary" @click="$router.push({ name: 'createLaporanKerusakan' })" />
+				<SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary"
+					@click="$router.push({ name: 'createLaporanKerusakan' })" />
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">
-				<button v-for="tab in statusTabs" :key="tab.value" @click="handleTabChange(tab.value)" class="stf-tab-btn"
-					:class="[
+				<button v-for="tab in statusTabs" :key="tab.value" @click="handleTabChange(tab.value)"
+					class="stf-tab-btn" :class="[
 						selectedStatus === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
 						selectedStatus === tab.value ? `stf-tab--${tab.value}` : ''
 					]">
@@ -268,16 +280,21 @@ onMounted(() => {
 						variant="text" @input="onSearchInput" />
 				</div>
 				<div class="filter-extras">
-					<div class="relative">
-						<button 
-							type="button"
-							class="filter-input flex items-center gap-2 bg-white"
-							@click="showDatePicker = !showDatePicker"
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+					<div class="relative filter-date">
+						<button type="button" class="filter-input filter-date-button flex items-center gap-2 bg-white"
+							@click="showDatePicker = !showDatePicker">
+							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+								fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+								stroke-linejoin="round">
+								<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+								<line x1="16" y1="2" x2="16" y2="6"></line>
+								<line x1="8" y1="2" x2="8" y2="6"></line>
+								<line x1="3" y1="10" x2="21" y2="10"></line>
+							</svg>
 							{{ selectedDate || 'Pilih Tanggal' }}
 						</button>
-						<div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+						<div v-if="showDatePicker"
+							class="absolute right-0 top-13 z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
 							<SDatePicker v-model="selectedDateObj" />
 						</div>
 					</div>
@@ -303,11 +320,17 @@ onMounted(() => {
 
 					<div class="table-wrapper">
 						<STable :columns="columns" :data="paginatedList" :total-data="totalData"
-							v-model:current-page="currentPage" v-model:page-size="pageSize" :sort-key="sortKey"
-							:sort-order="sortOrder" @sort="handleSort"
+							v-model:current-page="currentPage" v-model:page-size="pageSize"
+							:sort-key="sortKey"
+							:sort-order="tableSortOrder"
+							@sort="handleSort"
 							empty-message="Tidak ada laporan kerusakan yang ditemukan.">
 							<template #body-cell-id="{ row }">
 								<span class="text-xs text-gray-500">{{ row.id }}</span>
+							</template>
+
+							<template #body-cell-tanggal_laporan="{ row }">
+								<span class="text-sm text-gray-500">{{ formatDateTime(row.tanggal_laporan || row.created_at) }}</span>
 							</template>
 
 							<template #body-cell-no_laporan="{ row }">
@@ -322,45 +345,37 @@ onMounted(() => {
 								<span>{{ row.lokasi }}</span>
 							</template>
 
-							<template #body-cell-deskripsi="{ row }">
-								<div class="deskripsi-cell">{{ row.deskripsi }}</div>
-							</template>
-
 							<template #body-cell-tanggal_kejadian="{ row }">
 								<span class="text-sm text-gray-500">{{ formatDate(row.tanggal_kejadian) }}</span>
 							</template>
 
 							<template #body-cell-pengirim="{ row }">
 								<div class="flex flex-col items-start gap-1">
-                  <span class="font-semibold text-gray-800">{{ row.pelapor_info?.nama_lengkap || '-' }}</span>
-                  <SChip
-                    v-if="row.akun_terverifikasi !== undefined"
-                    :label="row.akun_terverifikasi ? 'Terverifikasi' : 'Belum Terverifikasi'"
-                    :tone="row.akun_terverifikasi ? 'success' : 'warning'"
-                    size="small"
-                  />
-                </div>
+									<span class="font-semibold text-gray-800">{{ row.anonimitas ? 'Anonim' : (row.pelapor_info?.nama_lengkap || row.nama_lengkap || '-')
+										}}</span>
+									<SChip v-if="!row.anonimitas && row.akun_terverifikasi !== undefined"
+										:label="row.akun_terverifikasi ? 'Terverifikasi' : 'Belum Terverifikasi'"
+										:tone="row.akun_terverifikasi ? 'success' : 'warning'" size="small" />
+								</div>
 							</template>
 
 							<template #body-cell-aksi="{ row }">
-								<SButton 
-                                    label="Detail" 
-                                    variant="action" 
-                                    size="small" 
-                                    @click="openDetail(row)" 
-                                >
-                                    <template #left-icon>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                    </template>
-                                </SButton>
+								<SButton label="Detail" variant="action" size="small" @click="router.push({ name: 'detailLaporanKerusakan', params: { id: row.id } })">
+									<template #left-icon>
+										<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+											viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+											stroke-linecap="round" stroke-linejoin="round">
+											<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+											<circle cx="12" cy="12" r="3"></circle>
+										</svg>
+									</template>
+								</SButton>
 							</template>
 
 							<template #body-cell-status="{ row }">
-								<SChip 
-									:label="statusLabel(row.status)" 
-									:tone="row.status === 'selesai' ? 'success' : (row.status === 'diproses' ? 'info' : (row.status === 'menunggu' ? 'warning' : 'danger'))" 
-									size="small" 
-								/>
+								<SChip :label="statusLabel(row.status)"
+									:tone="row.status === 'selesai' ? 'success' : (row.status === 'diproses' ? 'info' : (row.status === 'menunggu' ? 'warning' : 'danger'))"
+									size="small" />
 							</template>
 
 
@@ -373,25 +388,26 @@ onMounted(() => {
 				<p class="card-view-count">{{ totalData }} laporan ditemukan</p>
 
 				<div v-if="paginatedList.length === 0" class="s-empty-state">
-					<svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+					<svg class="s-empty-state__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+						stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 					</svg>
 					<h3 class="s-empty-state__title">Belum ada laporan</h3>
 					<p class="s-empty-state__desc">Laporan kerusakan yang kamu buat akan muncul di sini.</p>
 				</div>
 
 				<div v-else class="card-grid">
-					<SReportCard
-						v-for="item in paginatedList" 
-						:key="item.id"
+					<SReportCard v-for="item in paginatedList" :key="item.id"
 						:status="item.status"
+						:chip-label="statusLabel(item.status)"
+						:chip-tone="statusTone(item.status)"
 						:date="formatDate(item.tanggal_kejadian)"
 						:title="item.judul"
 						:location="item.lokasi"
 						:report-number="item.no_laporan"
 						@click-card="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })"
-						@click-detail="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })"
-					/>
+						@click-detail="$router.push({ name: 'detailLaporanKerusakan', params: { id: item.id } })" />
 				</div>
 
 				<div v-if="totalPages > 1" class="card-pagination">
@@ -399,61 +415,6 @@ onMounted(() => {
 				</div>
 			</template>
 		</div>
-
-		<SDialog :visible="showDetailDialog" variant="primary" title="Detail Laporan Kerusakan"
-			@update:visible="showDetailDialog = $event" @close="showDetailDialog = false">
-			<div v-if="selectedLaporan" class="detail-content">
-				<div v-if="isAdmin" class="detail-row">
-					<span class="detail-label">ID Internal</span>
-					<span class="detail-value">{{ selectedLaporan.id }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">No. Laporan</span>
-					<span class="detail-value font-semibold text-blue-600">{{ selectedLaporan.no_laporan }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Judul Laporan</span>
-					<span class="detail-value">{{ selectedLaporan.judul }}</span>
-				</div>
-				<div v-if="isAdmin && selectedLaporan" class="detail-row">
-					<span class="detail-label">Pengirim</span>
-					<div class="detail-value flex items-center gap-1.5">
-						<span>{{ selectedLaporan.nama_lengkap || selectedLaporan.pengirim_username || '-' }}</span>
-						<span v-if="selectedLaporan.akun_terverifikasi" title="Terverifikasi" class="text-green-600">
-							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-						</span>
-					</div>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Lokasi</span>
-					<span class="detail-value">{{ selectedLaporan.lokasi }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Tanggal Kejadian</span>
-					<span class="detail-value">{{ formatDate(selectedLaporan.tanggal_kejadian) }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Anonimitas</span>
-					<span class="detail-value">{{ anonimitasLabel(selectedLaporan.anonimitas) }}</span>
-				</div>
-				<div class="detail-row">
-					<span class="detail-label">Status</span>
-					<SChip size="large" variant="solid" :tone="statusTone(selectedLaporan.status)" :label="statusLabel(selectedLaporan.status)" />
-				</div>
-				<div class="detail-row detail-row--full">
-					<span class="detail-label">Deskripsi Kerusakan</span>
-					<p class="detail-desc">{{ selectedLaporan.deskripsi }}</p>
-				</div>
-				<div v-if="selectedLaporan.catatan_admin" class="detail-row detail-row--full">
-					<span class="detail-label">Catatan Admin</span>
-					<p class="detail-desc">{{ selectedLaporan.catatan_admin }}</p>
-				</div>
-			</div>
-
-			<template #actions>
-				<SButton label="Tutup" variant="secondary" @click="showDetailDialog = false" />
-			</template>
-		</SDialog>
 
 		<SDialog :visible="showStatusDialog" :variant="statusAction === 'ditolak' ? 'danger' : 'primary'"
 			:title="statusAction === 'diproses' ? 'Proses Laporan' : statusAction === 'selesai' ? 'Selesaikan Laporan' : 'Tolak Laporan'"
@@ -537,6 +498,12 @@ onMounted(() => {
 
 /* Status badges removed */
 
+.status-badge--dibatalkan {
+	background: #FEF2F2;
+	color: #DC2626;
+	border: 1px solid #DC2626;
+}
+
 .aksi-btn {
 	padding: 4px 12px;
 	border-radius: 6px;
@@ -592,7 +559,7 @@ onMounted(() => {
 }
 
 .aksi-btn--dibatalkan:hover {
-	background:  #FECACA;
+	background: #FECACA;
 }
 
 .detail-content {
@@ -957,11 +924,33 @@ onMounted(() => {
 	margin-bottom: 24px;
 	align-items: stretch;
 }
-.filter-search { flex: 1; min-width: 0; }
-.filter-extras {
-	display: flex;
-	gap: 12px;
+
+.filter-search {
+	flex: 1;
+	min-width: 0;
 }
+
+.filter-extras {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	align-items: stretch;
+}
+
+.filter-extras > * {
+	min-width: 0;
+	width: 100%;
+}
+
+.filter-date {
+	position: relative;
+}
+
+.filter-date-button {
+	width: 100%;
+	justify-content: flex-start;
+}
+
 .filter-input {
 	border: 1px solid var(--color-general-border);
 	border-radius: 8px;
@@ -980,9 +969,40 @@ onMounted(() => {
 	background-position: right 12px center;
 	cursor: pointer;
 }
+
 .filter-input:focus {
 	outline: none;
 	border-color: var(--color-blue-500);
-	box-shadow: 0 0 0 3px rgba(46,48,148,.08);
+	box-shadow: 0 0 0 3px rgba(46, 48, 148, .08);
 }
+
+@media (max-width: 768px) {
+	.filters-row {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.filter-search {
+		width: 100%;
+	}
+
+	.filter-extras {
+		width: 100%;
+	}
+
+	.filter-input {
+		width: 100%;
+		min-width: 0;
+	}
+
+	.filter-date-button {
+		justify-content: space-between;
+	}
+
+	.filter-date > div[class*='absolute'] {
+		left: 0;
+		right: 0;
+	}
+}
+
 </style>

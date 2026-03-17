@@ -43,21 +43,21 @@ const buktiError = ref('')
 const isSubmitting = ref(false)
 
 watch(tanggalKejadianObj, (newVal) => {
-  if (newVal) {
-    const yyyy = newVal.getFullYear()
-    const mm = String(newVal.getMonth() + 1).padStart(2, '0')
-    const dd = String(newVal.getDate()).padStart(2, '0')
-    tanggalKejadian.value = `${yyyy}-${mm}-${dd}`
-    showDatePicker.value = false
-    validate()
-  }
+    if (newVal) {
+        const yyyy = newVal.getFullYear()
+        const mm = String(newVal.getMonth() + 1).padStart(2, '0')
+        const dd = String(newVal.getDate()).padStart(2, '0')
+        tanggalKejadian.value = `${yyyy}-${mm}-${dd}`
+        showDatePicker.value = false
+        validate()
+    }
 })
 
 const MAX_FILES = 5
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 const MAX_TOTAL_SIZE_BYTES = MAX_FILES * MAX_FILE_SIZE_BYTES
 const MIN_REPORT_DATE = new Date('2000-01-01')
-const FORBIDDEN_SPECIAL_CHARS_REGEX = /[@!~`#$%^&*+_\-]/
+const FORBIDDEN_SPECIAL_CHARS_REGEX = /[@!~`#$%^*+]/
 
 const errors = ref({
     judul: '',
@@ -135,8 +135,8 @@ function validate() {
     } else {
         const picked = new Date(tanggalKejadian.value)
         const today = new Date()
-        today.setHours(0,0,0,0)
-        picked.setHours(0,0,0,0)
+        today.setHours(0, 0, 0, 0)
+        picked.setHours(0, 0, 0, 0)
         if (picked < MIN_REPORT_DATE) {
             errors.value.tanggalKejadian = 'Tanggal kejadian tidak valid'
         } else if (picked > today) {
@@ -156,7 +156,7 @@ function validate() {
     errors.value.deskripsi = validateTextField({
         label: 'Deskripsi',
         value: deskripsi.value,
-        minLength: 20,
+        minLength: 50,
         maxLength: 2000,
     })
 }
@@ -185,7 +185,7 @@ function validateField(field: 'judul' | 'lokasi' | 'deskripsi') {
     errors.value.deskripsi = validateTextField({
         label: 'Deskripsi',
         value: deskripsi.value,
-        minLength: 20,
+        minLength: 50,
         maxLength: 2000,
     })
 }
@@ -197,9 +197,9 @@ function triggerFileInput() {
 function handleFileChange(e: Event) {
     const files = (e.target as HTMLInputElement).files
     buktiError.value = ''
-    
+
     if (!files || files.length === 0) return
-    
+
     const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     const newFiles: File[] = []
     const rejected: string[] = []
@@ -208,7 +208,7 @@ function handleFileChange(e: Event) {
     )
     const remainingSlots = MAX_FILES - buktiPendukung.value.length
     let totalSize = buktiPendukung.value.reduce((sum, file) => sum + file.size, 0)
-    
+
     for (let i = 0; i < files.length; i++) {
         const file = files[i]
         if (!file) continue
@@ -217,7 +217,7 @@ function handleFileChange(e: Event) {
             rejected.push(`${file.name}: melewati batas maksimal ${MAX_FILES} foto`)
             continue
         }
-        
+
         const signature = `${file.name}|${file.size}|${file.lastModified}`
         if (existingSignatures.has(signature)) {
             rejected.push(`${file.name}: file duplikat`)
@@ -228,12 +228,12 @@ function handleFileChange(e: Event) {
             rejected.push(`${file.name}: file kosong`)
             continue
         }
-        
+
         if (!allowed.includes(file.type)) {
             rejected.push(`${file.name}: format tidak didukung`)
             continue
         }
-        
+
         if (file.size > MAX_FILE_SIZE_BYTES) {
             rejected.push(`${file.name}: ukuran maksimal 5 MB`)
             continue
@@ -243,12 +243,12 @@ function handleFileChange(e: Event) {
             rejected.push(`${file.name}: total ukuran semua foto maksimal 25 MB`)
             continue
         }
-        
+
         newFiles.push(file)
         totalSize += file.size
         existingSignatures.add(signature)
     }
-    
+
     buktiPendukung.value = [...buktiPendukung.value, ...newFiles]
     buktiError.value = rejected.length > 0 ? rejected.join(' | ') : ''
     if (buktiInputRef.value) buktiInputRef.value.value = ''
@@ -319,14 +319,8 @@ async function handleSubmit() {
         <Teleport to="body">
             <Transition name="fade">
                 <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
-                    <SAlert
-                        :type="alertType"
-                        :title="alertTitle"
-                        :description="alertDescription"
-                        primary-button-text="OK"
-                        @close="alertVisible = false"
-                        @primary-click="handleAlertPrimary"
-                    />
+                    <SAlert :type="alertType" :title="alertTitle" :description="alertDescription"
+                        primary-button-text="OK" @close="alertVisible = false" @primary-click="handleAlertPrimary" />
                 </div>
             </Transition>
         </Teleport>
@@ -334,10 +328,8 @@ async function handleSubmit() {
         <div class="form-page-container">
             <!-- Back Button -->
             <div class="mb-4">
-                <button
-                    @click="router.back()"
-                    class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline"
-                >
+                <button @click="router.back()"
+                    class="flex items-center gap-2 text-[#2e3094] font-['Be_Vietnam_Pro'] font-semibold text-[14px] hover:underline">
                     <span>&larr;</span> Kembali
                 </button>
             </div>
@@ -354,139 +346,112 @@ async function handleSubmit() {
             </div>
 
             <div class="form-wrapper">
-            <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
-                <div class="form-group">
-                    <STextField
-                        v-model="judul"
-                        label="Judul"
-                        :required="true"
-                        :placeholder="'Ketik di sini...'"
-                        :variant="'text'"
-                        :disabled="false"
-                        @blur="validateField('judul')"
-                    />
-                    <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
-                </div>
-
-                <div class="form-group">
-                    <div class="custom-label-row">
-                        <label class="custom-label">Tanggal Kejadian</label>
-                        <span class="custom-asterisk">*</span>
+                <form @submit.prevent="handleSubmit" class="laporan-form" novalidate>
+                    <div class="form-group">
+                        <STextField v-model="judul" label="Judul" :required="true" :placeholder="'Ketik di sini...'"
+                            :variant="'text'" :disabled="false" @blur="validateField('judul')" />
+                        <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
                     </div>
-                    <div class="relative w-full">
-                        <button
-                            type="button"
-                            class="flex w-full items-center gap-2 rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
-                            @click="showDatePicker = !showDatePicker"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-neutral-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                            <span v-if="tanggalKejadian">{{ new Date(tanggalKejadian).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
-                            <span v-else class="text-neutral-300">Pilih tanggal...</span>
-                        </button>
-                        <div v-show="showDatePicker" class="absolute left-0 top-[52px] z-50 shadow-2xl border rounded-2xl overflow-hidden scale-90 origin-top-left bg-white">
-                            <SDatePicker v-model="tanggalKejadianObj" />
-                        </div>
-                    </div>
-                    <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
-                </div>
 
-                <div class="form-group">
-                    <STextField
-                        v-model="lokasi"
-                        label="Lokasi Kejadian"
-                        :required="true"
-                        :placeholder="'Ketik di sini...'"
-                        :variant="'text'"
-                        :disabled="false"
-                        @blur="validateField('lokasi')"
-                    />
-                    <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
-                </div>
-
-                <div class="form-group">
-                    <STextField
-                        v-model="deskripsi"
-                        label="Deskripsi Kerusakan"
-                        :required="true"
-                        :placeholder="'Ketik di sini...'"
-                        :variant="'textarea'"
-                        :disabled="false"
-                        @blur="validateField('deskripsi')"
-                    />
-                    <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
-                </div>
-
-                <div class="form-group">
-                    <div class="custom-label-row">
-                        <label class="custom-label">Bukti Pendukung (opsional)</label>
-                        <span v-if="buktiPendukung.length > 0" class="file-count">{{ buktiPendukung.length }}/{{ MAX_FILES }} foto</span>
-                    </div>
-                    <p class="file-guidance">Format: JPG/JPEG/PNG/WEBP · Maks. 25MB/5 foto</p>
-                    <div class="file-upload-section">
-                        <input
-                            ref="buktiInputRef"
-                            type="file"
-                            accept="image/png,image/jpeg,image/jpg,image/webp"
-                            class="file-input-hidden"
-                            multiple
-                            @change="handleFileChange"
-                        />
-                        <button 
-                            type="button" 
-                            class="choose-file-btn" 
-                            @click="triggerFileInput"
-                            :disabled="buktiPendukung.length >= MAX_FILES"
-                        >
-                            {{ buktiPendukung.length >= MAX_FILES ? 'Maksimal 5 Foto' : 'Tambah Foto' }}
-                        </button>
-                        <div v-if="buktiPendukung.length > 0" class="file-list">
-                            <div v-for="(file, index) in buktiPendukung" :key="index" class="file-chosen-wrapper">
-                                <span class="file-chosen">{{ file.name }}</span>
-                                <button type="button" class="remove-file-btn" @click="removeFile(index)" title="Hapus file">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <span v-if="buktiError" class="error-msg">{{ buktiError }}</span>
-                </div>
-
-                <div class="form-group">
-                    <div class="flex items-center gap-3">
-                        <div class="custom-label-row mb-0">
-                            <label class="custom-label">Anonimitas</label>
+                    <div class="form-group">
+                        <div class="custom-label-row">
+                            <label class="custom-label">Tanggal Kejadian</label>
                             <span class="custom-asterisk">*</span>
                         </div>
-                        <SToggle v-model="anonimitas" />
-                        <span class="switch-label">{{ anonimitas ? 'Ya (Anonim)' : 'Tidak (Nama Asli)' }}</span>
+                        <div class="relative w-full">
+                            <button type="button"
+                                class="flex w-full items-center gap-2 rounded-lg border border-general-border bg-white px-3 py-2.5 sm:px-4 sm:py-3 text-general-black text-sm sm:text-base font-['Be_Vietnam_Pro'] font-medium placeholder:text-neutral-300 transition-colors hover:border-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                                @click="showDatePicker = !showDatePicker">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="text-neutral-400">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                <span v-if="tanggalKejadian">{{ new Date(tanggalKejadian).toLocaleDateString('id-ID', {
+                                    year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
+                                <span v-else class="text-neutral-300">Pilih tanggal...</span>
+                            </button>
+                            <div v-show="showDatePicker"
+                                class="absolute left-0 top-[52px] z-50 shadow-2xl border rounded-2xl overflow-hidden scale-90 origin-top-left bg-white">
+                                <SDatePicker v-model="tanggalKejadianObj" />
+                            </div>
+                        </div>
+                        <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <div style="display: flex; gap: 12px;">
-                        <SButton
-                            label="Kembali"
-                            variant="ghost"
-                            type="button"
-                            @click="$router.back()"
-                            class="w-full"
-                        />
-                        <button
-                            type="submit"
-                            class="submit-btn w-full"
-                            :disabled="!isFormValid"
-                        >
-                            {{ isSubmitting ? 'Mengirim...' : 'Kirim Laporan' }}
-                        </button>
+                    <div class="form-group">
+                        <STextField v-model="lokasi" label="Lokasi Kejadian" :required="true"
+                            :placeholder="'Ketik di sini...'" :variant="'text'" :disabled="false"
+                            @blur="validateField('lokasi')" />
+                        <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                     </div>
-                </div>
-            </form>
+
+                    <div class="form-group">
+                        <STextField v-model="deskripsi" label="Deskripsi Kerusakan" :required="true"
+                            :placeholder="'Ketik di sini...'" :variant="'textarea'" :disabled="false"
+                            @blur="validateField('deskripsi')" />
+                        <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="custom-label-row">
+                            <label class="custom-label">Bukti Pendukung (opsional)</label>
+                            <span v-if="buktiPendukung.length > 0" class="file-count">{{ buktiPendukung.length }}/{{
+                                MAX_FILES }} foto</span>
+                        </div>
+                        <p class="file-guidance">Format: JPG/JPEG/PNG/WEBP · Maks. 25MB/5 foto</p>
+                        <div class="file-upload-section">
+                            <input ref="buktiInputRef" type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
+                                class="file-input-hidden" multiple @change="handleFileChange" />
+                            <button type="button" class="choose-file-btn" @click="triggerFileInput"
+                                :disabled="buktiPendukung.length >= MAX_FILES">
+                                {{ buktiPendukung.length >= MAX_FILES ? 'Maksimal 5 Foto' : 'Tambah Foto' }}
+                            </button>
+                            <div v-if="buktiPendukung.length > 0" class="file-list">
+                                <div v-for="(file, index) in buktiPendukung" :key="index" class="file-chosen-wrapper">
+                                    <span class="file-chosen">{{ file.name }}</span>
+                                    <button type="button" class="remove-file-btn" @click="removeFile(index)"
+                                        title="Hapus file">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <span v-if="buktiError" class="error-msg">{{ buktiError }}</span>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="flex items-center gap-3">
+                            <div class="custom-label-row mb-0">
+                                <label class="custom-label">Anonimitas</label>
+                                <span class="custom-asterisk">*</span>
+                            </div>
+                            <SToggle v-model="anonimitas" />
+                            <span class="switch-label">{{ anonimitas ? 'Ya (Anonim)' : 'Tidak (Nama Asli)' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div style="display: flex; gap: 12px;">
+                            <SButton label="Kembali" variant="ghost" type="button" @click="$router.back()"
+                                class="w-full" />
+                            <button type="submit" class="submit-btn w-full" :disabled="!isFormValid">
+                                {{ isSubmitting ? 'Mengirim...' : 'Kirim Laporan' }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 </template>
 
 <style scoped>
@@ -497,21 +462,24 @@ async function handleSubmit() {
     padding: 0;
     margin: -1px;
     overflow: hidden;
-    clip: rect(0,0,0,0);
+    clip: rect(0, 0, 0, 0);
     border: 0;
 }
+
 .custom-label-row {
     display: flex;
     align-items: center;
     gap: 4px;
     margin-bottom: 2px;
 }
+
 .custom-label {
     font-size: 16px;
     font-weight: 700;
     color: var(--color-general-black);
     font-family: "Be Vietnam Pro", sans-serif;
 }
+
 .custom-asterisk {
     color: var(--color-general-red);
     font-size: 16px;
@@ -519,6 +487,7 @@ async function handleSubmit() {
     margin-left: 2px;
     font-family: "Be Vietnam Pro", sans-serif;
 }
+
 .form-page-container {
     max-width: 800px;
     margin: 0 auto;
@@ -532,17 +501,20 @@ async function handleSubmit() {
     box-shadow: 0 4px 24px 0 rgba(46, 48, 148, 0.1);
     padding: 48px 40px;
 }
+
 .stf-label--bold {
     font-weight: 700;
     font-size: 16px;
     color: var(--color-general-black);
     font-family: "Be Vietnam Pro", sans-serif;
 }
+
 .laporan-form {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -552,11 +524,13 @@ async function handleSubmit() {
 .file-input-hidden {
     display: none;
 }
+
 .file-upload-section {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
+
 .file-count {
     font-size: 12px;
     color: var(--color-neutral-400);
@@ -564,12 +538,14 @@ async function handleSubmit() {
     font-weight: 500;
     margin-left: auto;
 }
+
 .file-guidance {
     font-size: 12px;
     color: var(--color-neutral-400);
     font-family: "Be Vietnam Pro", sans-serif;
     margin: 0;
 }
+
 .choose-file-btn {
     background: var(--color-blue-500);
     color: var(--color-general-white);
@@ -583,19 +559,23 @@ async function handleSubmit() {
     transition: background 0.2s;
     align-self: flex-start;
 }
+
 .choose-file-btn:hover:not(:disabled) {
     background: var(--color-blue-600);
 }
+
 .choose-file-btn:disabled {
     background: var(--color-neutral-300);
     cursor: not-allowed;
     opacity: 0.6;
 }
+
 .file-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
+
 .file-chosen-wrapper {
     display: flex;
     align-items: center;
@@ -605,6 +585,7 @@ async function handleSubmit() {
     border-radius: 8px;
     border: 1px solid var(--color-blue-200);
 }
+
 .file-chosen {
     font-size: 13px;
     color: var(--color-blue-500);
@@ -612,6 +593,7 @@ async function handleSubmit() {
     font-weight: 500;
     flex: 1;
 }
+
 .remove-file-btn {
     display: flex;
     align-items: center;
@@ -627,6 +609,7 @@ async function handleSubmit() {
     padding: 0;
     flex-shrink: 0;
 }
+
 .remove-file-btn:hover {
     background: var(--color-blue-100);
     color: var(--color-blue-600);
@@ -638,33 +621,42 @@ async function handleSubmit() {
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 600;
 }
+
 .form-group--switch {
     flex-direction: row;
     align-items: center;
     gap: 12px;
 }
+
 .switch {
     position: relative;
     display: inline-block;
     width: 44px;
     height: 24px;
 }
+
 .switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
+
 .slider {
     position: absolute;
     cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: #e5e7eb;
     border-radius: 24px;
     transition: .2s;
 }
-.switch input:checked + .slider {
+
+.switch input:checked+.slider {
     background-color: var(--color-blue-500, #3b82f6);
 }
+
 .slider:before {
     position: absolute;
     content: "";
@@ -676,14 +668,17 @@ async function handleSubmit() {
     border-radius: 50%;
     transition: .2s;
 }
-.switch input:checked + .slider:before {
+
+.switch input:checked+.slider:before {
     transform: translateX(20px);
 }
+
 .switch-label {
     font-size: 13px;
     color: var(--color-blue-500);
     font-family: "Be Vietnam Pro", sans-serif;
 }
+
 .submit-btn {
     width: 100%;
     background: var(--color-blue-500);
@@ -697,59 +692,74 @@ async function handleSubmit() {
     cursor: pointer;
     transition: background 0.2s;
     letter-spacing: 0.01em;
-    box-shadow: 0 2px 8px rgba(46,48,148,0.10);
+    box-shadow: 0 2px 8px rgba(46, 48, 148, 0.10);
 }
+
 .submit-btn:disabled {
     background: var(--color-blue-100);
     color: var(--color-general-white);
     cursor: not-allowed;
 }
+
 @media (max-width: 600px) {
     .create-laporan-page {
         padding: 16px 8px;
     }
+
     .form-container {
         padding: 20px 16px;
         border-radius: 16px;
     }
+
     .form-title {
         font-size: 18px;
         margin-bottom: 20px;
     }
+
     .laporan-form {
         gap: 12px;
     }
+
     .form-group {
         gap: 4px;
     }
-    .submit-btn, .submit-btn:disabled {
+
+    .submit-btn,
+    .submit-btn:disabled {
         font-size: 14px;
         padding: 10px 0;
         border-radius: 8px;
     }
+
     .choose-file-btn {
         font-size: 12px;
         padding: 6px 12px;
         border-radius: 6px;
     }
+
     .file-chosen {
         font-size: 11px;
     }
+
     .switch-label {
         font-size: 11px;
     }
-    .custom-label, .custom-asterisk {
+
+    .custom-label,
+    .custom-asterisk {
         font-size: 14px;
     }
+
     .error-msg {
         font-size: 11px;
     }
 
-    .form-group > div[style*="display: flex"] {
+    .form-group>div[style*="display: flex"] {
         flex-direction: column-reverse !important;
         gap: 8px !important;
     }
-    .form-group > div[style*="display: flex"] > * {
+
+    .form-group>div[style*="display: flex"]>* {
         width: 100% !important;
         min-width: 0 !important;
         flex: none !important;
@@ -771,6 +781,7 @@ async function handleSubmit() {
 .fade-leave-active {
     transition: opacity 0.2s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
