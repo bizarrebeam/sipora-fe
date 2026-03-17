@@ -81,6 +81,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             }
 
             await ambilLaporan()
+            return json.data
         } catch (error: any) {
             console.error('Gagal membuat laporan:', error.message)
             throw error

@@ -262,10 +262,10 @@ async function handleSelesai() {
 
                 <div v-if="isAdmin" class="info-field">
                   <span class="info-label">Status Akun Pelapor</span>
-                  <span class="info-verified" :class="laporan.is_verified ? 'verified--yes' : 'verified--no'">
-                    <svg v-if="laporan.is_verified" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                  <span class="info-verified" :class="laporan.akun_terverifikasi ? 'verified--yes' : 'verified--no'">
+                    <svg v-if="laporan.akun_terverifikasi" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-                    {{ laporan.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi' }}
+                    {{ laporan.akun_terverifikasi ? 'Terverifikasi' : 'Belum Terverifikasi' }}
                   </span>
                 </div>
               </div>
