@@ -199,7 +199,11 @@ function applyFiltersAndClose() {
     showFilterDrawer.value = false
 }
 
-onMounted(() => { fetchData() })
+onMounted(() => {
+    if (laporanStore.daftarLaporan.length === 0) {
+        fetchData()
+    }
+})
 </script>
 
 <template>

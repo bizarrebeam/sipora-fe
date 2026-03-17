@@ -192,7 +192,7 @@ async function fetchDaftar() {
   loading.value = true
   // Only show mascot if not loaded yet
   if (!isLoaded.value) {
-    loadingStore.show('Memuat daftar akun...')
+    // loadingStore.show('Memuat daftar akun...')
   }
   try {
     const params = search.value ? `?search=${encodeURIComponent(search.value)}` : ''
@@ -208,7 +208,7 @@ async function fetchDaftar() {
     toast.error(err.message || 'Gagal memuat daftar akun.')
   } finally {
     loading.value = false
-    loadingStore.hide()
+    // loadingStore.hide()
   }
 }
 
@@ -332,7 +332,11 @@ function removeMapel(index: number) {
   createMapels.value.splice(index, 1)
 }
 
-onMounted(fetchDaftar)
+onMounted(() => {
+  if (siswaList.value.length === 0 && guruList.value.length === 0 && guruBkList.value.length === 0) {
+    fetchDaftar()
+  }
+})
 </script>
 
 <template>

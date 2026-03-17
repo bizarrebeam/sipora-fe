@@ -74,7 +74,7 @@ const moduleTabs = [
 
 async function fetchLogs(page = 1) {
   loadingLogs.value = true
-  loadingStore.show('Memuat log aktivitas...')
+  // loadingStore.show('Memuat log aktivitas...')
   logError.value = ''
   try {
     const query = new URLSearchParams()
@@ -93,7 +93,7 @@ async function fetchLogs(page = 1) {
     logError.value = err.message || 'Gagal memuat log aktivitas.'
   } finally {
     loadingLogs.value = false
-    loadingStore.hide()
+    // loadingStore.hide()
   }
 }
 
@@ -163,7 +163,9 @@ const sortedLogs = computed(() => {
 })
 
 onMounted(() => {
-  fetchLogs(1)
+  if (logs.value.length === 0) {
+    fetchLogs(1)
+  }
 })
 </script>
 

@@ -17,7 +17,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         
         // Only show global loader if not loaded yet or data is stale
         if (!isLoaded.value || isStale) {
-            loader.show('Mengambil data laporan...')
+            // loader.show('Mengambil data laporan...')
         }
 
         try {
@@ -36,12 +36,12 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         } catch (error: any) {
             console.error('Gagal mengambil laporan:', error.message)
         } finally {
-            loader.hide()
+            // loader.hide()
         }
     }
 
     async function ambilDetail(id: string) {
-        loader.show('Mengambil detail laporan...')
+        // loader.show('Mengambil detail laporan...')
 
         try {
             detailLaporan.value = await apiAuthGet(`laporan-bullying/${id}/`)

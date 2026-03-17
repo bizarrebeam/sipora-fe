@@ -241,7 +241,9 @@ async function fetchData() {
 }
 
 onMounted(() => {
-	fetchData()
+	if (laporanStore.laporanList.length === 0) {
+		fetchData()
+	}
 })
 </script>
 

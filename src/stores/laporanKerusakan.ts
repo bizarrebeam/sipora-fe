@@ -81,7 +81,7 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         const isStale = Date.now() - lastFetched.value > CACHE_TIME
 
         if (!isLoaded.value || isStale) {
-            loadingStore.show('Memuat laporan kerusakan...')
+            // loadingStore.show('Memuat laporan kerusakan...')
         }
         try {
             const queryParams: string[] = []
@@ -108,12 +108,12 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 
     async function fetchLaporanDetail(id: string) {
-        loadingStore.show('Memuat detail laporan...')
+        // loadingStore.show('Memuat detail laporan...')
         try {
             const data = await apiAuthGet(`laporan-kerusakan/${id}/`)
             currentLaporan.value = data
@@ -121,7 +121,7 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 

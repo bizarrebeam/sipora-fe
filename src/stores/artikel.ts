@@ -26,7 +26,7 @@ export const useArtikelStore = defineStore('artikel', () => {
     const isStale = Date.now() - lastFetched.value > CACHE_TIME
 
     if (!isLoaded.value || isStale) {
-      loader.show('Memuat artikel...')
+      // loader.show('Memuat artikel...')
     }
     try {
       const response = await apiAuthGet('artikel/')
@@ -37,7 +37,7 @@ export const useArtikelStore = defineStore('artikel', () => {
     } catch (error) {
       throw error
     } finally {
-      loader.hide()
+      // loader.hide()
     }
   }
 
@@ -46,7 +46,7 @@ export const useArtikelStore = defineStore('artikel', () => {
     const isStale = Date.now() - lastFetched.value > CACHE_TIME
 
     if (!isLoaded.value || isStale) {
-      loader.show('Memuat manajemen artikel...')
+      // loader.show('Memuat manajemen artikel...')
     }
     try {
       const response = await apiAuthGet('artikel/kelola/')
@@ -57,7 +57,7 @@ export const useArtikelStore = defineStore('artikel', () => {
     } catch (error) {
       throw error
     } finally {
-      loader.hide()
+      // loader.hide()
     }
   }
 
@@ -69,7 +69,7 @@ export const useArtikelStore = defineStore('artikel', () => {
    * @returns {Promise<any>} API response
    */
   async function fetchDetailArtikel(id: string) {
-    loader.show('Memuat isi artikel...')
+    // loader.show('Memuat isi artikel...')
     try {
       const response = await apiAuthGet(`artikel/${id}/`)
       detailArtikel.value = response
@@ -77,7 +77,7 @@ export const useArtikelStore = defineStore('artikel', () => {
     } catch (error) {
       throw error
     } finally {
-      loader.hide()
+      // loader.hide()
     }
   }
 

@@ -72,7 +72,7 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
         const isStale = Date.now() - lastFetched.value > CACHE_TIME
 
         if (!isLoaded.value || isStale) {
-            loadingStore.show('Memuat aspirasi...')
+            // loadingStore.show('Memuat aspirasi...')
         }
         try {
             const queryParams: string[] = []
@@ -97,12 +97,12 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 
     async function fetchAspirasiDetail(id: string) {
-        loadingStore.show('Memuat detail aspirasi...')
+        // loadingStore.show('Memuat detail aspirasi...')
         try {
             const data = await apiAuthGet(`aspirasi/${id}/`)
             currentAspirasi.value = data
@@ -110,7 +110,7 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 

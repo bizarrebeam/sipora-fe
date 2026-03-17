@@ -18,7 +18,11 @@ function handleSessionExpired() {
 <template>
   <SNavbar />
   <main class="main-layout">
-    <RouterView />
+    <router-view v-slot="{ Component }">
+      <keep-alive>
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
   </main>
 
   <SDialog

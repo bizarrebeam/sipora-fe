@@ -287,7 +287,9 @@ async function fetchData() {
 }
 
 onMounted(() => {
-	fetchData()
+	if (aspirasiStore.aspirasiList.length === 0) {
+		fetchData()
+	}
 })
 </script>
 
