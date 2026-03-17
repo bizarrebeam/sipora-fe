@@ -79,7 +79,8 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
                 })
             }
 
-            const response = await fetch('/api/laporan-bullying/create/', {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-bullying/create/`, {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
@@ -120,7 +121,8 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
                 })
             }
 
-            const response = await fetch(`/api/laporan-bullying/${id}/edit/`, {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-bullying/${id}/edit/`, {
                 method: 'PUT',
                 credentials: 'include',
                 body: formData

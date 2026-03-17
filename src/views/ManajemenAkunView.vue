@@ -57,6 +57,9 @@ watch(sortOrder, (val: 'asc' | 'desc') => {
   sortState.value.guru.order = val
   sortState.value.guruBk.key = 'date_joined'
   sortState.value.guruBk.order = val
+  
+  // Trigger backend fetch when sort order changes
+  fetchDaftar()
 })
 const loading = ref(false)
 const isLoaded = ref(false)
@@ -76,6 +79,9 @@ const createNama = ref('')
 const createMapels = ref<string[]>([''])
 const createPassword = ref('')
 const createLoading = ref(false)
+
+const showSuccessVerifyDialog = ref(false)
+const verifiedSiswaName = ref('')
 const showVerifyDialog = ref(false)
 const verifyLoading = ref(false)
 const selectedSiswa = ref<AkunItem | null>(null)
@@ -195,8 +201,11 @@ async function fetchDaftar() {
     // loadingStore.show('Memuat daftar akun...')
   }
   try {
-    const params = search.value ? `?search=${encodeURIComponent(search.value)}` : ''
-    const data = await apiAuthGet(`akun/admin/daftar/${params}`)
+    const query = new URLSearchParams()
+    if (search.value) query.set('search', search.value)
+    if (sortOrder.value) query.set('sort', sortOrder.value)
+    
+    const data = await apiAuthGet(`akun/admin/daftar/?${query.toString()}`)
     siswaList.value = data.siswa.data
     siswaTotal.value = data.siswa.total
     guruList.value = data.guru.data
@@ -240,9 +249,12 @@ const verifyMessage = computed(() => {
 async function confirmVerify() {
   if (!selectedSiswa.value) return
   verifyLoading.value = true
+  const studentName = selectedSiswa.value.nama_lengkap
   try {
     await handleVerify(selectedSiswa.value.id)
+    verifiedSiswaName.value = studentName
     closeVerifyDialog()
+    showSuccessVerifyDialog.value = true
   } finally {
     verifyLoading.value = false
   }
@@ -642,6 +654,16 @@ onMounted(() => {
         <SButton :label="verifyLoading ? 'Memverifikasi...' : 'Ya, Verifikasi'" variant="primary" :disabled="verifyLoading" @click="confirmVerify" />
       </template>
     </SDialog>
+
+    <SDialog
+      :visible="showSuccessVerifyDialog"
+      variant="primary"
+      title="Siswa Terverifikasi"
+      :message="`Siswa ${verifiedSiswaName} berhasil diverifikasi. Akun tersebut kini dapat login dan mengakses seluruh fitur SIPORA sebagai siswa.`"
+      confirmLabel="OK"
+      cancelLabel=""
+      @confirm="showSuccessVerifyDialog = false"
+    />
   </div>
 </template>
 

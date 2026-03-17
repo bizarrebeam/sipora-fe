@@ -55,6 +55,10 @@ const totalPages = ref(1)
 const sortKey = ref('')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
+watch(sortOrder, () => {
+  fetchLogs(1)
+})
+
 const columns = [
   { key: 'waktu', label: 'Waktu', sortable: true },
   { key: 'pengguna', label: 'Pengguna', sortable: true, tdClass: 'min-w-[200px]' },
@@ -83,6 +87,7 @@ async function fetchLogs(page = 1) {
     if (searchQuery.value) query.set('search', searchQuery.value)
     if (selectedDate.value) query.set('tanggal', selectedDate.value)
     if (selectedModule.value) query.set('modul', selectedModule.value)
+    if (sortOrder.value) query.set('sort', sortOrder.value)
 
     const res: any = await apiAuthGet(`logs/?${query.toString()}`)
     logs.value = res.results || []
@@ -141,25 +146,8 @@ function sortBy(key: string) {
 }
 
 const sortedLogs = computed(() => {
-  if (!sortKey.value) return logs.value
-  
-  return [...logs.value].sort((a: any, b: any) => {
-    let valA = a[sortKey.value]
-    let valB = b[sortKey.value]
-    
-    // Custom mapping for nested fields
-    if (sortKey.value === 'pengguna') {
-      valA = a.pengguna?.nama_lengkap || (a.deskripsi?.startsWith('Anonim') ? a.deskripsi.split(' membuat')[0] : 'Sistem')
-      valB = b.pengguna?.nama_lengkap || (b.deskripsi?.startsWith('Anonim') ? b.deskripsi.split(' membuat')[0] : 'Sistem')
-    } else if (sortKey.value === 'role') {
-      valA = formatRole(a.pengguna?.role)
-      valB = formatRole(b.pengguna?.role)
-    }
-
-    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
-    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
-    return 0
-  })
+  // Use backend sorting, so just return logs as is
+  return logs.value
 })
 
 onMounted(() => {
