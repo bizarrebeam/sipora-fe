@@ -197,20 +197,14 @@ async function handleSubmit() {
 <template>
     <div class="stf-page">
         <!-- SAlert overlay -->
-        <Teleport to="body">
-            <Transition name="fade">
-                <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
-                    <SAlert
-                        :type="alertType"
-                        :title="alertTitle"
-                        :description="alertDescription"
-                        primary-button-text="OK"
-                        @close="alertVisible = false"
-                        @primary-click="handleAlertPrimary"
-                    />
-                </div>
-            </Transition>
-        </Teleport>
+        <SAlert
+            v-model:visible="alertVisible"
+            :type="alertType"
+            :title="alertTitle"
+            :description="alertDescription"
+            primary-button-text="OK"
+            @primary-click="handleAlertPrimary"
+        />
 
         <div class="form-page-container">
             <!-- Back Button -->

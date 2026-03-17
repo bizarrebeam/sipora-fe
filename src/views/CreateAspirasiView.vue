@@ -162,20 +162,14 @@ async function handleSubmit() {
 
 <template>
     <div class="stf-page">
-        <Teleport to="body">
-            <Transition name="fade">
-                <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
-                    <SAlert
-                        :type="alertType"
-                        :title="alertTitle"
-                        :description="alertDescription"
-                        primary-button-text="OK"
-                        @close="alertVisible = false"
-                        @primary-click="handleAlertPrimary"
-                    />
-                </div>
-            </Transition>
-        </Teleport>
+        <SAlert
+            v-model:visible="alertVisible"
+            :type="alertType"
+            :title="alertTitle"
+            :description="alertDescription"
+            primary-button-text="OK"
+            @primary-click="handleAlertPrimary"
+        />
 
         <div class="form-page-container">
             <!-- Back Button -->
@@ -572,23 +566,4 @@ async function handleSubmit() {
     }
 }
 
-.salert-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(2px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
 </style>

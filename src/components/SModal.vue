@@ -53,13 +53,28 @@ function close() {
 
 .modal-fade-enter-active,
 .modal-fade-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.3s ease;
 }
 
 .modal-fade-enter-from,
 .modal-fade-leave-to {
   opacity: 0;
-  transform: scale(0.95);
+}
+
+.modal-fade-enter-active .modal-box,
+.modal-fade-leave-active .modal-box {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-fade-enter-from .modal-box {
+  transform: scale(0.8) translateY(20px);
+  opacity: 0;
+}
+
+.modal-fade-leave-to .modal-box {
+  transform: scale(0.95) translateY(0);
+  opacity: 0;
+  transition: all 0.2s ease-in;
 }
 
 .modal-box {
