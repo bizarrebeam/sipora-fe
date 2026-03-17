@@ -251,7 +251,7 @@ const submitArticle = async (status: 'draft' | 'published') => {
       toast.success(`Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`)
     }
     router.push('/artikel')
-  } catch (error: unknown) {
+  } catch (error: any) {
     const errorMessage = error instanceof Error ? error.message : 'Gagal menyimpan artikel'
     toast.error(errorMessage)
   } finally {
@@ -274,12 +274,12 @@ const toggleList = () => {
 onMounted(async () => {
   if (isEditMode.value && articleId) {
     try {
-      const data = await artikelStore.fetchDetailArtikel(articleId)
-      formData.value.judul = data.judul || ''
-      formData.value.konten = data.konten || ''
-      formData.value.ringkasan = data.ringkasan || ''
-      if (data.gambar) {
-        previewImage.value = data.gambar
+      const response = await artikelStore.fetchDetailArtikel(articleId)
+      formData.value.judul = response.judul || ''
+      formData.value.konten = response.konten || ''
+      formData.value.ringkasan = response.ringkasan || ''
+      if (response.gambar) {
+        previewImage.value = response.gambar
       }
     } catch (error) {
       console.error(error)

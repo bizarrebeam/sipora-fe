@@ -204,7 +204,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
           v-if="isAdmin"
           label="Buat Artikel"
           variant="primary"
-          @click="$router.push({ name: 'createArtikel' })"
+          @click="router.push({ name: 'createArtikel' })"
           class="shrink-0 mt-2"
         >
           <template #left-icon>
@@ -282,7 +282,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
             :key="artikel.id"
             class="article-card"
             padding="0"
-            @click="$router.push({ name: 'detailArtikel', params: { id: artikel.id } })"
+            @click="router.push({ name: 'detailArtikel', params: { id: artikel.id } })"
           >
             <div class="article-thumb">
               <div v-if="artikel.status === 'draft'" class="draft-badge">

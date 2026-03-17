@@ -80,7 +80,7 @@ export const useArtikelStore = defineStore('artikel', () => {
     loader.show('Memuat isi artikel...')
     try {
       const response = await apiAuthGet(`artikel/${id}/`)
-      detailArtikel.value = response.data
+      detailArtikel.value = response
       return response
     } catch (error) {
       throw error
