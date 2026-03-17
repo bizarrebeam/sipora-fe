@@ -52,7 +52,7 @@ const pageSize = ref(20)
 const totalData = ref(0)
 const totalPages = ref(1)
 
-const sortKey = ref('')
+const sortKey = ref('waktu')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 let fetchTimeout: ReturnType<typeof setTimeout>
@@ -95,7 +95,12 @@ async function fetchLogs(page = 1) {
     if (searchQuery.value) query.set('search', searchQuery.value)
     if (selectedDate.value) query.set('tanggal', selectedDate.value)
     if (selectedModule.value) query.set('modul', selectedModule.value)
-    if (sortOrder.value) query.set('sort', sortOrder.value)
+    
+    // Support both 'sort' and 'ordering' for backend compatibility
+    if (sortOrder.value) {
+      query.set('sort', sortOrder.value)
+      query.set('ordering', sortOrder.value === 'desc' ? '-waktu' : 'waktu')
+    }
 
     const res: any = await apiAuthGet(`logs/?${query.toString()}`)
     logs.value = res.results || []
@@ -154,8 +159,21 @@ function sortBy(key: string) {
 }
 
 const sortedLogs = computed(() => {
-  // Use backend sorting, so just return logs as is
-  return logs.value
+  if (!sortKey.value) return logs.value
+  return [...logs.value].sort((a: any, b: any) => {
+    let valA = a[sortKey.value]
+    let valB = b[sortKey.value]
+    
+    // Handle date sorting
+    if (sortKey.value === 'waktu') {
+      valA = new Date(valA).getTime()
+      valB = new Date(valB).getTime()
+    }
+    
+    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
+    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
+    return 0
+  })
 })
 
 onMounted(() => {

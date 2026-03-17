@@ -103,9 +103,9 @@ const pagination = ref({
 })
 
 const sortState = ref({
-  siswa: { key: '', order: 'desc' as 'asc' | 'desc' },
-  guru: { key: '', order: 'desc' as 'asc' | 'desc' },
-  guruBk: { key: '', order: 'desc' as 'asc' | 'desc' }
+  siswa: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' },
+  guru: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' },
+  guruBk: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' }
 })
 
 const activeTab = ref('siswa')
@@ -169,6 +169,12 @@ function getSortedList(list: AkunItem[], type: 'siswa' | 'guru' | 'guruBk') {
   return [...list].sort((a: any, b: any) => {
     let valA = a[key]
     let valB = b[key]
+    
+    if (key === 'date_joined') {
+      valA = new Date(valA).getTime()
+      valB = new Date(valB).getTime()
+    }
+    
     if (valA < valB) return order === 'asc' ? -1 : 1
     if (valA > valB) return order === 'asc' ? 1 : -1
     return 0
@@ -211,7 +217,11 @@ async function fetchDaftar() {
   try {
     const query = new URLSearchParams()
     if (search.value) query.set('search', search.value)
-    if (sortOrder.value) query.set('sort', sortOrder.value)
+    if (sortOrder.value) {
+      query.set('sort', sortOrder.value)
+      // Standard DRF ordering
+      query.set('ordering', sortOrder.value === 'desc' ? '-date_joined' : 'date_joined')
+    }
     
     const data = await apiAuthGet(`akun/admin/daftar/?${query.toString()}`)
     siswaList.value = data.siswa.data
