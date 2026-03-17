@@ -7,11 +7,13 @@ interface User {
   id?: number
   role: string
   nama_lengkap: string
-  nisn?: string | null
+  nis?: string | null
   nuptk?: string | null
   username?: string
+  email?: string | null
   kelas?: string | null
   mata_pelajaran?: string | null
+  is_verified?: boolean
   tahun_ajaran?: string
   semester?: string
   date_joined?: string
@@ -19,6 +21,7 @@ interface User {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
+  const isSessionExpired = ref(false)
 
   const isAuthenticated = computed(() => !!user.value)
 
@@ -48,6 +51,13 @@ export const useAuthStore = defineStore('auth', () => {
     return map[user.value.role] || user.value.role
   })
 
+  const isVerified = computed(() => !!user.value?.is_verified)
+
+  const verificationLabel = computed(() => {
+    if (!user.value || user.value.role !== 'siswa') return ''
+    return user.value.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'
+  })
+
   function setUser(userData: User) {
     user.value = userData
     localStorage.setItem('user', JSON.stringify(userData))
@@ -55,9 +65,16 @@ export const useAuthStore = defineStore('auth', () => {
 
   function clearAuth() {
     user.value = null
-    localStorage.removeItem('access_token') // clean up old items
+    localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
+  }
+
+  function setSessionExpired(value: boolean) {
+    isSessionExpired.value = value
+    if (value) {
+      clearAuth()
+    }
   }
 
   async function login(identifier: string, password: string, allowedRoles?: string[]) {
@@ -70,13 +87,18 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error('Akun Anda tidak memiliki akses ke portal ini.')
       }
 
+      isSessionExpired.value = false
+
       setUser({
+        username: data.username,
         role: data.role,
         nama_lengkap: data.nama_lengkap,
-        nisn: data.nisn,
+        nis: data.nis,
         nuptk: data.nuptk,
+        email: data.email,
         kelas: data.kelas,
         mata_pelajaran: data.mata_pelajaran,
+        is_verified: data.is_verified,
       })
       return data
     } finally {
@@ -85,8 +107,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function registerSiswa(
-    nisn: string,
+    nis: string,
     nama_lengkap: string,
+    email: string,
     kelas: string,
     password: string,
     konfirmasi_password: string,
@@ -94,7 +117,27 @@ export const useAuthStore = defineStore('auth', () => {
     const loader = useLoadingStore()
     loader.show('Mendaftarkan akun...')
     try {
-      await apiPost('akun/register/', { nisn, nama_lengkap, kelas, password, konfirmasi_password })
+      await apiPost('akun/register/', { nis, nama_lengkap, email, kelas, password, konfirmasi_password })
+    } finally {
+      loader.hide()
+    }
+  }
+
+  async function forgotPassword(nis: string) {
+    const loader = useLoadingStore()
+    loader.show('Mengirim email reset...')
+    try {
+      return await apiPost('akun/forgot-password/', { nis })
+    } finally {
+      loader.hide()
+    }
+  }
+
+  async function resetPassword(uid: string, token: string, password: string, konfirmasi_password: string) {
+    const loader = useLoadingStore()
+    loader.show('Mengubah password...')
+    try {
+      return await apiPost('akun/reset-password/', { uid, token, password, konfirmasi_password })
     } finally {
       loader.hide()
     }
@@ -150,15 +193,21 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user,
+    isSessionExpired,
     isAuthenticated,
     namaDepan,
     roleBadge,
+    isVerified,
+    verificationLabel,
     login,
     registerSiswa,
+    forgotPassword,
+    resetPassword,
     logout,
     fetchProfile,
     editProfil,
     ubahPassword,
     clearAuth,
+    setSessionExpired,
   }
 })

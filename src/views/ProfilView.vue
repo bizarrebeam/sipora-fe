@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
+import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import { toast } from 'vue-sonner'
 
@@ -78,13 +79,13 @@ const roleLabel = computed(() => {
 })
 
 const identifier = computed(() => {
-  if (isSiswa.value) return user.value?.nisn || '-'
+  if (isSiswa.value) return user.value?.nis || '-'
   if (isGuru.value || isGuruBk.value) return user.value?.nuptk || '-'
   return user.value?.username || '-'
 })
 
 const identifierLabel = computed(() => {
-  if (isSiswa.value) return 'NISN'
+  if (isSiswa.value) return 'Nomor Induk Siswa (NIS)'
   if (isGuru.value || isGuruBk.value) return 'NUPTK'
   return 'Username'
 })
@@ -130,9 +131,17 @@ async function handleUbahPassword() {
 </script>
 
 <template>
-  <div class="profil-page">
+  <div class="stf-page">
     <div class="profil-container">
-      <h1 class="profil-title">Manajemen Profil</h1>
+      <h1 class="stf-page-title">Manajemen Profil</h1>
+
+      <!-- Verification Notice -->
+      <div v-if="isSiswa && !user?.is_verified" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-start gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600 shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        <p class="text-sm font-medium text-yellow-800 font-['Be_Vietnam_Pro'] leading-relaxed m-0">
+          Akun kamu sedang diverifikasi oleh Kemahasiswaan SMP Desa Putera. Selama proses ini, kamu tetap bisa menggunakan fitur SIPORA.
+        </p>
+      </div>
 
       <!-- Profile Info Card -->
       <SCard class="profil-card">
@@ -143,6 +152,13 @@ async function handleUbahPassword() {
             <div class="info-badges">
               <span class="badge badge--role">{{ roleLabel }}</span>
               <span class="badge badge--semester">{{ semesterInfo }}</span>
+              <SChip
+                v-if="isSiswa"
+                :label="user?.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'"
+                :tone="user?.is_verified ? 'success' : 'warning'"
+                variant="light"
+                size="small"
+              />
             </div>
           </div>
         </div>
@@ -173,7 +189,7 @@ async function handleUbahPassword() {
 
       <!-- Edit Profile (Siswa: kelas, Guru: mapel) -->
       <SCard v-if="isSiswa || isGuru" class="profil-card">
-        <h3 class="section-title">Ubah Detail Profil</h3>
+        <h3 class="stf-section-title">Ubah Detail Profil</h3>
 
         <!-- Siswa: kelas dropdown -->
         <div v-if="isSiswa" class="edit-field">
@@ -220,7 +236,7 @@ async function handleUbahPassword() {
 
       <!-- Change Password -->
       <SCard class="profil-card">
-        <h3 class="section-title">Ganti Password</h3>
+        <h3 class="stf-section-title">Ganti Password</h3>
         <div class="password-form">
           <STextField
             label="Password Lama"
@@ -266,7 +282,9 @@ async function handleUbahPassword() {
 .profil-page {
   min-height: calc(100vh - 64px);
   background: var(--color-general-frame);
-  padding: 24px 16px;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .profil-container {
@@ -346,8 +364,20 @@ async function handleUbahPassword() {
 }
 
 .badge--semester {
-  background: #f0fdf4;
-  color: #15803d;
+  background: var(--color-blue-50);
+  color: var(--color-blue-600);
+}
+
+.badge--verify-true {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.badge--verify-false {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
 }
 
 /* ── Info Grid ── */
@@ -483,6 +513,51 @@ async function handleUbahPassword() {
 
   .profil-title {
     font-size: 28px;
+  }
+}
+
+/* ── Mobile (≤ 600px) ── */
+@media (max-width: 600px) {
+  .profil-page {
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .profil-title {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+  .info-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .info-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+  .info-nama {
+    font-size: 15px;
+  }
+}
+
+/* ── Tiny (iPhone SE ≤ 375px) ── */
+@media (max-width: 375px) {
+  .profil-page {
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .profil-title {
+    font-size: 18px;
+  }
+  .info-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 16px;
+  }
+  .kelas-select {
+    font-size: 14px;
+    padding: 10px 12px;
   }
 }
 </style>

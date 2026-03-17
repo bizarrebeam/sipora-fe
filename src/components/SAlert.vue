@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+// nitip comment
 const props = defineProps<{
   type?: 'default' | 'warning' | 'no-header'
   title?: string
@@ -28,8 +29,8 @@ const showHeader = computed(() => props.type !== 'no-header')
     <!-- Header -->
     <div v-if="showHeader" :class="headerClass">
       <h3 class="w-full text-center heading-h5">{{ title }}</h3>
-      <button 
-        type="button" 
+      <button
+        type="button"
         class="absolute right-[21px] top-[21px] flex size-6 items-center justify-center text-general-black hover:opacity-70 transition-opacity"
         @click="$emit('close')"
       >
@@ -38,11 +39,11 @@ const showHeader = computed(() => props.type !== 'no-header')
         </svg>
       </button>
     </div>
-    
+
     <!-- No Header Close Button -->
-    <button 
+    <button
       v-else
-      type="button" 
+      type="button"
       class="absolute right-6 top-6 flex size-6 items-center justify-center text-general-black hover:opacity-70 transition-opacity"
       @click="$emit('close')"
     >
@@ -54,7 +55,7 @@ const showHeader = computed(() => props.type !== 'no-header')
     <!-- Body -->
     <div class="flex flex-col items-center justify-center gap-6 p-8" :class="{ 'pt-14': !showHeader }">
       <p class="w-[508px] text-center text-general-black subheading-s6 whitespace-pre-wrap">{{ description }}</p>
-      
+
       <!-- Actions -->
       <div class="flex w-full items-center justify-center gap-[29px]">
         <button

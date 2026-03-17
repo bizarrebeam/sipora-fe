@@ -6,6 +6,7 @@ const props = withDefaults(defineProps<{
   message?: string
   confirmLabel?: string
   cancelLabel?: string
+  persistent?: boolean
 }>(), {
   variant: 'primary',
   confirmLabel: 'Konfirmasi',
@@ -30,10 +31,10 @@ function cancel() {
 
 <template>
   <Transition name="dialog-fade">
-    <div v-if="visible" class="dialog-overlay" @click.self="close">
+    <div v-if="visible" class="dialog-overlay" @click.self="persistent ? null : close()">
       <div class="dialog-box">
         
-        <button class="dialog-close" @click="close" aria-label="Tutup">
+        <button v-if="!persistent" class="dialog-close" @click="close" aria-label="Tutup">
           <svg v-if="variant === 'plain'" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M13 1L1 13M1 1L13 13" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
