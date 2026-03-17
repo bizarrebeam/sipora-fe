@@ -7,6 +7,10 @@ import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SDialog from '@/components/SDialog.vue'
 import STable from '@/components/STable.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
+import { useLoadingStore } from '@/stores/loading'
+
+const loadingStore = useLoadingStore()
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 
@@ -55,6 +59,7 @@ watch(sortOrder, (val: 'asc' | 'desc') => {
   sortState.value.guruBk.order = val
 })
 const loading = ref(false)
+const isLoaded = ref(false)
 
 const isPasswordLengthValid = computed(() => createPassword.value.length >= 8)
 const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.value) && /[0-9]/.test(createPassword.value))
@@ -185,6 +190,10 @@ const paginatedGuruBkList = computed(() => {
 
 async function fetchDaftar() {
   loading.value = true
+  // Only show mascot if not loaded yet
+  if (!isLoaded.value) {
+    loadingStore.show('Memuat daftar akun...')
+  }
   try {
     const params = search.value ? `?search=${encodeURIComponent(search.value)}` : ''
     const data = await apiAuthGet(`akun/admin/daftar/${params}`)
@@ -194,10 +203,12 @@ async function fetchDaftar() {
     guruTotal.value = data.guru.total
     guruBkList.value = data.guru_bk.data
     guruBkTotal.value = data.guru_bk.total
+    isLoaded.value = true
   } catch (err: any) {
     toast.error(err.message || 'Gagal memuat daftar akun.')
   } finally {
     loading.value = false
+    loadingStore.hide()
   }
 }
 
@@ -396,11 +407,7 @@ onMounted(fetchDaftar)
         </div>
       </div>
 
-      <div v-if="loading" class="admin-loading">
-        <p>Memuat data...</p>
-      </div>
-
-      <template v-else>
+      <!-- Always show content, loading mascot will overlap if needed -->
         <SCard v-if="activeTab === 'siswa'" class="section-card">
           <div class="section-header">
             <div>
@@ -417,7 +424,8 @@ onMounted(fetchDaftar)
               v-model:page-size="pagination.siswa.pageSize"
               :sort-key="sortState.siswa.key"
               :sort-order="sortState.siswa.order"
-              @sort="(k) => handleSort('siswa', k)"
+              :loading="loading"
+              @sort="(k: string) => handleSort('siswa', k)"
               empty-message="Belum ada siswa yang terdaftar."
             >
               <template #body-cell-nis="{ row }">
@@ -472,7 +480,8 @@ onMounted(fetchDaftar)
               v-model:page-size="pagination.guru.pageSize"
               :sort-key="sortState.guru.key"
               :sort-order="sortState.guru.order"
-              @sort="(k) => handleSort('guru', k)"
+              :loading="loading"
+              @sort="(k: string) => handleSort('guru', k)"
               empty-message="Belum ada guru yang terdaftar."
             >
               <template #body-cell-nuptk="{ row }">
@@ -504,7 +513,8 @@ onMounted(fetchDaftar)
               v-model:page-size="pagination.guruBk.pageSize"
               :sort-key="sortState.guruBk.key"
               :sort-order="sortState.guruBk.order"
-              @sort="(k) => handleSort('guruBk', k)"
+              :loading="loading"
+              @sort="(k: string) => handleSort('guruBk', k)"
               empty-message="Belum ada guru BK yang terdaftar."
             >
               <template #body-cell-nuptk="{ row }">
@@ -519,7 +529,6 @@ onMounted(fetchDaftar)
             </STable>
           </div>
         </SCard>
-      </template>
     </div>
 
     <SDialog 

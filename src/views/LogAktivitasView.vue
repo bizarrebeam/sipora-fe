@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { apiAuthGet } from '@/services/api'
+import { useLoadingStore } from '@/stores/loading'
+
+const loadingStore = useLoadingStore()
 import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SPagination from '@/components/SPagination.vue'
@@ -71,6 +74,7 @@ const moduleTabs = [
 
 async function fetchLogs(page = 1) {
   loadingLogs.value = true
+  loadingStore.show('Memuat log aktivitas...')
   logError.value = ''
   try {
     const query = new URLSearchParams()
@@ -89,6 +93,7 @@ async function fetchLogs(page = 1) {
     logError.value = err.message || 'Gagal memuat log aktivitas.'
   } finally {
     loadingLogs.value = false
+    loadingStore.hide()
   }
 }
 

@@ -305,7 +305,7 @@ onMounted(() => {
 				</div>
 			</div>
 
-			<div v-if="loading" class="loading-state">
+			<div v-if="loading && paginatedList.length === 0" class="loading-state">
 				<p>Memuat data...</p>
 			</div>
 
@@ -323,6 +323,7 @@ onMounted(() => {
 							v-model:current-page="currentPage" v-model:page-size="pageSize"
 							:sort-key="sortKey"
 							:sort-order="tableSortOrder"
+							:loading="loading"
 							@sort="handleSort"
 							empty-message="Tidak ada laporan kerusakan yang ditemukan.">
 							<template #body-cell-id="{ row }">

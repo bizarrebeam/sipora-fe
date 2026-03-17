@@ -6,11 +6,19 @@ import { useLoadingStore } from '@/stores/loading'
 export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
     const daftarLaporan = ref<any[]>([])
     const detailLaporan = ref<any | null>(null)
+    const isLoaded = ref(false)
+    const lastFetched = ref(0)
 
     const loader = useLoadingStore()
 
     async function ambilLaporan(params: { sortOrder?: string; status?: string; search?: string; date?: string } = {}) {
-        loader.show('Mengambil data laporan...')
+        const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
+        const isStale = Date.now() - lastFetched.value > CACHE_TIME
+        
+        // Only show global loader if not loaded yet or data is stale
+        if (!isLoaded.value || isStale) {
+            loader.show('Mengambil data laporan...')
+        }
 
         try {
             const searchParams = new URLSearchParams()
@@ -21,7 +29,10 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             if (params.search) searchParams.append('search', params.search)
             if (params.date) searchParams.append('date', params.date)
 
-            daftarLaporan.value = await apiAuthGet(`laporan-bullying/?${searchParams.toString()}`)
+            const data = await apiAuthGet(`laporan-bullying/?${searchParams.toString()}`)
+            daftarLaporan.value = data
+            isLoaded.value = true
+            lastFetched.value = Date.now()
         } catch (error: any) {
             console.error('Gagal mengambil laporan:', error.message)
         } finally {

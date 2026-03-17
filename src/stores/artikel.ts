@@ -15,29 +15,24 @@ export const useArtikelStore = defineStore('artikel', () => {
    * List of articles (published or all, depending on fetch method).
    */
   const daftarArtikel = ref<any[]>([])
-
-  /**
-   * Detail of a single article (for view/edit).
-   */
   const detailArtikel = ref<any | null>(null)
+  const isLoaded = ref(false)
+  const lastFetched = ref(0)
 
-  /**
-   * Global loading state store.
-   */
   const loader = useLoadingStore()
 
-
-  /**
-   * Fetch the list of published articles (public endpoint).
-   * Updates daftarArtikel with the result.
-   * @returns {Promise<any>} API response
-   */
   async function fetchArtikelPublik() {
-    loader.show('Memuat artikel...')
+    const CACHE_TIME = 2 * 60 * 1000
+    const isStale = Date.now() - lastFetched.value > CACHE_TIME
+
+    if (!isLoaded.value || isStale) {
+      loader.show('Memuat artikel...')
+    }
     try {
       const response = await apiAuthGet('artikel/')
-      // apiAuthGet already unwraps json.data, so response is the array
       daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
+      isLoaded.value = true
+      lastFetched.value = Date.now()
       return response
     } catch (error) {
       throw error
@@ -46,23 +41,20 @@ export const useArtikelStore = defineStore('artikel', () => {
     }
   }
 
-
-  /**
-   * Fetch the list of all articles (draft & published) for admin management.
-   * Updates daftarArtikel with the result.
-   * @returns {Promise<any>} API response
-   */
   async function fetchKelolaArtikel() {
-    loader.show('Memuat manajemen artikel...')
+    const CACHE_TIME = 2 * 60 * 1000
+    const isStale = Date.now() - lastFetched.value > CACHE_TIME
+
+    if (!isLoaded.value || isStale) {
+      loader.show('Memuat manajemen artikel...')
+    }
     try {
       const response = await apiAuthGet('artikel/kelola/')
-      // DEBUG: Log the raw response for troubleshooting
-      console.log('Response from backend:', response)
-      // apiAuthGet already unwraps json.data, so response is the array
       daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
+      isLoaded.value = true
+      lastFetched.value = Date.now()
       return response
     } catch (error) {
-      console.error('Error Store:', error)
       throw error
     } finally {
       loader.hide()
@@ -70,7 +62,7 @@ export const useArtikelStore = defineStore('artikel', () => {
   }
 
 
-  /**
+    /**
    * Fetch the details of a single article by ID.
    * Updates detailArtikel with the result.
    * @param {string} id - Article UUID

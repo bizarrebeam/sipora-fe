@@ -270,7 +270,7 @@ onMounted(() => { fetchData() })
                 </button>
             </div>
 
-            <div v-if="loading" class="loading-state">
+            <div v-if="loading && paginatedList.length === 0" class="loading-state">
                 <p>Memuat data...</p>
             </div>
 
@@ -292,6 +292,7 @@ onMounted(() => { fetchData() })
                             v-model:page-size="pageSize"
                             :sort-key="sortKey || 'tanggal_laporan'"
                             :sort-order="sortOrder"
+                            :loading="loading"
                             @sort="handleSort"
                             empty-message="Belum ada laporan bullying."
                         >

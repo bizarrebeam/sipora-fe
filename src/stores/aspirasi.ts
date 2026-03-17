@@ -62,11 +62,18 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
     const aspirasiList = ref<Aspirasi[]>([])
     const totalAspirasi = ref(0)
     const currentAspirasi = ref<Aspirasi | null>(null)
+    const isLoaded = ref(false)
+    const lastFetched = ref(0)
 
     const loadingStore = useLoadingStore()
 
     async function fetchAspirasi(params: { status?: string; search?: string; kategori?: string }) {
-        loadingStore.show('Memuat aspirasi...')
+        const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
+        const isStale = Date.now() - lastFetched.value > CACHE_TIME
+
+        if (!isLoaded.value || isStale) {
+            loadingStore.show('Memuat aspirasi...')
+        }
         try {
             const queryParams: string[] = []
             if (params.status && params.status !== 'semua') {
@@ -85,6 +92,8 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
             
             aspirasiList.value = data.aspirasi
             totalAspirasi.value = data.total
+            isLoaded.value = true
+            lastFetched.value = Date.now()
         } catch (error: any) {
             throw error
         } finally {

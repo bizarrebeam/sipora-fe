@@ -66,6 +66,8 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
     const laporanList = ref<LaporanKerusakan[]>([])
     const totalLaporan = ref(0)
     const currentLaporan = ref<LaporanKerusakan | null>(null)
+    const isLoaded = ref(false)
+    const lastFetched = ref(0)
 
     const loadingStore = useLoadingStore()
 
@@ -75,7 +77,12 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         date?: string
         sort?: 'asc' | 'desc'
     }) {
-        loadingStore.show('Memuat laporan kerusakan...')
+        const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
+        const isStale = Date.now() - lastFetched.value > CACHE_TIME
+
+        if (!isLoaded.value || isStale) {
+            loadingStore.show('Memuat laporan kerusakan...')
+        }
         try {
             const queryParams: string[] = []
             if (params.status && params.status !== 'semua') {
@@ -96,6 +103,8 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             
             laporanList.value = data.laporan
             totalLaporan.value = data.total
+            isLoaded.value = true
+            lastFetched.value = Date.now()
         } catch (error: any) {
             throw error
         } finally {

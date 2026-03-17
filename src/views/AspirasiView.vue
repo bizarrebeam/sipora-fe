@@ -360,7 +360,7 @@ onMounted(() => {
 				</div>
 			</div>
 
-			<div v-if="loading" class="loading-state">
+			<div v-if="loading && paginatedList.length === 0" class="loading-state">
 				<p>Memuat data...</p>
 			</div>
 
@@ -376,7 +376,7 @@ onMounted(() => {
 					<div class="table-wrapper">
 						<STable :columns="columns" :data="paginatedList" :total-data="totalData"
 								v-model:current-page="currentPage" v-model:page-size="pageSize" :sort-key="sortKey"
-								:sort-order="sortOrder" @sort="handleSort"
+								:sort-order="sortOrder" :loading="loading" @sort="handleSort"
 								empty-message="Tidak ada aspirasi yang ditemukan.">
 							<template #body-cell-id="{ row }">
 								<span class="text-xs text-gray-500">{{ row.id }}</span>
