@@ -151,13 +151,21 @@ function handleSort(key: string) {
     }
 }
 
-let searchTimeout: ReturnType<typeof setTimeout>
-function onSearchInput() {
-    clearTimeout(searchTimeout)
-    searchTimeout = setTimeout(() => {
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+    clearTimeout(fetchTimeout)
+    fetchTimeout = setTimeout(() => {
         currentPage.value = 1
         fetchData()
     }, 400)
+}
+
+watch([search, selectedDate, apiSort, selectedStatus], () => {
+    debouncedFetch()
+})
+
+function onSearchInput() {
+    // handled by watcher
 }
 
 function openDetail(laporan: any) {

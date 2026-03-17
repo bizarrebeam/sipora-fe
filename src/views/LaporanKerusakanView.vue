@@ -185,13 +185,17 @@ function handleTabChange(value: string) {
 	currentPage.value = 1
 }
 
-let searchTimeout: ReturnType<typeof setTimeout>
-function onSearchInput() {
-	clearTimeout(searchTimeout)
-	searchTimeout = setTimeout(() => {
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+	clearTimeout(fetchTimeout)
+	fetchTimeout = setTimeout(() => {
 		currentPage.value = 1
 		fetchData()
 	}, 400)
+}
+
+function onSearchInput() {
+	// handled by watcher
 }
 
 function openStatusUpdate(laporan: LaporanKerusakan, action: 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan') {
@@ -219,9 +223,8 @@ const statusCounts = computed(() => ({
 	dibatalkan: laporanList.value.filter(l => l.status === 'dibatalkan').length,
 }))
 
-watch([selectedStatus, selectedDate, sortOrder], () => {
-	currentPage.value = 1
-	fetchData()
+watch([selectedStatus, selectedDate, sortOrder, search], () => {
+	debouncedFetch()
 }, { immediate: false })
 
 async function fetchData() {

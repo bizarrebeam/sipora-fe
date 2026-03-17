@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, unref } from 'vue'
+import { ref, computed, onMounted, onActivated, watch, unref } from 'vue'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
@@ -237,12 +237,21 @@ function handleSort(key: string) {
 	}
 }
 
-let searchTimeout: ReturnType<typeof setTimeout>
-function onSearchInput() {
-	clearTimeout(searchTimeout)
-	searchTimeout = setTimeout(() => {
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+	clearTimeout(fetchTimeout)
+	fetchTimeout = setTimeout(() => {
 		currentPage.value = 1
+		fetchData()
 	}, 400)
+}
+
+watch([search, selectedDate, selectedStatus, selectedKategori, sortOrder], () => {
+    debouncedFetch()
+})
+
+function onSearchInput() {
+	// handled by watcher
 }
 
 function openDetail(laporan: Aspirasi) {
@@ -290,6 +299,10 @@ onMounted(() => {
 	if (aspirasiStore.aspirasiList.length === 0) {
 		fetchData()
 	}
+})
+
+onActivated(() => {
+	fetchData()
 })
 </script>
 

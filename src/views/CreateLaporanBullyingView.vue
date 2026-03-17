@@ -169,9 +169,9 @@ async function handleSubmit() {
             description: 'Laporan berhasil dibuat',
             onPrimary: () => {
                 if (result && result.id) {
-                    router.push(`/laporan-bullying/${result.id}`)
+                    router.replace(`/laporan-bullying/${result.id}`)
                 } else {
-                    router.push('/laporan-bullying')
+                    router.replace('/laporan-bullying')
                 }
             }
         })

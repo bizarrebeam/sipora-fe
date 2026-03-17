@@ -143,9 +143,9 @@ async function handleSubmit() {
             description: 'Aspirasi berhasil dibuat',
             onPrimary: () => {
                 if (result && result.id) {
-                    router.push(`/aspirasi`) // ga detail dulu /aspirasi/${result.id}
+                    router.replace(`/aspirasi`) // ga detail dulu /aspirasi/${result.id}
                 } else {
-                    router.push('/aspirasi')
+                    router.replace('/aspirasi')
                 }
             }
         })

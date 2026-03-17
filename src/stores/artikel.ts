@@ -104,10 +104,12 @@ export const useArtikelStore = defineStore('artikel', () => {
             const errorMsg = json.message || json.detail || 'Gagal menyimpan artikel'
             throw new Error(errorMsg)
         }
+        isLoaded.value = false
         return json.data
       } else {
         // Use standard API helper for JSON payload
         const response = await apiAuthPost('artikel/', payload)
+        isLoaded.value = false
         return response
       }
     } catch (error) {
@@ -141,10 +143,12 @@ export const useArtikelStore = defineStore('artikel', () => {
             const errorMsg = json.message || json.detail || 'Gagal memperbarui artikel'
             throw new Error(errorMsg)
         }
+        isLoaded.value = false
         return json.data
       } else {
         // Use standard API helper for JSON payload
         const response = await apiAuthPut(`artikel/${id}/`, payload)
+        isLoaded.value = false
         return response
       }
     } catch (error) {

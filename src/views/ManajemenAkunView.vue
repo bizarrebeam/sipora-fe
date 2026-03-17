@@ -50,16 +50,24 @@ watch(selectedDateObj, (newVal: Date | null) => {
 })
 
 const sortOrder = ref<'asc' | 'desc'>('desc')
-watch(sortOrder, (val: 'asc' | 'desc') => {
+
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+  clearTimeout(fetchTimeout)
+  fetchTimeout = setTimeout(() => {
+    fetchDaftar()
+  }, 400)
+}
+
+watch([sortOrder, search, selectedDate], () => {
   sortState.value.siswa.key = 'date_joined'
-  sortState.value.siswa.order = val
+  sortState.value.siswa.order = sortOrder.value
   sortState.value.guru.key = 'date_joined'
-  sortState.value.guru.order = val
+  sortState.value.guru.order = sortOrder.value
   sortState.value.guruBk.key = 'date_joined'
-  sortState.value.guruBk.order = val
+  sortState.value.guruBk.order = sortOrder.value
   
-  // Trigger backend fetch when sort order changes
-  fetchDaftar()
+  debouncedFetch()
 })
 const loading = ref(false)
 const isLoaded = ref(false)
@@ -224,7 +232,6 @@ async function fetchDaftar() {
 async function handleVerify(id: string) {
   try {
     await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
-    toast.success('Akun siswa berhasil diverifikasi.')
     await fetchDaftar()
   } catch (err: any) {
     toast.error(err.message || 'Gagal memverifikasi akun.')
@@ -330,10 +337,8 @@ async function handleCreate() {
   }
 }
 
-let searchTimeout: ReturnType<typeof setTimeout>
 function onSearchInput() {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => fetchDaftar(), 400)
+  // handled by watcher
 }
 
 function addMapel() {

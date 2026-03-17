@@ -55,8 +55,16 @@ const totalPages = ref(1)
 const sortKey = ref('')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
-watch(sortOrder, () => {
-  fetchLogs(1)
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+  clearTimeout(fetchTimeout)
+  fetchTimeout = setTimeout(() => {
+    fetchLogs(1)
+  }, 400)
+}
+
+watch([sortOrder, searchQuery, selectedDate, selectedModule], () => {
+  debouncedFetch()
 })
 
 const columns = [
@@ -103,7 +111,7 @@ async function fetchLogs(page = 1) {
 }
 
 function handleSearch() {
-  fetchLogs(1)
+  debouncedFetch()
 }
 
 function handleDateChange(e: Event) {

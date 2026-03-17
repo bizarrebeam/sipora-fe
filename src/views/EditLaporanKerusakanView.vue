@@ -191,9 +191,9 @@ async function handleSubmit() {
             description: 'Laporan berhasil Diubah',
             onPrimary: () => {
                 if (result && result.id) {
-                    router.push(`/laporan-kerusakan/${result.id}`)
+                    router.replace(`/laporan-kerusakan/${result.id}`)
                 } else {
-                    router.push('/laporan-kerusakan')
+                    router.replace('/laporan-kerusakan')
                 }
             }
         })

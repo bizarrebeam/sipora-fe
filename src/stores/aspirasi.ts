@@ -142,6 +142,7 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
                 throw new Error(errorMsg)
             }
             
+            isLoaded.value = false
             return json.data
         } catch (error: any) {
             throw error

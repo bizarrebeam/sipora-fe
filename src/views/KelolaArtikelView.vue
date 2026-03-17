@@ -5,7 +5,7 @@
 // Admins can filter by status (published/draft), search, and create new articles.
 // Pagination, search, and card display are supported.
 // ---
-import { onMounted, ref, computed, watch } from 'vue'
+import { onMounted, onActivated, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useArtikelStore } from '@/stores/artikel'
 import { useAuthStore } from '@/stores/auth'
@@ -163,6 +163,19 @@ const goToDetail = (id: number | string) => {
   router.push({ name: 'detailArtikel', params: { id } });
 };
 
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+  clearTimeout(fetchTimeout)
+  fetchTimeout = setTimeout(() => {
+    fetchData()
+  }, 400)
+}
+
+watch([searchQuery, statusFilter, sortOrder], () => {
+  currentPage.value = 1
+  debouncedFetch()
+})
+
 /**
  * Fetch articles from the store depending on user role (admin/public)
  */
@@ -183,6 +196,10 @@ async function fetchData() {
 
 // Fetch data on mount
 onMounted(() => fetchData())
+
+onActivated(() => {
+  fetchData()
+})
 
 // Reset to first page when search query changes
 watch(searchQuery, () => { currentPage.value = 1 })

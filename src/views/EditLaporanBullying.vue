@@ -183,7 +183,7 @@ async function handleSubmit() {
             foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
         })
         
-        router.push(`/laporan-bullying/${id}`)
+        router.replace(`/laporan-bullying/${id}`)
     } catch (error: any) {
         showAlert({
             type: 'warning',
