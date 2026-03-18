@@ -21,7 +21,7 @@ const laporan = computed(() => laporanStore.detailLaporan)
 const isGuruBk = computed(() => authStore.user?.role === 'guru_bk')
 const isKemahasiswaan = computed(() => authStore.user?.role === 'kemahasiswaan')
 const isAdmin = computed(() => isGuruBk.value || isKemahasiswaan.value)
-const isPelapor = computed(() => !isAdmin.value && laporan.value?.pelapor === authStore.user?.id)
+const isPelapor = computed(() => !isAdmin.value)
 
 const showBatalkanDialog = ref(false)
 const showProsesDialog = ref(false)
@@ -37,9 +37,17 @@ async function fetchDetail() {
     loading.value = true
     try {
         await laporanStore.ambilDetail(id)
+        if (laporan.value) {
+            const hasAccess = isAdmin.value || laporan.value.pelapor === authStore.user?.id
+            if (!hasAccess) {
+                toast.error('Anda tidak memiliki akses untuk melihat detail laporan ini')
+                await router.push({ path: '/laporan-bullying', query: { unauthorized: 'true' } })
+                return
+            }
+        }
     } catch (error) {
         toast.error('Gagal memuat detail laporan')
-        router.push('/laporan')
+        router.push('/laporan-bullying')
     } finally {
         loading.value = false
     }
