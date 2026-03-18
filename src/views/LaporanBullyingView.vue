@@ -445,15 +445,6 @@ onMounted(() => {
                 </div>
             </div>
         </Transition>
-
-        <SDialog :visible="showUnauthorizedDialog" variant="danger" title="Akses Ditolak" @update:visible="showUnauthorizedDialog = $event" @close="showUnauthorizedDialog = false">
-            <p class="text-sm text-gray-700">Anda tidak memiliki akses untuk melihat laporan ini.</p>
-            <template #actions>
-                <div class="flex gap-2 justify-end w-full">
-                    <SButton label="Tutup" variant="secondary" @click="showUnauthorizedDialog = false" />
-                </div>
-            </template>
-        </SDialog>
     </div>
 </template>
 
