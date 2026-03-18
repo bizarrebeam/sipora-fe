@@ -5,16 +5,17 @@ import { useLoadingStore } from '@/stores/loading'
 
 export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
     const daftarLaporan = ref<any[]>([])
+    const totalLaporan = ref(0)
     const detailLaporan = ref<any | null>(null)
     const isLoaded = ref(false)
     const lastFetched = ref(0)
 
     const loader = useLoadingStore()
 
-    async function ambilLaporan(params: { sortOrder?: string; status?: string; search?: string; date?: string } = {}) {
+    async function ambilLaporan(params: { sortOrder?: string; status?: string; search?: string; date?: string; page?: number; pageSize?: number } = {}) {
         const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
         const isStale = Date.now() - lastFetched.value > CACHE_TIME
-        
+
         // Only show global loader if not loaded yet or data is stale
         if (!isLoaded.value || isStale) {
             // loader.show('Mengambil data laporan...')
@@ -28,9 +29,22 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             if (params.status && params.status !== 'semua') searchParams.append('status', params.status)
             if (params.search) searchParams.append('search', params.search)
             if (params.date) searchParams.append('date', params.date)
+            if (params.page) searchParams.append('page', params.page.toString())
+            if (params.pageSize) searchParams.append('page_size', params.pageSize.toString())
 
             const data = await apiAuthGet(`laporan-bullying/?${searchParams.toString()}`)
-            daftarLaporan.value = data
+
+            if (data && typeof data === 'object' && 'results' in data) {
+                daftarLaporan.value = data.results || []
+                totalLaporan.value = data.count || 0
+            } else if (data && typeof data === 'object' && 'data' in data && 'total' in data) {
+                daftarLaporan.value = data.data || []
+                totalLaporan.value = data.total || 0
+            } else {
+                daftarLaporan.value = Array.isArray(data) ? data : []
+                totalLaporan.value = Array.isArray(data) ? data.length : 0
+            }
+
             isLoaded.value = true
             lastFetched.value = Date.now()
         } catch (error: any) {
@@ -165,6 +179,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
 
     return {
         daftarLaporan,
+        totalLaporan,
         detailLaporan,
         ambilLaporan,
         ambilDetail,

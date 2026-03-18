@@ -49,7 +49,7 @@ const sortKey = ref('')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<any | null>(null)
@@ -84,12 +84,11 @@ const filteredList = computed(() => {
     return Array.isArray(laporanList.value) ? laporanList.value : []
 })
 
-const totalData = computed(() => filteredList.value.length)
+const totalData = computed(() => laporanStore.totalLaporan || filteredList.value.length)
 const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
 
 const paginatedList = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value
-    return filteredList.value.slice(start, start + pageSize.value)
+    return filteredList.value
 })
 
 function formatDate(dateStr: string) {
@@ -157,10 +156,29 @@ let fetchTimeout: ReturnType<typeof setTimeout>
 function debouncedFetch() {
     clearTimeout(fetchTimeout)
     fetchTimeout = setTimeout(() => {
-        currentPage.value = 1
-        fetchData()
+        if (currentPage.value !== 1) {
+            currentPage.value = 1
+        } else {
+            fetchData()
+        }
     }, 400)
 }
+
+watch(currentPage, async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        await fetchData()
+    }
+})
+
+watch(pageSize, async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        if (currentPage.value !== 1) {
+            currentPage.value = 1
+        } else {
+            await fetchData()
+        }
+    }
+})
 
 watch([search, selectedDate, apiSort, selectedStatus], () => {
     debouncedFetch()
@@ -194,7 +212,9 @@ async function fetchData() {
             sortOrder: apiSort.value,
             status: selectedStatus.value,
             search: search.value,
-            date: selectedDate.value
+            date: selectedDate.value,
+            page: currentPage.value,
+            pageSize: pageSize.value
         })
     } catch (error) {
         console.error('Error fetching laporan:', error)
@@ -396,7 +416,7 @@ onMounted(() => {
 					/>
                 </div>
 
-                <div v-if="totalPages > 1" class="card-pagination">
+                <div v-if="paginatedList.length > 0" class="card-pagination">
                     <SPagination v-model="currentPage" :total-pages="totalPages" />
                 </div>
             </template>
