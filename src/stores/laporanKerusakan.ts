@@ -68,7 +68,8 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
     const currentLaporan = ref<LaporanKerusakan | null>(null)
     const accessDenied = ref(false)
     const accessMessage = ref('')
-
+    const isLoaded = ref(false)
+    const lastFetched = ref(0)
     const loadingStore = useLoadingStore()
 
     async function fetchLaporanKerusakan(params: {
@@ -105,6 +106,8 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             totalLaporan.value = data?.total || 0
             accessDenied.value = Boolean(data?.access_denied)
             accessMessage.value = data?.access_message || ''
+            lastFetched.value = Date.now()
+            isLoaded.value = true
         } catch (error: any) {
             throw error
         } finally {
