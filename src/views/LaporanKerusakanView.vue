@@ -944,6 +944,48 @@ onMounted(() => {
 	}
 }
 
+@media (max-width: 600px) {
+	.card-grid {
+		grid-template-columns: 1fr;
+		gap: 8px;
+		padding: 12px 16px;
+		margin-bottom: 0;
+	}
+
+	.card-grid > * {
+		width: 100%;
+	}
+
+	.card-grid :deep(.report-card) {
+		width: 100%;
+		border-radius: 12px;
+		padding: 14px;
+		gap: 8px;
+	}
+
+	.card-grid :deep(.report-card:hover) {
+		transform: none;
+	}
+
+	.card-grid :deep(.report-card__no) {
+		font-size: 14px;
+	}
+
+	.card-grid :deep(.report-card__date) {
+		font-size: 10px;
+	}
+
+	.card-view-count {
+		padding: 10px 16px 0;
+		margin-bottom: 0;
+	}
+
+	.card-pagination {
+		margin-top: 16px;
+		padding-bottom: 16px;
+	}
+}
+
 .filters-row {
 	display: flex;
 	gap: 12px;
