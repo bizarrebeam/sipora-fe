@@ -80,8 +80,11 @@ const auth = useAuthStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 
 const showCreateDialog = ref(false)
+const showSuccessCreateDialog = ref(false)
+const createdAccountMessage = ref('')
 const createType = ref<'guru' | 'guru_bk'>('guru')
 const createNuptk = ref('')
+const createEmail = ref('')
 const createUsername = ref('')
 const createNama = ref('')
 const createMapels = ref<string[]>([''])
@@ -280,6 +283,7 @@ async function confirmVerify() {
 function openCreateDialog(type: 'guru' | 'guru_bk') {
   createType.value = type
   createNuptk.value = ''
+  createEmail.value = ''
   createUsername.value = ''
   createNama.value = ''
   createMapels.value = ['']
@@ -292,8 +296,21 @@ async function handleCreate() {
     toast.error('Username wajib diisi untuk Guru BK.')
     return
   }
-  if (!createNama.value || !createPassword.value) {
-    toast.error('Harap isi semua field wajib.')
+  if (!createNama.value) {
+    toast.error('Nama lengkap wajib diisi.')
+    return
+  }
+  if (!createEmail.value) {
+    toast.error('Email wajib diisi.')
+    return
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(createEmail.value)) {
+    toast.error('Format email tidak valid.')
+    return
+  }
+  if (!createPassword.value) {
+    toast.error('Password wajib diisi.')
     return
   }
   if (!isPasswordValid.value) {
@@ -325,10 +342,11 @@ async function handleCreate() {
 
   createLoading.value = true
   try {
-    const payload: Record<string, string> = {
+    const payload: Record<string, any> = {
       role_type: createType.value,
       username: createType.value === 'guru_bk' ? createUsername.value : createNuptk.value,
       nuptk: createNuptk.value,
+      email: createEmail.value,
       nama_lengkap: createNama.value,
       password: createPassword.value,
     }
@@ -337,8 +355,9 @@ async function handleCreate() {
       payload.mata_pelajaran = validMapels.join(', ')
     }
     await apiAuthPost('akun/admin/buat/', payload)
-    toast.success(`Akun ${createType.value === 'guru' ? 'Guru' : 'Guru BK'} berhasil dibuat.`)
+    createdAccountMessage.value = `Akun ${createType.value === 'guru' ? 'Guru' : 'Guru BK'} ${createNama.value} berhasil dibuat.`
     showCreateDialog.value = false
+    showSuccessCreateDialog.value = true
     await fetchDaftar()
   } catch (err: any) {
     toast.error(err.message || 'Gagal membuat akun.')
@@ -567,9 +586,8 @@ onMounted(() => {
       variant="primary" 
       :title="createTitle" 
       @update:visible="showCreateDialog = $event"
-      @close="showCreateDialog = false"
     >
-      <div class="create-form">
+      <form @submit.prevent="handleCreate" class="create-form">
         <STextField
           v-if="createType === 'guru_bk'"
           label="Username"
@@ -578,6 +596,7 @@ onMounted(() => {
           v-model="createUsername"
           :required="true"
           maxlength="50"
+          autocomplete="username"
         />
         <div class="nuptk-field">
           <STextField
@@ -587,11 +606,13 @@ onMounted(() => {
             v-model="createNuptk"
             :required="createType === 'guru'"
             maxlength="16"
-            :digitGuide="createType === 'guru' ? '16' : ''"
+            digitGuide="16"
             digitGroup="4"
+            :autocomplete="createType === 'guru' ? 'username' : 'off'"
           />
           <a href="https://gtk.belajar.kemendikdasmen.go.id/akun/ptk" target="_blank" rel="noopener noreferrer" class="nuptk-help">Cek NUPTK</a>
         </div>
+        <STextField label="Email" placeholder="Masukkan alamat email (cth: [REDACTED EMAIL])" variant="text" v-model="createEmail" :required="true" />
         <STextField label="Nama Lengkap" placeholder="Masukkan nama lengkap" variant="text" v-model="createNama" :required="true" />
         
         <template v-if="createType === 'guru'">
@@ -628,10 +649,11 @@ onMounted(() => {
           <STextField 
             label="Password" 
             placeholder="Min. 8 karakter + huruf & angka" 
-            variant="text" 
+            variant="text"
             v-model="createPassword" 
             :required="true" 
             input-type="password" 
+            autocomplete="new-password"
           />
           <div class="password-rules" v-if="createPassword.length > 0">
             <div :class="['rule-item', isPasswordLengthValid ? 'valid' : 'invalid']">
@@ -646,7 +668,9 @@ onMounted(() => {
             </div>
           </div>
         </div>
-      </div>
+        <!-- Hidden submit button for form trigger -->
+        <button type="submit" class="hidden"></button>
+      </form>
 
       <template #actions>
         <SButton label="Batal" variant="secondary" @click="showCreateDialog = false" />
@@ -669,6 +693,16 @@ onMounted(() => {
         <SButton :label="verifyLoading ? 'Memverifikasi...' : 'Ya, Verifikasi'" variant="primary" :disabled="verifyLoading" @click="confirmVerify" />
       </template>
     </SDialog>
+
+    <!-- Success Modal: Account Created -->
+    <SDialog
+      v-model:visible="showSuccessCreateDialog"
+      title="Akun Berhasil Dibuat"
+      :message="createdAccountMessage"
+      confirmLabel="Selesai"
+      cancelLabel=""
+      @confirm="showSuccessCreateDialog = false"
+    />
 
     <SDialog
       :visible="showSuccessVerifyDialog"
