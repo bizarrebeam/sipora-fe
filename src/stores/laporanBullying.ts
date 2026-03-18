@@ -33,9 +33,12 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         loader.show('Mengambil detail laporan...')
 
         try {
-            detailLaporan.value = await apiAuthGet(`laporan-bullying/${id}/`)
+            const data = await apiAuthGet(`laporan-bullying/${id}/`)
+            detailLaporan.value = data
+            return data
         } catch (error: any) {
             console.error('Gagal mengambil detail:', error.message)
+            throw error
         } finally {
             loader.hide()
         }
