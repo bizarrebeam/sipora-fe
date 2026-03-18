@@ -5,6 +5,7 @@ import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
+import SDialog from '@/components/SDialog.vue'
 import { toast } from 'vue-sonner'
 
 const auth = useAuthStore()
@@ -32,6 +33,7 @@ const semesterInfo = computed(() => {
 const editKelas = ref('')
 const mapels = ref<string[]>([])
 const editLoading = ref(false)
+const showSuccessUpdateDialog = ref(false)
 
 function addMapel() {
   mapels.value.push('')
@@ -48,6 +50,7 @@ function removeMapel(index: number) {
 const passwordLama = ref('')
 const passwordBaru = ref('')
 const passwordLoading = ref(false)
+const showSuccessPasswordDialog = ref(false)
 
 const isPasswordBaruLengthValid = computed(() => passwordBaru.value.length >= 8)
 const isPasswordBaruAlphanumeric = computed(() => /[a-zA-Z]/.test(passwordBaru.value) && /[0-9]/.test(passwordBaru.value))
@@ -99,7 +102,7 @@ async function handleEditProfil() {
     await auth.editProfil(payload)
     // Re-fetch to update user data
     await auth.fetchProfile()
-    toast.success('Profil berhasil diperbarui.')
+    showSuccessUpdateDialog.value = true
   } catch (err: any) {
     toast.error(err.message || 'Gagal menyimpan perubahan.')
   } finally {
@@ -121,7 +124,7 @@ async function handleUbahPassword() {
     await auth.ubahPassword(passwordLama.value, passwordBaru.value)
     passwordLama.value = ''
     passwordBaru.value = ''
-    toast.success('Password berhasil diubah.')
+    showSuccessPasswordDialog.value = true
   } catch (err: any) {
     toast.error(err.message || 'Gagal mengubah password.')
   } finally {
@@ -275,6 +278,26 @@ async function handleUbahPassword() {
         </div>
       </SCard>
     </div>
+
+    <!-- Success Modal: Profil Updated -->
+    <SDialog
+      v-model:visible="showSuccessUpdateDialog"
+      title="Profil Diperbarui"
+      message="Perubahan profil Anda telah berhasil disimpan."
+      confirmLabel="Tutup"
+      cancelLabel=""
+      @confirm="showSuccessUpdateDialog = false"
+    />
+
+    <!-- Success Modal: Password Changed -->
+    <SDialog
+      v-model:visible="showSuccessPasswordDialog"
+      title="Password Diubah"
+      message="Password akun Anda telah berhasil diperbarui."
+      confirmLabel="Selesai"
+      cancelLabel=""
+      @confirm="showSuccessPasswordDialog = false"
+    />
   </div>
 </template>
 

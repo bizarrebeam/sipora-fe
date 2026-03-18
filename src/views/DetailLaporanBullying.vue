@@ -37,17 +37,17 @@ async function fetchDetail() {
     loading.value = true
     try {
         await laporanStore.ambilDetail(id)
-        if (laporan.value) {
-            const hasAccess = isAdmin.value || laporan.value.pelapor === authStore.user?.id
-            if (!hasAccess) {
-                toast.error('Anda tidak memiliki akses untuk melihat detail laporan ini')
-                await router.push({ path: '/laporan-bullying', query: { unauthorized: 'true' } })
-                return
-            }
+        // Jika berhasil mengambil data, berarti backend sudah memvalidasi bahwa user ini authorized
+    } catch (error: any) {
+        const errorMsg = String(error?.message || error)
+        // Asumsi jika error berkaitan dengan hak akses:
+        if (errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
+            toast.error('Anda tidak memiliki akses untuk melihat detail laporan ini')
+            router.push({ path: '/laporan-bullying', query: { unauthorized: 'true' } })
+        } else {
+            toast.error('Gagal memuat detail laporan')
+            router.push('/laporan-bullying')
         }
-    } catch (error) {
-        toast.error('Gagal memuat detail laporan')
-        router.push('/laporan-bullying')
     } finally {
         loading.value = false
     }
