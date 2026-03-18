@@ -97,19 +97,19 @@ const router = createRouter({
       path: '/laporan-kerusakan',
       name: 'laporanKerusakan',
       component: LaporanKerusakanView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
     },
     {
       path: '/laporan-kerusakan/:id',
       name: 'detailLaporanKerusakan',
       component: DetailLaporanKerusakanView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
     },
     {
       path: '/create-kerusakan',
       name: 'createLaporanKerusakan',
       component: CreateLaporanKerusakanView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['guru', 'siswa'] },
     },
     {
       path: '/laporan-bullying',
@@ -139,7 +139,7 @@ const router = createRouter({
       path: '/laporan-kerusakan/:id/edit',
       name: 'editLaporanKerusakan',
       component: EditLaporanKerusakanView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
     },
     {
       path: '/aspirasi',
@@ -181,9 +181,25 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const isUserLoggedIn = !!localStorage.getItem('user')
+  const storedUser = localStorage.getItem('user')
+  const isUserLoggedIn = !!storedUser
+  let userRole: string | null = null
+
+  if (storedUser) {
+    try {
+      const parsedUser = JSON.parse(storedUser)
+      userRole = parsedUser?.role || null
+    } catch {
+      userRole = null
+    }
+  }
+
+  const allowedRoles = to.meta.allowedRoles as string[] | undefined
+
   if (to.meta.requiresAuth && !isUserLoggedIn) {
     next('/login')
+  } else if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
+    next('/')
   } else if (to.meta.guest && isUserLoggedIn) {
     next('/')
   } else {
