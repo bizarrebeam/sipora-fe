@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
@@ -16,12 +16,14 @@ import { useLaporanBullyingStore } from '@/stores/laporanBullying'
 const auth = useAuthStore()
 const laporanStore = useLaporanBullyingStore()
 const router = useRouter()
+const route = useRoute()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isGuruBk = computed(() => auth.user?.role === 'guru_bk')
 const isAdmin = computed(() => isKemahasiswaan.value || isGuruBk.value)
 const isPelapor = computed(() => !isAdmin.value)
 
 const loading = ref(false)
+const showUnauthorizedDialog = ref(false)
 const search = ref('')
 const selectedStatus = ref('semua')
 const selectedDate = ref('')
@@ -207,9 +209,13 @@ function applyFiltersAndClose() {
     showFilterDrawer.value = false
 }
 
-onMounted(() => {
-    if (laporanStore.daftarLaporan.length === 0) {
-        fetchData()
+onMounted(() => { 
+    fetchData() 
+    if (route.query.unauthorized) {
+        showUnauthorizedDialog.value = true
+        const query = { ...route.query }
+        delete query.unauthorized
+        router.replace({ query })
     }
 })
 </script>
@@ -439,6 +445,15 @@ onMounted(() => {
                 </div>
             </div>
         </Transition>
+
+        <SDialog :visible="showUnauthorizedDialog" variant="danger" title="Akses Ditolak" @update:visible="showUnauthorizedDialog = $event" @close="showUnauthorizedDialog = false">
+            <p class="text-sm text-gray-700">Anda tidak memiliki akses untuk melihat laporan ini.</p>
+            <template #actions>
+                <div class="flex gap-2 justify-end w-full">
+                    <SButton label="Tutup" variant="secondary" @click="showUnauthorizedDialog = false" />
+                </div>
+            </template>
+        </SDialog>
     </div>
 </template>
 

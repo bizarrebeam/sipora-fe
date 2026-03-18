@@ -38,6 +38,13 @@ const laporanStore = useLaporanKerusakanStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isAdmin = computed(() => isKemahasiswaan.value)
 const isPelapor = computed(() => !isAdmin.value)
+const canCreateLaporan = computed(() => ['siswa', 'guru'].includes(auth.user?.role || ''))
+const accessDenied = computed(() => laporanStore.accessDenied)
+const accessMessage = computed(() => laporanStore.accessMessage)
+const pelaporEmptyDesc = computed(() => {
+	if (accessDenied.value && accessMessage.value) return accessMessage.value
+	return 'Laporan kerusakan yang kamu buat akan muncul di sini.'
+})
 
 const loading = ref(false)
 const search = ref('')
@@ -261,8 +268,12 @@ onMounted(() => {
 						'Pantau status laporan kerusakan fasilitas yang telah kamu kirim.' }}
 					</p>
 				</div>
-				<SButton v-if="isPelapor" label="+ Buat Laporan" variant="primary"
+				<SButton v-if="isPelapor && canCreateLaporan" label="+ Buat Laporan" variant="primary"
 					@click="$router.push({ name: 'createLaporanKerusakan' })" />
+			</div>
+
+			<div v-if="accessDenied && accessMessage" class="access-denied-banner mb-4">
+				{{ accessMessage }}
 			</div>
 
 			<div class="flex flex-wrap gap-2 mb-6">
@@ -328,7 +339,6 @@ onMounted(() => {
 							v-model:current-page="currentPage" v-model:page-size="pageSize"
 							:sort-key="sortKey"
 							:sort-order="tableSortOrder"
-							:loading="loading"
 							@sort="handleSort"
 							empty-message="Tidak ada laporan kerusakan yang ditemukan.">
 							<template #body-cell-id="{ row }">
@@ -400,7 +410,7 @@ onMounted(() => {
 							d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 					</svg>
 					<h3 class="s-empty-state__title">Belum ada laporan</h3>
-					<p class="s-empty-state__desc">Laporan kerusakan yang kamu buat akan muncul di sini.</p>
+					<p class="s-empty-state__desc">{{ pelaporEmptyDesc }}</p>
 				</div>
 
 				<div v-else class="card-grid">
@@ -432,6 +442,16 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.access-denied-banner {
+	padding: 12px 16px;
+	border-radius: 12px;
+	border: 1px solid var(--color-red-200);
+	background: var(--color-red-50);
+	color: var(--color-red-700);
+	font-size: 14px;
+	font-weight: 500;
+}
+
 .tab-badge--inactive {
 	background: var(--color-neutral-100);
 	color: var(--color-neutral-500);

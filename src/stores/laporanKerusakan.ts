@@ -66,8 +66,8 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
     const laporanList = ref<LaporanKerusakan[]>([])
     const totalLaporan = ref(0)
     const currentLaporan = ref<LaporanKerusakan | null>(null)
-    const isLoaded = ref(false)
-    const lastFetched = ref(0)
+    const accessDenied = ref(false)
+    const accessMessage = ref('')
 
     const loadingStore = useLoadingStore()
 
@@ -101,10 +101,10 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : ''
             const data = await apiAuthGet(`laporan-kerusakan/list/${queryString}`)
             
-            laporanList.value = data.laporan
-            totalLaporan.value = data.total
-            isLoaded.value = true
-            lastFetched.value = Date.now()
+            laporanList.value = data?.laporan || []
+            totalLaporan.value = data?.total || 0
+            accessDenied.value = Boolean(data?.access_denied)
+            accessMessage.value = data?.access_message || ''
         } catch (error: any) {
             throw error
         } finally {
@@ -236,5 +236,16 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
-    return { laporanList, totalLaporan, currentLaporan, fetchLaporanKerusakan, fetchLaporanDetail, createLaporanKerusakan, editLaporanKerusakan, cancelLaporanKerusakan }
+    return {
+        laporanList,
+        totalLaporan,
+        currentLaporan,
+        accessDenied,
+        accessMessage,
+        fetchLaporanKerusakan,
+        fetchLaporanDetail,
+        createLaporanKerusakan,
+        editLaporanKerusakan,
+        cancelLaporanKerusakan
+    }
 })
