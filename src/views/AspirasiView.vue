@@ -5,6 +5,7 @@ import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
 import STable from '@/components/STable.vue'
 import SDialog from '@/components/SDialog.vue'
+import SDropDown from '@/components/SDropDown.vue'
 import SPagination from '@/components/SPagination.vue'
 import SChip from '@/components/SChip.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
@@ -118,11 +119,19 @@ const statusCounts = computed(() => {
     }
 })
 
+const kategoriDropdownOptions = computed(() => {
+	return kategoriTabs.map(tab => ({
+		label: tab.value === 'semua' ? `Semua Kategori (${kategoriCounts.value.semua})` : `${tab.label} (${kategoriCounts.value[tab.value] || 0})`,
+		value: tab.value
+	}))
+})
+
 function tabActiveClass(value: string) {
 	return `tab-btn--active tab-btn--active-${value}`
 }
 
 const columns = [
+	{ key: 'tanggal_aspirasi', label: 'Dibuat Pada', sortable: true },
 	{ key: 'no_laporan', label: 'No. Laporan', sortable: true },
 	{ key: 'pengirim', label: 'Pengirim', sortable: true, tdClass: 'min-w-[200px]' },
 	{ key: 'judul', label: 'Judul', sortable: true },
@@ -164,6 +173,28 @@ const filteredList = computed(() => {
 		})
 	}
 
+	if (selectedDate.value) {
+		list = list.filter(l => {
+			if (!l.tanggal_aspirasi) return false
+			const d = new Date(l.tanggal_aspirasi)
+			const y = d.getFullYear()
+			const m = String(d.getMonth() + 1).padStart(2, '0')
+			const day = String(d.getDate()).padStart(2, '0')
+			return `${y}-${m}-${day}` === selectedDate.value
+		})
+	}
+
+	if (selectedDate.value) {
+		list = list.filter(l => {
+			if (!l.tanggal_aspirasi) return false
+			const d = new Date(l.tanggal_aspirasi)
+			const y = d.getFullYear()
+			const m = String(d.getMonth() + 1).padStart(2, '0')
+			const day = String(d.getDate()).padStart(2, '0')
+			return `${y}-${m}-${day}` === selectedDate.value
+		})
+	}
+
 	if (sortKey.value) {
 		list.sort((a, b) => {
 			let valA = a[sortKey.value as keyof typeof a]
@@ -201,6 +232,12 @@ function formatDate(dateStr: string) {
 	return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
+function formatDateTime(dateStr: string) {
+    if (!dateStr) return '-'
+    const d = new Date(dateStr)
+    return d.toLocaleString('id-ID', { year: 'numeric', month: 'short', day: 'numeric'})
+}
+
 function statusLabel(status_ditandai: string) {
 	const map: Record<string, string> = {
         ditandai: 'Ditandai',
@@ -215,6 +252,11 @@ function anonimitasLabel(value: boolean) {
 
 function handleKategoriSelect(value: string) {
 	selectedKategori.value = value
+	currentPage.value = 1
+}
+
+function handleKategoriDropdownUpdate(value: string | number) {
+	selectedKategori.value = value as string
 	currentPage.value = 1
 }
 
@@ -276,10 +318,7 @@ function confirmStatusUpdate() {
 }
 
 watch([search, selectedKategori, selectedStatus, selectedDate, sortKey, sortOrder], () => {
-    // No need to refetch data from API for every filter change if filtering is client-side
-    // If filtering is server-side, then fetchData() should be called here.
-    // For now, assuming client-side filtering based on the computed properties.
-    currentPage.value = 1; // Reset page on filter/sort change
+    currentPage.value = 1; 
 }, { immediate: false })
 
 async function fetchData() {
@@ -319,41 +358,38 @@ onActivated(() => {
 				<SButton v-if="isPelapor" label="+ Buat Aspirasi" variant="primary" @click="$router.push({ name: 'createAspirasi' })" />
 			</div>
 
-			<div class="flex flex-wrap gap-2 mb-6">
-					<button v-for="tab in kategoriTabs" :key="tab.value" @click="() => handleKategoriSelect(tab.value)" class="stf-tab-btn"
-						:class="[
-							selectedKategori === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
-							selectedKategori === tab.value ? (tab.value === 'semua' ? 'stf-tab--semua' : 'stf-tab--sarana') : ''
-						]">
-					{{ tab.label }}
-					<span class="stf-tab-badge"
-						:class="selectedKategori === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
-						{{ kategoriCounts[tab.value as keyof typeof kategoriCounts] }}
-					</span>
-				</button>
-			</div>
+			<div class="filter-section flex flex-col gap-4">
+			<!-- Kategori tabs untuk semua role -->
+            	<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+					<div class="w-full md:w-100">
+						<SDropDown  
+							v-model="selectedKategori" 
+							:options="kategoriDropdownOptions" 
+							placeholder="Pilih Kategori" 
+							@update:modelValue="handleKategoriDropdownUpdate"
+						/>
+					</div>
 
-			<div class="flex flex-wrap gap-2 mb-6">
-				<template v-if="isAdmin">
-					<button v-for="tab in statusTabs" :key="tab.value" @click="() => handleStatusSelect(tab.value)" class="stf-tab-btn"
-						:class="[
-							selectedStatus === tab.value ? 'stf-tab-btn--active' : 'stf-tab-btn--inactive',
-							selectedStatus === tab.value ? (tab.value === 'semua' ? 'stf-tab--semua' : 'stf-tab--sarana') : ''
-						]">
-						{{ tab.label }}
-						<span class="stf-tab-badge"
-							:class="selectedStatus === tab.value ? 'stf-tab-badge--active' : 'stf-tab-badge--inactive'">
-							{{ statusCounts[tab.value as keyof typeof statusCounts] }}
-						</span>
-					</button>
-				</template>
-			</div>
+					<div class="flex flex-wrap gap-2 items-center">
+						<!-- Status tabs only for kemahasiswaan -->
+						<template v-if="isAdmin">
+							<button v-for="tab in statusTabs" :key="tab.value" @click="handleStatusSelect(tab.value)" class="tab-btn"
+								:class="selectedStatus === tab.value ? tabActiveClass(tab.value) : 'tab-btn--inactive'">
+								{{ tab.label }}
+								<span class="tab-badge"
+									:class="selectedStatus === tab.value  ? ['tab-badge--active', `tab-badge--active-${tab.value}`] : 'tab-badge--inactive'">
+									{{ statusCounts[tab.value as keyof typeof statusCounts] }}
+								</span>
+							</button>
+						</template>
+					</div>
+				</div>
 
 			<div class="filters-row">
 				<div class="filter-search">
-					<STextField v-model="search" placeholder="Cari no. laporan, judul, kategori, deskripsi..."
-						variant="text" @input="onSearchInput" />
+					<STextField v-model="search" placeholder="Cari no. laporan, judul..." variant="text" @input="onSearchInput" />
 				</div>
+
 				<div class="filter-extras">
 					<div class="relative">
 						<button 
@@ -364,16 +400,18 @@ onActivated(() => {
 							<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
 							{{ selectedDate || 'Pilih Tanggal' }}
 						</button>
-						<div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+						<div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right calendar-popup">
 							<SDatePicker v-model="selectedDateObj" />
 						</div>
 					</div>
+
 					<select v-model="sortOrder" class="filter-input" @change="currentPage = 1">
 						<option value="desc">Terbaru</option>
 						<option value="asc">Terlama</option>
 					</select>
 				</div>
 			</div>
+		</div>
 
 			<div v-if="loading && paginatedList.length === 0" class="loading-state">
 				<p>Memuat data...</p>
@@ -393,6 +431,11 @@ onActivated(() => {
 								v-model:current-page="currentPage" v-model:page-size="pageSize" :sort-key="sortKey"
 								:sort-order="sortOrder" :loading="loading" @sort="handleSort"
 								empty-message="Tidak ada aspirasi yang ditemukan.">
+
+							<template #body-cell-tanggal_aspirasi="{ row }">
+								<span class="text-sm text-gray-500">{{ formatDateTime(row.tanggal_aspirasi) }}</span>
+							</template>
+
 							<template #body-cell-id="{ row }">
 								<span class="text-xs text-gray-500">{{ row.id }}</span>
 							</template>
@@ -534,11 +577,157 @@ onActivated(() => {
 </template>
 
 <style scoped>
+.laporan-page {
+	min-height: calc(100vh - 64px);
+	background: var(--color-general-frame);
+	padding: 24px 16px;
+}
+
+.laporan-container {
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+.laporan-title {
+	font-family: var(--font-be-vietnam);
+	font-weight: 700;
+	font-size: 24px;
+	color: var(--color-general-black);
+	margin-bottom: 4px;
+}
+
+.laporan-subtitle {
+	font-family: "Be Vietnam Pro", sans-serif;
+	font-size: 14px;
+	color: var(--color-neutral-500);
+	margin-bottom: 24px;
+}
+
+.laporan-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-bottom: 0;
+}
+
+.tab-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 16px;
+	border-radius: 9999px;
+	font-size: 14px;
+	font-weight: 600;
+	font-family: "Be Vietnam Pro", sans-serif;
+	transition: all 0.2s;
+	white-space: nowrap;
+	cursor: pointer;
+	border: none;
+}
+
+.tab-btn--active {
+	color: white;
+}
+
+.tab-btn--active-semua {
+	background: var(--color-blue-600);
+	border-color: var(--color-blue-600);
+	box-shadow: 0 2px 8px rgba(46, 48, 148, 0.25);
+}
+
+.tab-btn--active-sarana {
+	background: var(--color-blue-100);
+	color: var(--color-blue-600);
+	border: 1px solid var(--color-blue-400);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+
+.tab-btn--active-kurikulum {
+	background: var(--color-blue-100);
+	color: var(--color-blue-600);
+	border: 1px solid var(--color-blue-400);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+
+.tab-btn--active-layanan {
+	background: var(--color-blue-100);
+	color: var(--color-blue-600);
+	border: 1px solid var(--color-blue-400);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+.tab-btn--active-ekstrakulikuler{
+	background: var(--color-blue-100);
+	color: var(--color-blue-600);
+	border: 1px solid var(--color-blue-400);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+
+.tab-btn--active-kesehatan{
+	background: var(--color-blue-100);
+	color: var(--color-blue-600);
+	border: 1px solid var(--color-blue-400);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+
+.tab-btn--active-lainnya{
+	background: var(--color-blue-100);
+	color: var(--color-blue-600);
+	border: 1px solid var(--color-blue-400);
+	box-shadow: 0 2px 8px rgba(156, 163, 175, 0.18);
+}
+
+.tab-btn--inactive {
+	background: white;
+	color: var(--color-neutral-500);
+	border: 1px solid var(--color-general-border);
+}
+
+.tab-btn--inactive:hover {
+	background: var(--color-neutral-50);
+}
+
+.tab-badge {
+	font-size: 11px;
+	font-weight: 700;
+	padding: 1px 7px;
+	border-radius: 9999px;
+	line-height: 1.4;
+}
+
+.tab-badge--active {
+	background: rgba(255, 255, 255, 0.25);
+	color: white;
+}
+
+.tab-btn--active-ditandai {
+    background: #F59E0B  ;
+    color: #FFF8E1 ;
+    border: 1px solid #F59E0B ;
+}
+
+.tab-btn--active-tidak_ditandai {
+    background: var(--color-neutral-100);
+    color: var(--color-neutral-800);
+    border: 1px solid var(--color-general-border);
+}
+
+.tab-badge--active-tidak_ditandai {
+    background: var(--color-neutral-600);
+	color: white;
+    border: 1px solid var(--color-neutral-300);
+}
 .tab-badge--inactive {
 	background: var(--color-neutral-100);
 	color: var(--color-neutral-500);
 }
 
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 .date-input {
 	border: 1px solid var(--color-general-border);
 	border-radius: 8px;
@@ -645,9 +834,21 @@ onActivated(() => {
 }
 
 .detail-row {
-	display: flex;
-	align-items: center;
-	gap: 12px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	margin-bottom: 12px;
+}
+
+.detail-label {
+	font-size: 12px;
+	min-width: auto; 
+	color: var(--color-neutral-600);
+}
+
+.detail-value {
+	font-size: 13px;
+	word-break: break-word; 
 }
 
 .detail-row--full {
@@ -956,31 +1157,87 @@ onActivated(() => {
 .filters-row {
 	display: flex;
 	gap: 12px;
-	margin-bottom: 24px;
+	margin-bottom: 20px;
 	align-items: stretch;
 }
 .filter-search { flex: 1; min-width: 0; }
+
 .filter-extras {
 	display: flex;
 	gap: 12px;
 }
+
+.calendar-wrapper {
+  position: relative;
+}
+
+.calendar-popup {
+  position: absolute;
+  top: 110%;
+  right: 0; 
+  z-index: 50;
+
+}
+
 .filter-input {
 	border: 1px solid var(--color-general-border);
 	border-radius: 8px;
-	padding: 10px 40px 10px 14px;
+	padding: 10px 34px 10px 14px;
 	height: 48px;
 	font-size: 14px;
 	color: var(--color-general-black);
 	background: white;
 	transition: border-color 0.2s;
-	min-width: 140px;
+	min-width: 0; 
+	width: auto;
 	appearance: none;
 	-webkit-appearance: none;
-	-moz-appearance: none;
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
-	background-position: right 12px center;
+	background-position: right 10px center;
 	cursor: pointer;
+}
+
+/* responsive  */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column; 
+    gap: 12px;
+  }
+
+  .filter-extras {
+    display: grid; 
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .calendar-wrapper {
+    width: 100%;
+  }
+
+  .filter-input {
+    width: 100%;
+    min-width: 0 !important;
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+
+}
+
+@media (max-width: 480px) {
+  .calendar-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    width: 90%;
+    max-width: 360px;
+
+    z-index: 999;
+  }
 }
 .filter-input:focus {
 	outline: none;
