@@ -216,7 +216,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
               Temukan tips menghadapi bullying, cara menjaga kesehatan mental, dan informasi penting lainnya.
           </p>
         </div>
-        
+
         <SButton
           v-if="isAdmin"
           label="Buat Artikel"
@@ -263,7 +263,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
         </div>
 
         <div class="shrink-0 search-container flex items-center h-[52px] border-[1.5px] border-general-border rounded-lg bg-white px-2 cursor-pointer hover:border-blue-500 transition-colors">
-          <select 
+          <select
             v-model="sortOrder"
             class="h-full bg-transparent border-none outline-none text-general-black font-['Be_Vietnam_Pro'] text-base pr-8 pl-2 w-[140px] appearance-none"
           >
@@ -307,7 +307,6 @@ watch(searchQuery, () => { currentPage.value = 1 })
               </div>
 
               <img v-if="artikel.gambar" :src="artikel.gambar" :alt="artikel.judul" />
-              <div v-else class="thumb-empty">No Image</div>
             </div>
 
             <div class="article-card-content">
@@ -406,10 +405,11 @@ watch(searchQuery, () => { currentPage.value = 1 })
 }
 
 /* Card View */
+
 .card-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
 }
 
 @media (max-width: 1024px) {
@@ -440,12 +440,25 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
 .article-thumb {
   position: relative;
-  height: 215px;
+  aspect-ratio: 16/9;
+  width: 100%;
   border-radius: 16px 16px 0 0;
   overflow: hidden;
   background: #f0f0f0;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.article-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
 
 .draft-badge {
   position: absolute;
@@ -463,12 +476,22 @@ watch(searchQuery, () => { currentPage.value = 1 })
 }
 
 .thumb-empty {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 100%;
-	color: #999;
-	font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: #f3f4fa;
+  color: #6b6b8d;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.thumb-initial {
+  font-size: 48px;
+  font-weight: 800;
+  color: #b3b5d1;
+  font-family: "Be Vietnam Pro", sans-serif;
 }
 
 .article-card-content {
@@ -518,20 +541,20 @@ watch(searchQuery, () => { currentPage.value = 1 })
 }
 
 .article-card__desc {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 12px;
-	color: var(--color-neutral-600);
-	line-height: 16px;
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	line-clamp: 3;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	margin: 0;
-	text-align: justify;
-	word-wrap: break-word;
-	overflow-wrap: break-word;
-	hyphens: auto;
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 12px;
+  color: var(--color-neutral-600);
+  line-height: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 16px 0;
+  text-align: justify;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .article-card__footer {

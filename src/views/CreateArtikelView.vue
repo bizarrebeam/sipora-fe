@@ -11,6 +11,8 @@ import { toast } from 'vue-sonner'
 import STextField from '@/components/STextField.vue'
 import SButton from '@/components/SButton.vue'
 import SLoading from '@/components/SLoading.vue'
+import SModal from '@/components/SModal.vue'
+import SChip from '@/components/SChip.vue'
 
 
 // Router and store setup
@@ -49,6 +51,12 @@ const selectedFile = ref<File | null>(null)
 const previewImage = ref<string | null>(null)
 const isDragging = ref(false)
 
+
+
+// Modal sukses
+const showSuccessModal = ref(false)
+const successMessage = ref('')
+let successModalTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Character count and validation computed properties
 const judulCharCount = computed(() => formData.value.judul.length)
@@ -244,14 +252,19 @@ const submitArticle = async (status: 'draft' | 'published') => {
     if (isEditMode.value && articleId) {
       // Update existing article
       await artikelStore.updateArtikel(articleId, data)
-      toast.success('Artikel berhasil diperbarui')
+      successMessage.value = 'Artikel berhasil diperbarui.'
     } else {
       // Create new article
       await artikelStore.simpanArtikel(data)
-      toast.success(`Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`)
+      successMessage.value = `Artikel berhasil disimpan sebagai ${status === 'draft' ? 'Draft' : 'Publikasi'}`
     }
-    router.push('/artikel')
-  } catch (error: any) {
+    showSuccessModal.value = true
+    if (successModalTimeout) clearTimeout(successModalTimeout)
+    successModalTimeout = setTimeout(() => {
+      showSuccessModal.value = false
+      router.push('/artikel')
+    }, 2000)
+  } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Gagal menyimpan artikel'
     toast.error(errorMessage)
   } finally {
@@ -270,16 +283,19 @@ const toggleList = () => {
 
 
 
+// Status artikel untuk tag
+const artikelStatus = ref('')
 // Fetch article data when in edit mode
 onMounted(async () => {
   if (isEditMode.value && articleId) {
     try {
-      const response = await artikelStore.fetchDetailArtikel(articleId)
-      formData.value.judul = response.judul || ''
-      formData.value.konten = response.konten || ''
-      formData.value.ringkasan = response.ringkasan || ''
-      if (response.gambar) {
-        previewImage.value = response.gambar
+      const data = await artikelStore.fetchDetailArtikel(articleId)
+      formData.value.judul = data.judul || ''
+      formData.value.konten = data.konten || ''
+      formData.value.ringkasan = data.ringkasan || ''
+      artikelStatus.value = data.status || ''
+      if (data.gambar) {
+        previewImage.value = data.gambar
       }
     } catch (error) {
       console.error(error)
@@ -293,6 +309,13 @@ onMounted(async () => {
 
 <template>
   <div class="stf-page">
+    <SModal
+      :visible="showSuccessModal"
+      title="Berhasil!"
+      @update:visible="(v) => { showSuccessModal = v; if (!v) router.push('/artikel') }"
+    >
+      <div class="text-center text-lg font-semibold text-blue-700 py-2">{{ successMessage }}</div>
+    </SModal>
     <div class="form-page-container">
       <div v-if="isLoading" class="flex justify-center items-center h-64">
         <SLoading />
@@ -311,9 +334,16 @@ onMounted(async () => {
 
         <!-- Header -->
         <div class="form-header mb-8">
-          <h1 class="text-2xl font-bold mb-2 font-display text-[var(--color-general-black)]">
-            {{ isEditMode ? 'Edit Artikel' : 'Menyusun Artikel' }}
-          </h1>
+          <div class="flex items-center gap-3 mb-2">
+            <h1 class="text-2xl font-bold font-display text-[var(--color-general-black)]">
+              {{ isEditMode ? 'Edit Artikel' : 'Menyusun Artikel' }}
+            </h1>
+            <SChip
+              v-if="isEditMode && artikelStatus"
+              :label="artikelStatus === 'published' ? 'Published' : artikelStatus === 'draft' ? 'Draft' : artikelStatus"
+              :tone="artikelStatus === 'published' ? 'success' : 'info'"
+            />
+          </div>
           <p class="text-gray-500 font-display text-sm">
             {{ isEditMode ? 'Perbarui detail artikel yang sudah dibuat.' : 'Masukan detail publikasi yang akan dibagikan ke portal siswa.' }}<br>
             Berikan informasi berkualitas dan bermanfaat untuk siswa SMP Desa Mulia Putra.
@@ -344,13 +374,6 @@ onMounted(async () => {
             <p class="text-[#aeaeae] font-['Be_Vietnam_Pro'] text-center text-xs md:text-sm px-4">
               Masukkan gambar dengan format PNG, JPEG, atau WebP (Max. 5 MB)
             </p>
-            <input
-              ref="fileInput"
-              type="file"
-              class="hidden"
-              accept="image/png, image/jpeg, image/webp"
-              @change="handleFileSelect"
-            />
           </div>
 
           <div v-else class="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden group">
@@ -364,6 +387,13 @@ onMounted(async () => {
               </button>
             </div>
           </div>
+          <input
+            ref="fileInput"
+            type="file"
+            class="hidden"
+            accept="image/png, image/jpeg, image/webp"
+            @change="handleFileSelect"
+          />
         </div>
 
         <!-- Judul -->
@@ -503,7 +533,7 @@ onMounted(async () => {
         <!-- Actions -->
         <div class="flex flex-col sm:flex-row gap-4 mt-4 w-full justify-between items-center sm:h-12">
           <SButton
-            :label="isEditMode ? 'Simpan Perubahan' : 'Simpan Sebagai Draft'"
+            :label="isEditMode ? 'Simpan Sebagai Draft' : 'Simpan Sebagai Draft'"
             variant="ghost"
             :disabled="isSubmitting || !isJudulValid || !isKontenValid"
             @click="submitArticle('draft')"
@@ -522,7 +552,7 @@ onMounted(async () => {
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
             </template>
-            {{ isEditMode ? 'Perbarui Artikel' : 'Unggah Artikel' }}
+            {{ isEditMode ? 'Unggah Artikel' : 'Unggah Artikel' }}
           </SButton>
         </div>
 
@@ -550,4 +580,36 @@ onMounted(async () => {
   gap: 32px;
 }
 
+/* Responsif */
+::v-deep(.modal-box) {
+  max-width: 95vw;
+}
+@media (max-width: 600px) {
+  ::v-deep(.modal-box) {
+    width: 98vw;
+    min-width: unset;
+    padding: 0;
+  }
+  ::v-deep(.modal-header) {
+    height: auto;
+    padding: 18px 16px;
+    gap: 16px;
+  }
+  ::v-deep(.modal-header h5) {
+    font-size: 18px;
+    line-height: 24px;
+  }
+  ::v-deep(.modal-close) {
+    right: 12px;
+    top: 12px;
+  }
+  ::v-deep(.modal-body) {
+    padding: 20px 12px 16px 12px;
+    gap: 16px;
+  }
+  ::v-deep(.modal-actions) {
+    padding: 0 12px 16px 12px;
+    gap: 12px;
+  }
+}
 </style>
