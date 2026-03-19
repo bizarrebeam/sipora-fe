@@ -335,9 +335,7 @@ async function fetchData() {
 }
 
 onMounted(() => {
-	if (aspirasiStore.aspirasiList.length === 0) {
-		fetchData()
-	}
+	fetchData()
 })
 
 onActivated(() => {

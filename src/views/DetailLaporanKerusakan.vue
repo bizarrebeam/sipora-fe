@@ -151,7 +151,10 @@ onMounted(async () => {
 
             <template v-else>
                 <div class="laporan-header">
-                    <div>
+                    <button @click="router.back()" class="back-btn" aria-label="Kembali">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <div class="header-content">
                         <h1 class="stf-page-title">Detail Laporan Kerusakan</h1>
                         <p class="stf-page-subtitle">{{ laporan.no_laporan }}</p>
                     </div>
@@ -350,9 +353,33 @@ onMounted(async () => {
 
 .laporan-header {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
     margin-bottom: 24px;
+}
+
+.back-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #4b5563;
+}
+
+.back-btn:hover {
+    background: #f9fafb;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
 }
 
 .laporan-title {

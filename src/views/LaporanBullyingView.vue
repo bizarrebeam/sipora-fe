@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onActivated } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
@@ -237,6 +237,10 @@ onMounted(() => {
         delete query.unauthorized
         router.replace({ query })
     }
+})
+
+onActivated(() => {
+    fetchData()
 })
 </script>
 

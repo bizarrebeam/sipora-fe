@@ -8,7 +8,10 @@ import { useAuthStore } from '@/stores/auth'
  */
 
 export async function getApiStatus() {
-  const response = await fetch(API_BASE_URL, { credentials: 'include' })
+  const response = await fetch(API_BASE_URL, { 
+    credentials: 'include',
+    cache: 'no-store' 
+  })
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
     throw new Error(json.message || 'Failed to connect to backend')
@@ -41,7 +44,10 @@ function parseError(json: any, status: number): string {
 }
 
 export async function apiGet(endpoint: string) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, { credentials: 'include' })
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, { 
+    credentials: 'include',
+    cache: 'no-store'
+  })
   const json = await response.json()
   if (!response.ok || json.status === 'error') {
     throw new Error(parseError(json, response.status))
@@ -68,6 +74,7 @@ export async function apiPost(endpoint: string, payload: object) {
 export async function apiAuthGet(endpoint: string) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     credentials: 'include',
+    cache: 'no-store'
   })
   const json = await response.json()
   if (!response.ok || json.status === 'error') {

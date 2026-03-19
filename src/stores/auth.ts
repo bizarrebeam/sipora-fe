@@ -2,6 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiPost, apiAuthGet, apiAuthPost, apiAuthPut } from '@/services/api'
 import { useLoadingStore } from '@/stores/loading'
+import { useArtikelStore } from '@/stores/artikel'
+import { useAspirasiStore } from '@/stores/aspirasi'
+import { useLaporanBullyingStore } from '@/stores/laporanBullying'
+import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
+import { useAlertStore } from '@/stores/alert'
 
 interface User {
   id?: number
@@ -70,6 +75,17 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
+
+    // Reset all other stores
+    useArtikelStore().reset()
+    useAspirasiStore().reset()
+    useLaporanBullyingStore().reset()
+    useLaporanKerusakanStore().reset()
+    useAlertStore().reset()
+    useLoadingStore().reset()
+    
+    isProfileLoaded.value = false
+    profileLastFetched.value = 0
   }
 
   function setSessionExpired(value: boolean) {

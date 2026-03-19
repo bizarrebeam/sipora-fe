@@ -161,6 +161,7 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
                 throw error
             }
             
+            isLoaded.value = false
             return json.data
         } catch (error: any) {
             throw error
@@ -200,7 +201,7 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
 
             // update local currentLaporan with returned data
             currentLaporan.value = json.data
-
+            isLoaded.value = false
             return json.data
         } catch (error: any) {
             throw error
@@ -236,7 +237,18 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             throw error
         } finally {
             loadingStore.hide()
+            isLoaded.value = false
         }
+    }
+
+    function reset() {
+        laporanList.value = []
+        totalLaporan.value = 0
+        currentLaporan.value = null
+        isLoaded.value = false
+        lastFetched.value = 0
+        accessDenied.value = false
+        accessMessage.value = ''
     }
 
     return {
@@ -249,6 +261,7 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         fetchLaporanDetail,
         createLaporanKerusakan,
         editLaporanKerusakan,
-        cancelLaporanKerusakan
+        cancelLaporanKerusakan,
+        reset
     }
 })

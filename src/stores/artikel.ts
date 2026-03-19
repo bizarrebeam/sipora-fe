@@ -159,6 +159,14 @@ export const useArtikelStore = defineStore('artikel', () => {
   }
 
 
+  function reset() {
+    daftarArtikel.value = []
+    detailArtikel.value = null
+    isLoaded.value = false
+    lastFetched.value = 0
+  }
+
+
   // Expose state and actions for use in components
   return {
     daftarArtikel,
@@ -167,6 +175,7 @@ export const useArtikelStore = defineStore('artikel', () => {
     fetchKelolaArtikel,
     fetchDetailArtikel,
     simpanArtikel,
-    updateArtikel
+    updateArtikel,
+    reset
   }
 })

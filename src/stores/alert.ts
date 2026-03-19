@@ -49,6 +49,14 @@ export const useAlertStore = defineStore('alert', () => {
     visible.value = false
   }
 
+  function reset() {
+    visible.value = false
+    type.value = 'default'
+    title.value = ''
+    message.value = ''
+    primaryButtonText.value = 'OK'
+  }
+
   return {
     visible,
     type,
@@ -60,5 +68,6 @@ export const useAlertStore = defineStore('alert', () => {
     error,
     warning,
     hide,
+    reset,
   }
 })
