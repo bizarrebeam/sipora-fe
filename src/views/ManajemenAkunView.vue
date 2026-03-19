@@ -136,7 +136,7 @@ const accountTabs = computed(() => {
     { value: 'siswa', label: 'Siswa', count: siswaTotal.value },
     ...(isKemahasiswaan.value ? [
       { value: 'guru', label: 'Guru', count: guruTotal.value },
-      { value: 'guru_bk', label: 'Guru BK', count: guruBkTotal.value }
+      { value: 'guruBk', label: 'Guru BK', count: guruBkTotal.value }
     ] : [])
   ]
 })
@@ -225,7 +225,9 @@ async function fetchDaftar() {
   
   try {
     const query = new URLSearchParams()
-    query.set('role', role)
+    // Convert camelCase to snake_case for API: guruBk -> guru_bk
+    const apiRole = role === 'guruBk' ? 'guru_bk' : role
+    query.set('role', apiRole)
     query.set('page', pg.page.toString())
     query.set('page_size', pg.pageSize.toString())
     
@@ -247,7 +249,7 @@ async function fetchDaftar() {
     } else if (role === 'guru') {
       guruList.value = data.results
       guruTotal.value = data.count
-    } else if (role === 'guru_bk') {
+    } else if (role === 'guruBk') {
       guruBkList.value = data.results
       guruBkTotal.value = data.count
     }
@@ -421,7 +423,7 @@ onMounted(() => {
             @click="openCreateDialog('guru')" 
           />
           <SButton 
-            v-if="activeTab === 'guru_bk'" 
+            v-if="activeTab === 'guruBk'" 
             label="+ Buat Akun Guru BK" 
             variant="primary" 
             @click="openCreateDialog('guru_bk')" 
@@ -573,7 +575,7 @@ onMounted(() => {
           </div>
         </SCard>
 
-        <SCard v-if="activeTab === 'guru_bk' && isKemahasiswaan" class="section-card">
+        <SCard v-if="activeTab === 'guruBk' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
               <h3 class="stf-section-title">Guru BK</h3>
