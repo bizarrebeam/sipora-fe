@@ -234,26 +234,8 @@ watch(searchQuery, () => { currentPage.value = 1 })
         </SButton>
       </div>
 
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative">
-        <div class="toggle-container" v-if="isAdmin">
-          <div class="toggle-slider" :class="{ 'toggle-slider--draft': statusFilter === 'draft' }"></div>
-          <button
-            @click="statusFilter = 'published'; currentPage = 1"
-            class="toggle-btn"
-            :class="{ 'toggle-btn--active': statusFilter === 'published' }"
-          >
-            Publikasi
-          </button>
-          <button
-            @click="statusFilter = 'draft'; currentPage = 1"
-            class="toggle-btn"
-            :class="{ 'toggle-btn--active': statusFilter === 'draft' }"
-          >
-            Draft
-          </button>
-        </div>
-
-        <div class="flex-1 w-full search-container relative">
+      <div class="filters-row">
+        <div class="filter-search">
           <STextField
             v-model="searchQuery"
             placeholder="Cari artikel berdasarkan judul..."
@@ -262,16 +244,36 @@ watch(searchQuery, () => { currentPage.value = 1 })
           />
         </div>
 
-        <div class="shrink-0 search-container flex items-center h-[52px] border-[1.5px] border-general-border rounded-lg bg-white px-2 cursor-pointer hover:border-blue-500 transition-colors">
-          <select
-            v-model="sortOrder"
-            class="h-full bg-transparent border-none outline-none text-general-black font-['Be_Vietnam_Pro'] text-base pr-8 pl-2 w-[140px] appearance-none"
-          >
-            <option value="terbaru">Terbaru</option>
-            <option value="terlama">Terlama</option>
-          </select>
-          <div class="absolute right-4 pointer-events-none text-neutral-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        <div class="filter-extras">
+          <div class="toggle-container" v-if="isAdmin">
+            <div class="toggle-slider" :class="{ 'toggle-slider--draft': statusFilter === 'draft' }"></div>
+            <button
+              @click="statusFilter = 'published'; currentPage = 1"
+              class="toggle-btn"
+              :class="{ 'toggle-btn--active': statusFilter === 'published' }"
+            >
+              Publikasi
+            </button>
+            <button
+              @click="statusFilter = 'draft'; currentPage = 1"
+              class="toggle-btn"
+              :class="{ 'toggle-btn--active': statusFilter === 'draft' }"
+            >
+              Draft
+            </button>
+          </div>
+
+          <div class="sort-select-wrapper">
+            <select
+              v-model="sortOrder"
+              class="filter-input-select"
+            >
+              <option value="terbaru">Terbaru</option>
+              <option value="terlama">Terlama</option>
+            </select>
+            <div class="select-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
           </div>
         </div>
       </div>
@@ -392,6 +394,58 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	color: var(--color-blue-700);
 }
 
+.filters-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+
+.filter-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-extras {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.sort-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-input-select {
+  border: 1px solid var(--color-general-border);
+  border-radius: 8px;
+  padding: 10px 40px 10px 14px;
+  height: 52px;
+  font-size: 15px;
+  font-family: "Be Vietnam Pro", sans-serif;
+  color: var(--color-general-black);
+  background: white;
+  transition: border-color 0.2s;
+  min-width: 140px;
+  appearance: none;
+  cursor: pointer;
+  border-width: 1.5px;
+}
+
+.filter-input-select:focus {
+  outline: none;
+  border-color: var(--color-blue-500);
+}
+
+.select-icon {
+  position: absolute;
+  right: 14px;
+  pointer-events: none;
+  color: var(--color-neutral-400);
+}
+
 .search-container {
 	background: white;
 	border-radius: 8px;
@@ -402,6 +456,40 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	padding: 40px 0;
 	color: var(--color-neutral-500);
 	font-family: "Be Vietnam Pro", sans-serif;
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-extras {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .toggle-container {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .toggle-slider {
+    width: calc(50% - 1.5px);
+  }
+
+  .toggle-slider--draft {
+    transform: translateX(100%);
+  }
+
+  .filter-input-select {
+    width: 100%;
+  }
+
+  .sort-select-wrapper {
+    width: 100%;
+  }
 }
 
 /* Card View */

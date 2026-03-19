@@ -88,9 +88,17 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 64px);
+  min-height: 100dvh;
   background: var(--color-general-frame);
   padding: 16px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 375px) {
+  .login-page {
+    padding: 12px;
+    overflow: hidden;
+  }
 }
 
 .login-card {

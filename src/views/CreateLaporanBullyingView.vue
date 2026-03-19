@@ -678,10 +678,10 @@ async function handleSubmit() {
 
 /* ── Tablet (601px – 900px) ── */
 @media (min-width: 601px) and (max-width: 900px) {
-    .create-laporan-page {
+    .stf-page {
         padding: 24px 16px;
     }
-    .form-container {
+    .form-wrapper {
         max-width: 92%;
         padding: 36px 28px;
         border-radius: 18px;
@@ -713,7 +713,7 @@ async function handleSubmit() {
 /* ── Mobile (≤ 600px) ── */
 @media (max-width: 600px) {
     /* Page shell: flush edges, use safe area */
-    .create-laporan-page {
+    .stf-page {
         padding: 0 0 env(safe-area-inset-bottom, 24px);
         min-height: 100dvh;
         background: var(--color-blue-50);
@@ -729,7 +729,7 @@ async function handleSubmit() {
     }
 
     /* Card: no radius, no shadow, full-width */
-    .form-container {
+    .form-wrapper {
         max-width: 100%;
         margin: 0;
         padding: 16px 16px 40px;

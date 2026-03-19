@@ -613,4 +613,20 @@ onMounted(async () => {
     gap: 12px;
   }
 }
+
+@media (max-width: 768px) {
+  .form-wrapper {
+    padding: 24px 16px;
+    border-radius: 12px;
+    gap: 24px;
+  }
+  
+  .form-header h1 {
+    font-size: 20px;
+  }
+  
+  .form-header p {
+    font-size: 13px;
+  }
+}
 </style>

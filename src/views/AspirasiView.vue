@@ -561,7 +561,7 @@ onActivated(() => {
 					<span class="detail-label">Status</span>
 					<SChip size="large" variant="solid" :tone="selectedLaporan.status_ditandai === 'ditandai' ? 'warning' : 'neutral'" :label="statusLabel(selectedLaporan.status_ditandai)" />
 				</div>
-				<div class="detail-row detail-row--full">
+				<div class="detail-row--full">
 					<span class="detail-label">Deskripsi Aspirasi</span>
 					<p class="detail-desc">{{ selectedLaporan.deskripsi }}</p>
 				</div>
@@ -832,43 +832,45 @@ onActivated(() => {
 }
 
 .detail-row {
-	flex-direction: column;
+	display: flex;
 	align-items: flex-start;
-	gap: 4px;
-	margin-bottom: 12px;
+	gap: 16px;
+	margin-bottom: 16px;
 }
 
 .detail-label {
-	font-size: 12px;
-	min-width: auto; 
-	color: var(--color-neutral-600);
+	font-family: "Be Vietnam Pro", sans-serif;
+	font-weight: 700;
+	font-size: 13px;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+	color: var(--color-neutral-400);
+	width: 160px;
+	flex-shrink: 0;
+	white-space: nowrap;
 }
 
 .detail-value {
-	font-size: 13px;
-	word-break: break-word; 
+	font-family: "Be Vietnam Pro", sans-serif;
+	font-size: 15px;
+	color: var(--color-general-black);
+	line-height: 1.5;
+	flex: 1;
+	word-break: break-word;
 }
 
 .detail-row--full {
+	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
-	gap: 6px;
+	gap: 12px;
+	width: 100%;
 }
 
-.detail-label {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-weight: 600;
-	font-size: 13px;
-	color: var(--color-neutral-500);
-	min-width: 130px;
-	flex-shrink: 0;
+.detail-row--full .detail-label {
+	width: auto;
 }
 
-.detail-value {
-	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 14px;
-	color: var(--color-general-black);
-}
 
 .detail-desc {
 	font-family: "Be Vietnam Pro", sans-serif;
@@ -1113,6 +1115,18 @@ onActivated(() => {
 		font-size: 10px;
 		padding: 3px 8px;
 	}
+	.detail-row {
+		flex-direction: column;
+		gap: 4px;
+		margin-bottom: 12px;
+	}
+	.detail-label {
+		width: 100%;
+		font-size: 11px;
+	}
+	.detail-value {
+		font-size: 13px;
+	}
 	.detail-label {
 		font-size: 12px;
 	}
@@ -1199,12 +1213,18 @@ onActivated(() => {
 /* responsive  */
 @media (max-width: 768px) {
   .filters-row {
-    flex-direction: column; 
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .filter-search {
+    width: 100%;
   }
 
   .filter-extras {
-    display: grid; 
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
     width: 100%;
@@ -1217,11 +1237,8 @@ onActivated(() => {
   .filter-input {
     width: 100%;
     min-width: 0 !important;
-    padding: 10px 8px;
     font-size: 13px;
   }
-
-
 }
 
 @media (max-width: 480px) {

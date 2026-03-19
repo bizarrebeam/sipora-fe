@@ -100,10 +100,9 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 64px);
+  min-height: 100dvh;
   background: var(--color-general-frame);
   padding: 16px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
 }
 
@@ -241,6 +240,7 @@ async function handleLogin() {
 @media (max-width: 375px) {
   .login-page {
     padding: 12px;
+    overflow: hidden;
   }
   .login-card {
     padding: 20px 14px;

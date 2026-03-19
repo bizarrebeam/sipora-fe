@@ -348,29 +348,29 @@ onMounted(() => {
 /* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
   .filters-row {
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .filter-search {
+    width: 100%;
   }
   .filter-extras {
     width: 100%;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   .filter-input {
-    flex: 1;
-    min-width: 120px;
+    width: 100%;
+    min-width: 0;
   }
 }
 
 /* ── Small Mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  .filter-extras {
-    flex-direction: column;
-  }
-  .filter-input {
-    width: 100%;
-    min-width: unset;
-  }
+  /* Keep 2 columns if possible, but allow stacking if very narrow */
+  /* User wants rows, so grid is better than column flex here */
 }
 
 /* ── iPhone SE (≤ 375px) ── */
