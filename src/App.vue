@@ -22,8 +22,8 @@ function handleSessionExpired() {
 </script>
 
 <template>
-  <SNavbar v-if="!isGuestRoute" />
-  <main class="main-layout" :class="{ 'main-layout--no-navbar': isGuestRoute }">
+  <SNavbar />
+  <main class="main-layout">
     <router-view v-slot="{ Component }">
       <keep-alive>
         <component :is="Component" />
@@ -58,12 +58,9 @@ function handleSessionExpired() {
 .main-layout {
   min-height: calc(100vh - 64px);
   width: 100%;
+  padding-top: 64px;
   display: flex;
   flex-direction: column;
-}
-
-.main-layout--no-navbar {
-  min-height: 100dvh;
 }
 
 body {
