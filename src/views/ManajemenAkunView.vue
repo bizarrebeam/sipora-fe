@@ -9,10 +9,12 @@ import SDialog from '@/components/SDialog.vue'
 import STable from '@/components/STable.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
 import { useLoadingStore } from '@/stores/loading'
-
-const loadingStore = useLoadingStore()
-import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
+import { useAlertStore } from '@/stores/alert'
+
+const alertStore = useAlertStore()
+const loadingStore = useLoadingStore()
+const auth = useAuthStore()
 
 interface AkunItem {
   id: string
@@ -76,7 +78,6 @@ const isPasswordLengthValid = computed(() => createPassword.value.length >= 8)
 const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.value) && /[0-9]/.test(createPassword.value))
 const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
 
-const auth = useAuthStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 
 const showCreateDialog = ref(false)
@@ -235,7 +236,7 @@ async function fetchDaftar() {
     guruBkTotal.value = data.guru_bk.total
     isLoaded.value = true
   } catch (err: any) {
-    toast.error(err.message || 'Gagal memuat daftar akun.')
+    alertStore.error(err.message || 'Gagal memuat daftar akun.')
   } finally {
     loading.value = false
     // loadingStore.hide()
@@ -247,7 +248,7 @@ async function handleVerify(id: string) {
     await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
     await fetchDaftar()
   } catch (err: any) {
-    toast.error(err.message || 'Gagal memverifikasi akun.')
+    alertStore.error(err.message || 'Gagal memverifikasi akun.')
   }
 }
 
@@ -293,50 +294,50 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 
 async function handleCreate() {
   if (createType.value === 'guru_bk' && !createUsername.value) {
-    toast.error('Username wajib diisi untuk Guru BK.')
+    alertStore.error('Username wajib diisi untuk Guru BK.')
     return
   }
   if (!createNama.value) {
-    toast.error('Nama lengkap wajib diisi.')
+    alertStore.error('Nama lengkap wajib diisi.')
     return
   }
   if (!createEmail.value) {
-    toast.error('Email wajib diisi.')
+    alertStore.error('Email wajib diisi.')
     return
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(createEmail.value)) {
-    toast.error('Format email tidak valid.')
+    alertStore.error('Format email tidak valid.')
     return
   }
   if (!createPassword.value) {
-    toast.error('Password wajib diisi.')
+    alertStore.error('Password wajib diisi.')
     return
   }
   if (!isPasswordValid.value) {
-    toast.error('Password harus minimal 8 karakter dan mengandung huruf serta angka.')
+    alertStore.error('Password harus minimal 8 karakter dan mengandung huruf serta angka.')
     return
   }
   
   // NUPTK is only mandatory for 'guru', optional for 'guru_bk'
   if (createType.value === 'guru') {
     if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
-      toast.error('NUPTK harus terdiri dari 16 digit angka.')
+      alertStore.error('NUPTK harus terdiri dari 16 digit angka.')
       return
     }
   } else if (createNuptk.value && (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value))) {
-    toast.error('Jika diisi, NUPTK harus terdiri dari 16 digit angka.')
+    alertStore.error('Jika diisi, NUPTK harus terdiri dari 16 digit angka.')
     return
   }
   if (createType.value === 'guru') {
     const validMapels = createMapels.value.filter(m => m.trim().length > 0)
     if (validMapels.length === 0) {
-      toast.error('Mata pelajaran wajib diisi untuk guru.')
+      alertStore.error('Mata pelajaran wajib diisi untuk guru.')
       return
     }
   }
   if (createPassword.value.length < 6) {
-    toast.error('Password minimal 6 karakter.')
+    alertStore.error('Password minimal 6 karakter.')
     return
   }
 
@@ -360,7 +361,7 @@ async function handleCreate() {
     showSuccessCreateDialog.value = true
     await fetchDaftar()
   } catch (err: any) {
-    toast.error(err.message || 'Gagal membuat akun.')
+    alertStore.error(err.message || 'Gagal membuat akun.')
   } finally {
     createLoading.value = false
   }

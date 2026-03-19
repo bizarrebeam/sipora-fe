@@ -2,11 +2,13 @@
 import SNavbar from '@/components/SNavbar.vue'
 import SLoading from '@/components/SLoading.vue'
 import SDialog from '@/components/SDialog.vue'
-import { Toaster } from 'vue-sonner'
+import SAlert from '@/components/SAlert.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAlertStore } from '@/stores/alert'
 import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()
+const alertStore = useAlertStore()
 const router = useRouter()
 
 function handleSessionExpired() {
@@ -36,8 +38,16 @@ function handleSessionExpired() {
     @confirm="handleSessionExpired"
   />
 
+  <SAlert
+    v-model:visible="alertStore.visible"
+    :type="alertStore.type"
+    :title="alertStore.title"
+    :description="alertStore.message"
+    :primaryButtonText="alertStore.primaryButtonText"
+    @primaryClick="alertStore.hide"
+  />
+
   <SLoading />
-  <Toaster position="top-right" :duration="3000" rich-colors />
 </template>
 
 <style>
