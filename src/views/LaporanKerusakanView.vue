@@ -71,7 +71,7 @@ const sortKey = ref('tanggal_laporan')
 const tableSortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(isAdmin.value ? 10 : 6)
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<LaporanKerusakan | null>(null)
@@ -101,39 +101,11 @@ const columns = [
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
 
+// Use store data directly — backend handles sorting/pagination
 const laporanList = computed(() => laporanStore.laporanList)
-const sortedList = computed(() => {
-	const list = [...laporanList.value]
-	if (!sortKey.value) return list
-
-	return list.sort((first, second) => {
-		const getValue = (row: any) => {
-			if (sortKey.value === 'pengirim') {
-				if (row.anonimitas) return 'anonim'
-				return String(row.pelapor_info?.nama_lengkap || row.nama_lengkap || '').toLowerCase()
-			}
-
-			if (sortKey.value === 'tanggal_laporan') {
-				return row.tanggal_laporan || row.created_at || ''
-			}
-
-			return row[sortKey.value] ?? ''
-		}
-
-		const firstValue = getValue(first)
-		const secondValue = getValue(second)
-
-		if (firstValue < secondValue) return tableSortOrder.value === 'asc' ? -1 : 1
-		if (firstValue > secondValue) return tableSortOrder.value === 'asc' ? 1 : -1
-		return 0
-	})
-})
-const totalData = computed(() => sortedList.value.length)
+const totalData = computed(() => laporanStore.totalLaporan)
 const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
-const paginatedList = computed(() => {
-	const start = (currentPage.value - 1) * pageSize.value
-	return sortedList.value.slice(start, start + pageSize.value)
-})
+const paginatedList = computed(() => laporanList.value)
 
 function formatDate(dateStr: string) {
 	if (!dateStr) return '-'
@@ -183,9 +155,13 @@ function handleSort(key: string) {
 		sortKey.value = key
 		tableSortOrder.value = 'desc'
 	}
+	// Only backend-sortable field
+	if (key === 'tanggal_laporan') {
+		sortOrder.value = tableSortOrder.value
+		currentPage.value = 1
+		fetchData()
+	}
 }
-
-
 
 function handleTabChange(value: string) {
 	selectedStatus.value = value
@@ -222,7 +198,7 @@ function confirmStatusUpdate() {
 }
 
 const statusCounts = computed(() => ({
-	semua: laporanList.value.length,
+	semua: totalData.value,
 	menunggu: laporanList.value.filter(l => l.status === 'menunggu').length,
 	diproses: laporanList.value.filter(l => l.status === 'diproses').length,
 	selesai: laporanList.value.filter(l => l.status === 'selesai').length,
@@ -230,9 +206,21 @@ const statusCounts = computed(() => ({
 	dibatalkan: laporanList.value.filter(l => l.status === 'dibatalkan').length,
 }))
 
+// Re-fetch whenever filters or page change
 watch([selectedStatus, selectedDate, sortOrder, search], () => {
 	debouncedFetch()
 }, { immediate: false })
+
+watch(currentPage, (newVal, oldVal) => {
+	if (newVal !== oldVal) fetchData()
+})
+
+watch(pageSize, (newVal, oldVal) => {
+	if (newVal !== oldVal) {
+		currentPage.value = 1
+		fetchData()
+	}
+})
 
 async function fetchData() {
 	loading.value = true
@@ -242,6 +230,8 @@ async function fetchData() {
 			search: search.value.trim(),
 			date: selectedDate.value || undefined,
 			sort: sortOrder.value,
+			page: currentPage.value,
+			pageSize: pageSize.value,
 		})
 	} catch (error) {
 		console.error('Error fetching laporan:', error)

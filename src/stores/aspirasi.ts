@@ -67,7 +67,7 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
 
     const loadingStore = useLoadingStore()
 
-    async function fetchAspirasi(params: { status?: string; search?: string; kategori?: string }) {
+    async function fetchAspirasi(params: { status?: string; search?: string; kategori?: string; date?: string; sort?: string; page?: number; pageSize?: number }) {
         const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
         const isStale = Date.now() - lastFetched.value > CACHE_TIME
 
@@ -85,6 +85,18 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
             }
             if (params.search) {
                 queryParams.push(`search=${encodeURIComponent(params.search)}`)
+            }
+            if (params.date) {
+                queryParams.push(`date=${params.date}`)
+            }
+            if (params.sort) {
+                queryParams.push(`sort=${params.sort}`)
+            }
+            if (params.page) {
+                queryParams.push(`page=${params.page}`)
+            }
+            if (params.pageSize) {
+                queryParams.push(`page_size=${params.pageSize}`)
             }
             
             const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : ''
