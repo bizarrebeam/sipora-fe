@@ -184,35 +184,7 @@ function handleSort(type: 'siswa' | 'guru' | 'guruBk', key: string) {
   }
 }
 
-function getSortedList(list: AkunItem[], type: 'siswa' | 'guru' | 'guruBk') {
-  const { key, order } = sortState.value[type]
-  if (!key) return list
-  return [...list].sort((a: any, b: any) => {
-    let valA = a[key]
-    let valB = b[key]
-    
-    if (key === 'date_joined') {
-      valA = new Date(valA).getTime()
-      valB = new Date(valB).getTime()
-    }
-    
-    if (valA < valB) return order === 'asc' ? -1 : 1
-    if (valA > valB) return order === 'asc' ? 1 : -1
-    return 0
-  })
-}
 
-function applyDateFilter(list: AkunItem[]) {
-  if (!selectedDate.value) return list
-  return list.filter(item => {
-    if (!item.date_joined) return false
-    return item.date_joined.startsWith(selectedDate.value)
-  })
-}
-
-const siswaSorted = computed(() => getSortedList(applyDateFilter(siswaList.value), 'siswa'))
-const guruSorted = computed(() => getSortedList(applyDateFilter(guruList.value), 'guru'))
-const guruBkSorted = computed(() => getSortedList(applyDateFilter(guruBkList.value), 'guruBk'))
 
 const paginatedSiswaList = computed(() => siswaList.value)
 const paginatedGuruList = computed(() => guruList.value)
@@ -232,6 +204,7 @@ async function fetchDaftar() {
     query.set('page_size', pg.pageSize.toString())
     
     if (search.value) query.set('search', search.value)
+    if (selectedDate.value) query.set('date_joined', selectedDate.value)
     
     if (role === 'siswa' && isVerifiedFilter.value !== 'all') {
       query.set('is_verified', isVerifiedFilter.value)
