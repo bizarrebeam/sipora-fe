@@ -1,173 +1,74 @@
-# README
-
 ## Identitas Mahasiswa
-
-Nama  : Rizki Hidayatul Laeli  
-Kelompok : B01  
-Proyek : Propenat (C2H5COOH)
+- **Nama** : Joanne Kenisa Adelina Limena  
+- **NPM**  : 2306275626  
 
 ---
-
 ## Fitur yang Dikerjakan
-
-Berikut adalah daftar fitur dan backlog (PBI) yang saya kerjakan berdasarkan Product Backlog Item (PBI) pada dokumen Propenat 2025/2026.
-
-FITUR YANG DIKERJAKAN
-
-### 1. PBI-38 — Mengelola Jadwal Ketersediaan Guru BK
-
-Backlog Title: Mengelola Jadwal Ketersediaan Guru BK  
-
-Deskripsi Singkat:  
-Fitur ini memungkinkan Guru BK untuk menambahkan, mengubah, dan menghapus jadwal ketersediaan konsultasi. Sistem melakukan validasi waktu serta mencegah bentrok jadwal agar slot yang tersedia valid dan dapat digunakan siswa untuk booking.
-
-1.1 Membuat Laporan Kerusakan (PBI-15)
-Tujuan:
-Pengguna dapat membuat laporan kerusakan fasilitas agar dapat segera diketahui dan ditindaklanjuti.
-Endpoint:
-POST /api/laporan-kerusakan
-Field:
-judul
-deskripsi
-lokasi
-jenis kerusakan
-foto bukti pendukung
-
-### 2. PBI-39 — Membuat Booking Jadwal Konsultasi BK
-
-Backlog Title: Membuat Booking Jadwal Konsultasi BK  
-
-Deskripsi Singkat:  
-Fitur ini memungkinkan siswa melakukan booking berdasarkan slot yang tersedia. Siswa wajib mengisi alasan konsultasi sebelum mengirim permintaan. Status awal booking adalah *Menunggu Konfirmasi*.
-
-Sistem menerima semua field yang dibutuhkan.
-ID laporan otomatis dibuat dengan format UUID.
-Status awal laporan: “Menunggu Konfirmasi”.
-Mengembalikan status 201 jika berhasil.
-Hanya role Pelapor yang dapat membuat laporan.
-Ketentuan Frontend:
-
-### 3. PBI-40 — Mengonfirmasi Jadwal Booking
-
-Backlog Title: Mengonfirmasi Jadwal Booking  
-
-Deskripsi Singkat:  
-Fitur ini memungkinkan Guru BK untuk menerima atau menolak permintaan booking. Hanya booking dengan status *Menunggu Konfirmasi* yang dapat diproses. Jika ditolak, Guru BK dapat memberikan alasan penolakan.
-
-1.2 Mengedit Laporan Kerusakan (PBI-16)
-
-### 4. PBI-41 — Membatalkan Jadwal Booking Konsultasi
-
-Backlog Title: Membatalkan Jadwal Booking Konsultasi  
-
-Deskripsi Singkat:  
-Fitur ini memungkinkan siswa membatalkan booking selama masih berstatus *Menunggu Konfirmasi*. Sistem akan memperbarui status menjadi *Dibatalkan* setelah konfirmasi pembatalan dilakukan.
-
-Aturan Backend:
-Hanya pembuat laporan yang dapat mengedit.
-Laporan hanya bisa diedit jika status “Menunggu Konfirmasi”.
-Ketentuan Frontend:
-
-### 5. PBI-42 — Reschedule Jadwal Booking Konsultasi
-
-Backlog Title: Reschedule Jadwal Booking Konsultasi  
-
-Deskripsi Singkat:  
-Fitur ini memungkinkan siswa mengubah jadwal booking ke slot lain yang masih tersedia tanpa membuat booking baru. Perubahan hanya dapat dilakukan sebelum booking dikonfirmasi.
-
-Tombol “Ubah Laporan” aktif jika semua field valid.
-
-### 6. PBI-43 — Melihat Daftar Booking Konsultasi
-
-Backlog Title: Melihat Daftar Booking Konsultasi  
-
-Deskripsi Singkat:  
-Fitur ini menampilkan daftar booking sesuai peran pengguna. Guru BK dapat melihat seluruh booking yang ditujukan kepadanya, sedangkan siswa hanya dapat melihat booking miliknya sendiri.
-
-MENGELOLA ASPIRASI
-
-### 7. PBI-47 — Membuat artikel kesehatan mental
-
-Backlog Title: Membuat artikel kesehatan mental
-
-Deskripsi Singkat:  
-Fitur membuat artikel kesehatan mental memungkinkan kemahasiswaan membuat sebuah artikel yang berkaitan dengan isu kesehatan mental bagi siswa-siswi SMP Budi Mulia Desa Putera
-
-Tujuan:
-Pelapor dapat menyampaikan pendapat, masukan, dan saran kepada pihak sekolah.
-
-### 8. PBI-48 — Mengedit artikel kesehatan mental
-
-Backlog Title: Mengedit artikel kesehatan mental 
-
-Deskripsi Singkat:  
-Fitur mengedit artikel kesehatan mental memungkinkan kemahasiswaan mengedit sebuah artikel yang berkaitan dengan isu kesehatan mental  yang telah disimpan dalam sistem sebelumnya
+Berikut adalah daftar fitur dan backlog (PBI) yang saya kerjakan berdasarkan **Product Backlog Item (PBI)** pada dokumen Propenat :contentReference[oaicite:0]{index=0}.
 
 ---
 
-### 9. PBI-50 — Membaca artikel kesehatan mental
-
-Backlog Title: Membaca artikel kesehatan mental
-
-Deskripsi Singkat:  
-Fitur membaca artikel kesehatan mental memungkinkan pelapor membaca sebuah artikel yang berkaitan dengan isu kesehatan mental
+### 1️⃣ Mengelola Laporan Kerusakan Fasilitas Sekolah
+#### PBI-16 — Membuat Laporan Kerusakan  
+**Backlog Title**: Membuat Laporan Kerusakan  
+**Deskripsi Singkat**:  
+Fitur membuat laporan kerusakan memungkinkan pengguna untuk membuat laporan terkait kerusakan fasilitas ke sistem.
 
 ---
 
-### 7. PBI-52 — Melihat daftar artikel yang dibuat
+#### PBI-19 — Melihat Daftar Laporan Kerusakan  
+**Backlog Title**: Melihat Daftar Laporan Kerusakan  
+**Deskripsi Singkat**:  
+Fitur ini menampilkan daftar laporan kerusakan fasilitas sekolah yang telah dikirimkan ke sistem. Kemahasiswaan dapat melihat seluruh laporan dari semua pelapor, sedangkan siswa dan guru hanya dapat melihat laporan milik mereka sendiri. Tampilan disajikan dalam bentuk tabel (untuk admin) dan card (untuk pelapor).
 
-Backlog Title: Melihat daftar artikel yang dibuat
+---
 
-Deskripsi Singkat:  
-Fitur melihat daftar artikel artikel kesehatan mental memungkinkan kemahasiswaan melihat daftar artikel yang berkaitan dengan isu kesehatan mentals
+#### PBI-20 — Melihat Riwayat Laporan Kerusakan Pribadi 
+**Backlog Title**: Melihat Riwayat Laporan Kerusakan Pribadi 
+**Deskripsi Singkat**:  
+Fitur melihat riwayat laporan pribadi memungkinkan pelapor melihat daftar laporan yang telah mereka dikirimkan ke sistem.
 
-----------------------------------------
+---
 
-# sipora-fe
+#### PBI-21 — Melihat Detail Laporan Kerusakan
+**Backlog Title**: Melihat Detail Laporan Kerusakan
+**Deskripsi Singkat**:  
+Fitur melihat detail laporan kerusakan memungkinkan pengguna untuk melihat detail laporan dan melacak status pelaporan kerusakan.
 
-This template should help get you started developing with Vue 3 in Vite.
+---
 
-## Recommended IDE Setup
+### 2️⃣ Menanggapi Laporan Bullying dan Laporan Kerusakan
+#### PBI-22 — Membuat Pesan Tanggapan Laporan  
+**Backlog Title**: Membuat Pesan Tanggapan Laporan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan Kemahasiswaan, Guru BK, siswa, dan guru untuk mengirimkan pesan tanggapan terhadap laporan yang ada. Pesan ditampilkan dalam bentuk thread sehingga komunikasi antara pelapor dan pihak sekolah dapat berlangsung secara terstruktur dan terdokumentasi.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Recommended Browser Setup
+#### PBI-23 — Membaca Pesan Tanggapan Laporan  
+**Backlog Title**: Membaca Pesan Tanggapan Laporan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan pengguna untuk membaca seluruh pesan tanggapan yang telah dikirimkan pada suatu laporan. Pesan ditampilkan berdasarkan urutan waktu pengiriman untuk memudahkan pemahaman alur komunikasi.
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+---
 
-## Type Support for `.vue` Imports in TS
+#### PBI-24 — Mengupdate Status Laporan  
+**Backlog Title**: Mengupdate Status Laporan  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan Kemahasiswaan dan Guru BK untuk memperbarui status laporan menjadi *Diproses*, *Ditolak*, atau *Selesai*. Setiap perubahan status akan dicatat dalam sistem beserta informasi siapa yang melakukan perubahan dan waktu perubahan tersebut.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+---
 
-## Customize configuration
+#### PBI-25 — Menutup Laporan  
+**Backlog Title**: Menutup Laporan  
+**Deskripsi Singkat**:  
+Fitur ini digunakan untuk menandai laporan yang telah selesai ditindaklanjuti. Setelah laporan ditutup, status laporan tidak dapat diubah kembali, dan sistem akan menyimpan waktu penutupan laporan secara otomatis sebagai arsip.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+---
 
-## Project Setup
+### 3️⃣ Daftar Laporan Periodik
 
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+#### PBI-34 — Laporan Periodik Otomatis  
+**Backlog Title**: Laporan Periodik Otomatis  
+**Deskripsi Singkat**:  
+Fitur ini memungkinkan Kemahasiswaan untuk melihat rekap data laporan secara periodik dalam bentuk tabel berdasarkan rentang waktu tertentu. Data yang ditampilkan dapat diekspor dan diunduh dalam format PDF sebagai dokumen resmi untuk keperluan monitoring, evaluasi, dan arsip sekolah.

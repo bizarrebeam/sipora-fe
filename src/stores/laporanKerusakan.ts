@@ -66,11 +66,24 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
     const laporanList = ref<LaporanKerusakan[]>([])
     const totalLaporan = ref(0)
     const currentLaporan = ref<LaporanKerusakan | null>(null)
-
+    const accessDenied = ref(false)
+    const accessMessage = ref('')
+    const isLoaded = ref(false)
+    const lastFetched = ref(0)
     const loadingStore = useLoadingStore()
 
-    async function fetchLaporanKerusakan(params: { status?: string; search?: string }) {
-        loadingStore.show('Memuat laporan kerusakan...')
+    async function fetchLaporanKerusakan(params: {
+        status?: string
+        search?: string
+        date?: string
+        sort?: 'asc' | 'desc'
+    }) {
+        const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
+        const isStale = Date.now() - lastFetched.value > CACHE_TIME
+
+        if (!isLoaded.value || isStale) {
+            // loadingStore.show('Memuat laporan kerusakan...')
+        }
         try {
             const queryParams: string[] = []
             if (params.status && params.status !== 'semua') {
@@ -79,21 +92,31 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             if (params.search) {
                 queryParams.push(`search=${encodeURIComponent(params.search)}`)
             }
+            if (params.date) {
+                queryParams.push(`date=${params.date}`)
+            }
+            if (params.sort) {
+                queryParams.push(`sort=${params.sort}`)
+            }
             
             const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : ''
             const data = await apiAuthGet(`laporan-kerusakan/list/${queryString}`)
             
-            laporanList.value = data.laporan
-            totalLaporan.value = data.total
+            laporanList.value = data?.laporan || []
+            totalLaporan.value = data?.total || 0
+            accessDenied.value = Boolean(data?.access_denied)
+            accessMessage.value = data?.access_message || ''
+            lastFetched.value = Date.now()
+            isLoaded.value = true
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 
     async function fetchLaporanDetail(id: string) {
-        loadingStore.show('Memuat detail laporan...')
+        // loadingStore.show('Memuat detail laporan...')
         try {
             const data = await apiAuthGet(`laporan-kerusakan/${id}/`)
             currentLaporan.value = data
@@ -101,7 +124,7 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 
@@ -216,5 +239,16 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
-    return { laporanList, totalLaporan, currentLaporan, fetchLaporanKerusakan, fetchLaporanDetail, createLaporanKerusakan, editLaporanKerusakan, cancelLaporanKerusakan }
+    return {
+        laporanList,
+        totalLaporan,
+        currentLaporan,
+        accessDenied,
+        accessMessage,
+        fetchLaporanKerusakan,
+        fetchLaporanDetail,
+        createLaporanKerusakan,
+        editLaporanKerusakan,
+        cancelLaporanKerusakan
+    }
 })

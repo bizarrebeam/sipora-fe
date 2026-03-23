@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
@@ -16,12 +16,14 @@ import { useLaporanBullyingStore } from '@/stores/laporanBullying'
 const auth = useAuthStore()
 const laporanStore = useLaporanBullyingStore()
 const router = useRouter()
+const route = useRoute()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isGuruBk = computed(() => auth.user?.role === 'guru_bk')
 const isAdmin = computed(() => isKemahasiswaan.value || isGuruBk.value)
 const isPelapor = computed(() => !isAdmin.value)
 
 const loading = ref(false)
+const showUnauthorizedDialog = ref(false)
 const search = ref('')
 const selectedStatus = ref('semua')
 const selectedDate = ref('')
@@ -47,7 +49,7 @@ const sortKey = ref('')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<any | null>(null)
@@ -82,12 +84,11 @@ const filteredList = computed(() => {
     return Array.isArray(laporanList.value) ? laporanList.value : []
 })
 
-const totalData = computed(() => filteredList.value.length)
+const totalData = computed(() => laporanStore.totalLaporan || filteredList.value.length)
 const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
 
 const paginatedList = computed(() => {
-    const start = (currentPage.value - 1) * pageSize.value
-    return filteredList.value.slice(start, start + pageSize.value)
+    return filteredList.value
 })
 
 function formatDate(dateStr: string) {
@@ -151,13 +152,40 @@ function handleSort(key: string) {
     }
 }
 
-let searchTimeout: ReturnType<typeof setTimeout>
-function onSearchInput() {
-    clearTimeout(searchTimeout)
-    searchTimeout = setTimeout(() => {
-        currentPage.value = 1
-        fetchData()
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+    clearTimeout(fetchTimeout)
+    fetchTimeout = setTimeout(() => {
+        if (currentPage.value !== 1) {
+            currentPage.value = 1
+        } else {
+            fetchData()
+        }
     }, 400)
+}
+
+watch(currentPage, async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        await fetchData()
+    }
+})
+
+watch(pageSize, async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        if (currentPage.value !== 1) {
+            currentPage.value = 1
+        } else {
+            await fetchData()
+        }
+    }
+})
+
+watch([search, selectedDate, apiSort, selectedStatus], () => {
+    debouncedFetch()
+})
+
+function onSearchInput() {
+    // handled by watcher
 }
 
 function openDetail(laporan: any) {
@@ -184,7 +212,9 @@ async function fetchData() {
             sortOrder: apiSort.value,
             status: selectedStatus.value,
             search: search.value,
-            date: selectedDate.value
+            date: selectedDate.value,
+            page: currentPage.value,
+            pageSize: pageSize.value
         })
     } catch (error) {
         console.error('Error fetching laporan:', error)
@@ -199,7 +229,15 @@ function applyFiltersAndClose() {
     showFilterDrawer.value = false
 }
 
-onMounted(() => { fetchData() })
+onMounted(() => { 
+    fetchData() 
+    if (route.query.unauthorized) {
+        showUnauthorizedDialog.value = true
+        const query = { ...route.query }
+        delete query.unauthorized
+        router.replace({ query })
+    }
+})
 </script>
 
 <template>
@@ -270,7 +308,7 @@ onMounted(() => { fetchData() })
                 </button>
             </div>
 
-            <div v-if="loading" class="loading-state">
+            <div v-if="loading && paginatedList.length === 0" class="loading-state">
                 <p>Memuat data...</p>
             </div>
 
@@ -292,6 +330,7 @@ onMounted(() => { fetchData() })
                             v-model:page-size="pageSize"
                             :sort-key="sortKey || 'tanggal_laporan'"
                             :sort-order="sortOrder"
+                            :loading="loading"
                             @sort="handleSort"
                             empty-message="Belum ada laporan bullying."
                         >
@@ -366,6 +405,8 @@ onMounted(() => { fetchData() })
 						v-for="item in paginatedList" 
 						:key="item.id"
 						:status="item.status"
+                        :chip-label="statusLabel(item.status)"
+                        :chip-tone="statusTone(item.status)"
 						:date="formatDate(item.tanggal_kejadian)"
 						:title="item.judul"
 						:location="item.lokasi"
@@ -375,7 +416,7 @@ onMounted(() => { fetchData() })
 					/>
                 </div>
 
-                <div v-if="totalPages > 1" class="card-pagination">
+                <div v-if="paginatedList.length > 0" class="card-pagination">
                     <SPagination v-model="currentPage" :total-pages="totalPages" />
                 </div>
             </template>

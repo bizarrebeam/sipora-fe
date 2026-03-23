@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { apiAuthGet } from '@/services/api'
+import { useLoadingStore } from '@/stores/loading'
+
+const loadingStore = useLoadingStore()
 import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SPagination from '@/components/SPagination.vue'
@@ -49,8 +52,20 @@ const pageSize = ref(20)
 const totalData = ref(0)
 const totalPages = ref(1)
 
-const sortKey = ref('')
+const sortKey = ref('waktu')
 const sortOrder = ref<'asc' | 'desc'>('desc')
+
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+  clearTimeout(fetchTimeout)
+  fetchTimeout = setTimeout(() => {
+    fetchLogs(1)
+  }, 400)
+}
+
+watch([sortOrder, searchQuery, selectedDate, selectedModule], () => {
+  debouncedFetch()
+})
 
 const columns = [
   { key: 'waktu', label: 'Waktu', sortable: true },
@@ -71,6 +86,7 @@ const moduleTabs = [
 
 async function fetchLogs(page = 1) {
   loadingLogs.value = true
+  // loadingStore.show('Memuat log aktivitas...')
   logError.value = ''
   try {
     const query = new URLSearchParams()
@@ -79,6 +95,12 @@ async function fetchLogs(page = 1) {
     if (searchQuery.value) query.set('search', searchQuery.value)
     if (selectedDate.value) query.set('tanggal', selectedDate.value)
     if (selectedModule.value) query.set('modul', selectedModule.value)
+    
+    // Support both 'sort' and 'ordering' for backend compatibility
+    if (sortOrder.value) {
+      query.set('sort', sortOrder.value)
+      query.set('ordering', sortOrder.value === 'desc' ? '-waktu' : 'waktu')
+    }
 
     const res: any = await apiAuthGet(`logs/?${query.toString()}`)
     logs.value = res.results || []
@@ -89,11 +111,12 @@ async function fetchLogs(page = 1) {
     logError.value = err.message || 'Gagal memuat log aktivitas.'
   } finally {
     loadingLogs.value = false
+    // loadingStore.hide()
   }
 }
 
 function handleSearch() {
-  fetchLogs(1)
+  debouncedFetch()
 }
 
 function handleDateChange(e: Event) {
@@ -137,20 +160,16 @@ function sortBy(key: string) {
 
 const sortedLogs = computed(() => {
   if (!sortKey.value) return logs.value
-  
   return [...logs.value].sort((a: any, b: any) => {
     let valA = a[sortKey.value]
     let valB = b[sortKey.value]
     
-    // Custom mapping for nested fields
-    if (sortKey.value === 'pengguna') {
-      valA = a.pengguna?.nama_lengkap || (a.deskripsi?.startsWith('Anonim') ? a.deskripsi.split(' membuat')[0] : 'Sistem')
-      valB = b.pengguna?.nama_lengkap || (b.deskripsi?.startsWith('Anonim') ? b.deskripsi.split(' membuat')[0] : 'Sistem')
-    } else if (sortKey.value === 'role') {
-      valA = formatRole(a.pengguna?.role)
-      valB = formatRole(b.pengguna?.role)
+    // Handle date sorting
+    if (sortKey.value === 'waktu') {
+      valA = new Date(valA).getTime()
+      valB = new Date(valB).getTime()
     }
-
+    
     if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
     if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
     return 0
@@ -158,7 +177,9 @@ const sortedLogs = computed(() => {
 })
 
 onMounted(() => {
-  fetchLogs(1)
+  if (logs.value.length === 0) {
+    fetchLogs(1)
+  }
 })
 </script>
 

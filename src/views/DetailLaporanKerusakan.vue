@@ -160,26 +160,20 @@ onMounted(async () => {
 
 <template>
     <div class="stf-page">
-        <Teleport to="body">
-            <Transition name="fade">
-                <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
-                    <SAlert
-                        :type="alertType"
-                        :title="alertTitle"
-                        :description="alertDescription"
-                        primary-button-text="OK"
-                        @close="alertVisible = false"
-                        @primary-click="handleAlertPrimary"
-                    />
-                </div>
-            </Transition>
-        </Teleport>
+        <SAlert
+            v-model:visible="alertVisible"
+            :type="alertType"
+            :title="alertTitle"
+            :description="alertDescription"
+            primary-button-text="OK"
+            @primary-click="handleAlertPrimary"
+        />
 
         <div class="laporan-container">
 
             <div v-if="loadError" class="feedback-state">
                 <p class="feedback-text">{{ loadError }}</p>
-                <SButton label="Kembali" variant="ghost" @click="$router.back()" />
+                <SButton label="Kembali" variant="ghost" @click="router.push({ name: 'laporanKerusakan' })" />
             </div>
 
             <div v-else-if="!laporan" class="feedback-state">
@@ -293,7 +287,7 @@ onMounted(async () => {
                             <div class="riwayat-dot" :class="`dot--${r.status}`"></div>
                             <div class="riwayat-connector" v-if="(idx as number) < laporan.riwayat_status.length - 1"></div>
                             <div class="riwayat-content">
-                                <SChip size="small" variant="solid" :tone="statusTone(r.status)" :label="statusLabel(r.status)" />
+                                <SChip class="self-start" size="small" variant="solid" :tone="statusTone(r.status)" :label="statusLabel(r.status)" />
                                 <p class="riwayat-catatan" v-if="r.catatan">{{ r.catatan }}</p>
                                 <div class="riwayat-meta">
                                     <span>{{ formatDatetime(r.waktu) }}</span>
@@ -323,7 +317,7 @@ onMounted(async () => {
                         label="Kembali"
                         variant="ghost"
                         class="btn-full"
-                        @click="$router.back()"
+                        @click="router.push({ name: 'laporanKerusakan' })"
                     />
                 </div>
                 <!-- Kemahasiswaan: Kembali + Ubah Status (single row) -->
@@ -331,7 +325,7 @@ onMounted(async () => {
                     <SButton
                         label="Kembali"
                         variant="ghost"
-                        @click="$router.back()"
+                        @click="router.push({ name: 'laporanKerusakan' })"
                     />
                     <SButton
                         label="Ubah Status Laporan"
@@ -455,16 +449,6 @@ onMounted(async () => {
     }
 }
 
-.salert-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(2px);
-}
 
 .field-label {
     display: block;

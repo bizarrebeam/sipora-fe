@@ -141,7 +141,7 @@ async function handleSubmit() {
     if (!isFormValid.value) return
 
     try {
-        await laporanStore.buatLaporan({
+        const result = await laporanStore.buatLaporan({
             judul: judul.value.trim(),
             deskripsi: deskripsi.value.trim(),
             lokasi: lokasi.value.trim(),
@@ -161,7 +161,20 @@ async function handleSubmit() {
         buktiError.value = ''
         Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
         
-        router.push('/laporan-bullying')
+        Object.keys(errors.value).forEach(k => (errors.value[k as keyof typeof errors.value] = ''))
+        
+        showAlert({
+            type: 'default',
+            title: 'Laporan Terkirim',
+            description: 'Laporan berhasil dibuat',
+            onPrimary: () => {
+                if (result && result.id) {
+                    router.replace(`/laporan-bullying/${result.id}`)
+                } else {
+                    router.replace('/laporan-bullying')
+                }
+            }
+        })
     } catch (error: any) {
         showAlert({
             type: 'warning',
@@ -175,20 +188,14 @@ async function handleSubmit() {
 <template>
     <div class="stf-page">
         <!-- SAlert overlay -->
-        <Teleport to="body">
-            <Transition name="fade">
-                <div v-if="alertVisible" class="salert-overlay" @click.self="alertVisible = false">
-                    <SAlert
-                        :type="alertType"
-                        :title="alertTitle"
-                        :description="alertDescription"
-                        primary-button-text="OK"
-                        @close="alertVisible = false"
-                        @primary-click="handleAlertPrimary"
-                    />
-                </div>
-            </Transition>
-        </Teleport>
+        <SAlert
+            v-model:visible="alertVisible"
+            :type="alertType"
+            :title="alertTitle"
+            :description="alertDescription"
+            primary-button-text="OK"
+            @primary-click="handleAlertPrimary"
+        />
 
         <div class="form-page-container">
             <!-- Back Button -->
@@ -290,9 +297,16 @@ async function handleSubmit() {
 
                 <!-- Deskripsi -->
                 <div class="form-group">
+                    <div class="custom-label-row flex justify-between w-full">
+                        <div>
+                            <label class="custom-label">Deskripsi Kejadian</label>
+                            <span class="custom-asterisk">*</span>
+                        </div>
+                        <span class="file-count">{{ deskripsi.length }} karakter</span>
+                    </div>
                     <STextField
                         v-model="deskripsi"
-                        label="Deskripsi Kejadian"
+                        label=""
                         :required="true"
                         :placeholder="'Ketik detail kejadian di sini...'"
                         :variant="'textarea'"
@@ -657,27 +671,6 @@ async function handleSubmit() {
     background: var(--color-blue-600);
 }
 
-/* ─── SAlert overlay ─── */
-.salert-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(2px);
-    padding: 16px;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
 
 /* ════════════════════════════════════════════
    RESPONSIVE BREAKPOINTS

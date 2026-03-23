@@ -5,12 +5,21 @@ import { useLoadingStore } from '@/stores/loading'
 
 export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
     const daftarLaporan = ref<any[]>([])
+    const totalLaporan = ref(0)
     const detailLaporan = ref<any | null>(null)
+    const isLoaded = ref(false)
+    const lastFetched = ref(0)
 
     const loader = useLoadingStore()
 
-    async function ambilLaporan(params: { sortOrder?: string; status?: string; search?: string; date?: string } = {}) {
-        loader.show('Mengambil data laporan...')
+    async function ambilLaporan(params: { sortOrder?: string; status?: string; search?: string; date?: string; page?: number; pageSize?: number } = {}) {
+        const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
+        const isStale = Date.now() - lastFetched.value > CACHE_TIME
+
+        // Only show global loader if not loaded yet or data is stale
+        if (!isLoaded.value || isStale) {
+            // loader.show('Mengambil data laporan...')
+        }
 
         try {
             const searchParams = new URLSearchParams()
@@ -20,22 +29,41 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             if (params.status && params.status !== 'semua') searchParams.append('status', params.status)
             if (params.search) searchParams.append('search', params.search)
             if (params.date) searchParams.append('date', params.date)
+            if (params.page) searchParams.append('page', params.page.toString())
+            if (params.pageSize) searchParams.append('page_size', params.pageSize.toString())
 
-            daftarLaporan.value = await apiAuthGet(`laporan-bullying/?${searchParams.toString()}`)
+            const data = await apiAuthGet(`laporan-bullying/?${searchParams.toString()}`)
+
+            if (data && typeof data === 'object' && 'results' in data) {
+                daftarLaporan.value = data.results || []
+                totalLaporan.value = data.count || 0
+            } else if (data && typeof data === 'object' && 'data' in data && 'total' in data) {
+                daftarLaporan.value = data.data || []
+                totalLaporan.value = data.total || 0
+            } else {
+                daftarLaporan.value = Array.isArray(data) ? data : []
+                totalLaporan.value = Array.isArray(data) ? data.length : 0
+            }
+
+            isLoaded.value = true
+            lastFetched.value = Date.now()
         } catch (error: any) {
             console.error('Gagal mengambil laporan:', error.message)
         } finally {
-            loader.hide()
+            // loader.hide()
         }
     }
 
     async function ambilDetail(id: string) {
-        loader.show('Mengambil detail laporan...')
+        // loader.show('Mengambil detail laporan...')
 
         try {
-            detailLaporan.value = await apiAuthGet(`laporan-bullying/${id}/`)
+            const data = await apiAuthGet(`laporan-bullying/${id}/`)
+            detailLaporan.value = data
+            return data
         } catch (error: any) {
             console.error('Gagal mengambil detail:', error.message)
+            throw error
         } finally {
             loader.hide()
         }
@@ -68,7 +96,8 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
                 })
             }
 
-            const response = await fetch('/api/laporan-bullying/create/', {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-bullying/create/`, {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
@@ -81,6 +110,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             }
 
             await ambilLaporan()
+            return json.data
         } catch (error: any) {
             console.error('Gagal membuat laporan:', error.message)
             throw error
@@ -108,7 +138,8 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
                 })
             }
 
-            const response = await fetch(`/api/laporan-bullying/${id}/edit/`, {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
+            const response = await fetch(`${API_BASE_URL}laporan-bullying/${id}/edit/`, {
                 method: 'PUT',
                 credentials: 'include',
                 body: formData
@@ -148,6 +179,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
 
     return {
         daftarLaporan,
+        totalLaporan,
         detailLaporan,
         ambilLaporan,
         ambilDetail,

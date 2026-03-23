@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import SCard from '@/components/SCard.vue'
 import SiporaLogo from '@/assets/sipora-logo.svg'
+import SekolahSvg from '@/assets/sekolah.svg'
 import { useRevealOnScroll } from '@/components/ARevealOnScroll'
 
 const { el: heroRevealEl, isVisible: isHeroVisible } = useRevealOnScroll()
@@ -176,10 +177,10 @@ onMounted(() => {
         ref="heroRevealEl"
         :class="[
           'w-full p-8 md:p-12 border border-general-border rounded-lg bg-blue-50 relative overflow-hidden flex flex-col items-center gap-10 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out',
-          isHeroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        ]"
-        style="background-image: url('/src/assets/sekolah.svg');"
-      >
+        isHeroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+      ]"
+      :style="{ backgroundImage: `url(${SekolahSvg})` }"
+    >
         <!-- Floating decorative orbs inside hero -->
         <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
         <div class="hero-orb hero-orb-2" aria-hidden="true"></div>

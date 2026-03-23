@@ -89,7 +89,7 @@ function cancel() {
 
 .dialog-fade-enter-active,
 .dialog-fade-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.3s ease;
 }
 
 .dialog-fade-enter-from,
@@ -99,12 +99,18 @@ function cancel() {
 
 .dialog-fade-enter-active .dialog-box,
 .dialog-fade-leave-active .dialog-box {
-  transition: transform 0.2s ease;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.dialog-fade-enter-from .dialog-box,
+.dialog-fade-enter-from .dialog-box {
+  transform: scale(0.8) translateY(20px);
+  opacity: 0;
+}
+
 .dialog-fade-leave-to .dialog-box {
-  transform: scale(0.95);
+  transform: scale(0.95) translateY(0);
+  opacity: 0;
+  transition: all 0.2s ease-in;
 }
 
 .dialog-box {

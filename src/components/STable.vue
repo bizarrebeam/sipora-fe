@@ -69,8 +69,11 @@ function onPageSizeChange(e: Event) {
       </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-hidden border border-gray-100 relative">
-      <div v-if="loading" class="p-8 text-center text-gray-400 font-display min-h-[200px] flex items-center justify-center">
+    <div 
+      class="bg-white rounded-lg shadow border border-gray-100 relative"
+      :class="{ 'opacity-60 pointer-events-none': loading && data.length > 0 }"
+    >
+      <div v-if="loading && data.length === 0" class="p-8 text-center text-gray-400 font-display min-h-[200px] flex items-center justify-center">
         Memuat data...
       </div>
       <div v-else-if="error" class="p-8 text-center text-red-500 font-display min-h-[200px] flex items-center justify-center">

@@ -7,6 +7,10 @@ import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SDialog from '@/components/SDialog.vue'
 import STable from '@/components/STable.vue'
+import SDatePicker from '@/components/SDatePicker.vue'
+import { useLoadingStore } from '@/stores/loading'
+
+const loadingStore = useLoadingStore()
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 
@@ -46,15 +50,27 @@ watch(selectedDateObj, (newVal: Date | null) => {
 })
 
 const sortOrder = ref<'asc' | 'desc'>('desc')
-watch(sortOrder, (val: 'asc' | 'desc') => {
+
+let fetchTimeout: ReturnType<typeof setTimeout>
+function debouncedFetch() {
+  clearTimeout(fetchTimeout)
+  fetchTimeout = setTimeout(() => {
+    fetchDaftar()
+  }, 400)
+}
+
+watch([sortOrder, search, selectedDate], () => {
   sortState.value.siswa.key = 'date_joined'
-  sortState.value.siswa.order = val
+  sortState.value.siswa.order = sortOrder.value
   sortState.value.guru.key = 'date_joined'
-  sortState.value.guru.order = val
+  sortState.value.guru.order = sortOrder.value
   sortState.value.guruBk.key = 'date_joined'
-  sortState.value.guruBk.order = val
+  sortState.value.guruBk.order = sortOrder.value
+  
+  debouncedFetch()
 })
 const loading = ref(false)
+const isLoaded = ref(false)
 
 const isPasswordLengthValid = computed(() => createPassword.value.length >= 8)
 const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.value) && /[0-9]/.test(createPassword.value))
@@ -64,13 +80,19 @@ const auth = useAuthStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 
 const showCreateDialog = ref(false)
+const showSuccessCreateDialog = ref(false)
+const createdAccountMessage = ref('')
 const createType = ref<'guru' | 'guru_bk'>('guru')
 const createNuptk = ref('')
+const createEmail = ref('')
 const createUsername = ref('')
 const createNama = ref('')
 const createMapels = ref<string[]>([''])
 const createPassword = ref('')
 const createLoading = ref(false)
+
+const showSuccessVerifyDialog = ref(false)
+const verifiedSiswaName = ref('')
 const showVerifyDialog = ref(false)
 const verifyLoading = ref(false)
 const selectedSiswa = ref<AkunItem | null>(null)
@@ -84,9 +106,9 @@ const pagination = ref({
 })
 
 const sortState = ref({
-  siswa: { key: '', order: 'desc' as 'asc' | 'desc' },
-  guru: { key: '', order: 'desc' as 'asc' | 'desc' },
-  guruBk: { key: '', order: 'desc' as 'asc' | 'desc' }
+  siswa: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' },
+  guru: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' },
+  guruBk: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' }
 })
 
 const activeTab = ref('siswa')
@@ -150,6 +172,12 @@ function getSortedList(list: AkunItem[], type: 'siswa' | 'guru' | 'guruBk') {
   return [...list].sort((a: any, b: any) => {
     let valA = a[key]
     let valB = b[key]
+    
+    if (key === 'date_joined') {
+      valA = new Date(valA).getTime()
+      valB = new Date(valB).getTime()
+    }
+    
     if (valA < valB) return order === 'asc' ? -1 : 1
     if (valA > valB) return order === 'asc' ? 1 : -1
     return 0
@@ -185,26 +213,38 @@ const paginatedGuruBkList = computed(() => {
 
 async function fetchDaftar() {
   loading.value = true
+  // Only show mascot if not loaded yet
+  if (!isLoaded.value) {
+    // loadingStore.show('Memuat daftar akun...')
+  }
   try {
-    const params = search.value ? `?search=${encodeURIComponent(search.value)}` : ''
-    const data = await apiAuthGet(`akun/admin/daftar/${params}`)
+    const query = new URLSearchParams()
+    if (search.value) query.set('search', search.value)
+    if (sortOrder.value) {
+      query.set('sort', sortOrder.value)
+      // Standard DRF ordering
+      query.set('ordering', sortOrder.value === 'desc' ? '-date_joined' : 'date_joined')
+    }
+    
+    const data = await apiAuthGet(`akun/admin/daftar/?${query.toString()}`)
     siswaList.value = data.siswa.data
     siswaTotal.value = data.siswa.total
     guruList.value = data.guru.data
     guruTotal.value = data.guru.total
     guruBkList.value = data.guru_bk.data
     guruBkTotal.value = data.guru_bk.total
+    isLoaded.value = true
   } catch (err: any) {
     toast.error(err.message || 'Gagal memuat daftar akun.')
   } finally {
     loading.value = false
+    // loadingStore.hide()
   }
 }
 
 async function handleVerify(id: string) {
   try {
     await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
-    toast.success('Akun siswa berhasil diverifikasi.')
     await fetchDaftar()
   } catch (err: any) {
     toast.error(err.message || 'Gagal memverifikasi akun.')
@@ -229,9 +269,12 @@ const verifyMessage = computed(() => {
 async function confirmVerify() {
   if (!selectedSiswa.value) return
   verifyLoading.value = true
+  const studentName = selectedSiswa.value.nama_lengkap
   try {
     await handleVerify(selectedSiswa.value.id)
+    verifiedSiswaName.value = studentName
     closeVerifyDialog()
+    showSuccessVerifyDialog.value = true
   } finally {
     verifyLoading.value = false
   }
@@ -240,6 +283,7 @@ async function confirmVerify() {
 function openCreateDialog(type: 'guru' | 'guru_bk') {
   createType.value = type
   createNuptk.value = ''
+  createEmail.value = ''
   createUsername.value = ''
   createNama.value = ''
   createMapels.value = ['']
@@ -252,8 +296,21 @@ async function handleCreate() {
     toast.error('Username wajib diisi untuk Guru BK.')
     return
   }
-  if (!createNama.value || !createPassword.value) {
-    toast.error('Harap isi semua field wajib.')
+  if (!createNama.value) {
+    toast.error('Nama lengkap wajib diisi.')
+    return
+  }
+  if (!createEmail.value) {
+    toast.error('Email wajib diisi.')
+    return
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(createEmail.value)) {
+    toast.error('Format email tidak valid.')
+    return
+  }
+  if (!createPassword.value) {
+    toast.error('Password wajib diisi.')
     return
   }
   if (!isPasswordValid.value) {
@@ -285,10 +342,11 @@ async function handleCreate() {
 
   createLoading.value = true
   try {
-    const payload: Record<string, string> = {
+    const payload: Record<string, any> = {
       role_type: createType.value,
       username: createType.value === 'guru_bk' ? createUsername.value : createNuptk.value,
       nuptk: createNuptk.value,
+      email: createEmail.value,
       nama_lengkap: createNama.value,
       password: createPassword.value,
     }
@@ -297,8 +355,9 @@ async function handleCreate() {
       payload.mata_pelajaran = validMapels.join(', ')
     }
     await apiAuthPost('akun/admin/buat/', payload)
-    toast.success(`Akun ${createType.value === 'guru' ? 'Guru' : 'Guru BK'} berhasil dibuat.`)
+    createdAccountMessage.value = `Akun ${createType.value === 'guru' ? 'Guru' : 'Guru BK'} ${createNama.value} berhasil dibuat.`
     showCreateDialog.value = false
+    showSuccessCreateDialog.value = true
     await fetchDaftar()
   } catch (err: any) {
     toast.error(err.message || 'Gagal membuat akun.')
@@ -307,10 +366,8 @@ async function handleCreate() {
   }
 }
 
-let searchTimeout: ReturnType<typeof setTimeout>
 function onSearchInput() {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => fetchDaftar(), 400)
+  // handled by watcher
 }
 
 function addMapel() {
@@ -321,7 +378,11 @@ function removeMapel(index: number) {
   createMapels.value.splice(index, 1)
 }
 
-onMounted(fetchDaftar)
+onMounted(() => {
+  if (siswaList.value.length === 0 && guruList.value.length === 0 && guruBkList.value.length === 0) {
+    fetchDaftar()
+  }
+})
 </script>
 
 <template>
@@ -396,11 +457,7 @@ onMounted(fetchDaftar)
         </div>
       </div>
 
-      <div v-if="loading" class="admin-loading">
-        <p>Memuat data...</p>
-      </div>
-
-      <template v-else>
+      <!-- Always show content, loading mascot will overlap if needed -->
         <SCard v-if="activeTab === 'siswa'" class="section-card">
           <div class="section-header">
             <div>
@@ -417,7 +474,8 @@ onMounted(fetchDaftar)
               v-model:page-size="pagination.siswa.pageSize"
               :sort-key="sortState.siswa.key"
               :sort-order="sortState.siswa.order"
-              @sort="(k) => handleSort('siswa', k)"
+              :loading="loading"
+              @sort="(k: string) => handleSort('siswa', k)"
               empty-message="Belum ada siswa yang terdaftar."
             >
               <template #body-cell-nis="{ row }">
@@ -472,7 +530,8 @@ onMounted(fetchDaftar)
               v-model:page-size="pagination.guru.pageSize"
               :sort-key="sortState.guru.key"
               :sort-order="sortState.guru.order"
-              @sort="(k) => handleSort('guru', k)"
+              :loading="loading"
+              @sort="(k: string) => handleSort('guru', k)"
               empty-message="Belum ada guru yang terdaftar."
             >
               <template #body-cell-nuptk="{ row }">
@@ -504,7 +563,8 @@ onMounted(fetchDaftar)
               v-model:page-size="pagination.guruBk.pageSize"
               :sort-key="sortState.guruBk.key"
               :sort-order="sortState.guruBk.order"
-              @sort="(k) => handleSort('guruBk', k)"
+              :loading="loading"
+              @sort="(k: string) => handleSort('guruBk', k)"
               empty-message="Belum ada guru BK yang terdaftar."
             >
               <template #body-cell-nuptk="{ row }">
@@ -519,7 +579,6 @@ onMounted(fetchDaftar)
             </STable>
           </div>
         </SCard>
-      </template>
     </div>
 
     <SDialog 
@@ -527,9 +586,8 @@ onMounted(fetchDaftar)
       variant="primary" 
       :title="createTitle" 
       @update:visible="showCreateDialog = $event"
-      @close="showCreateDialog = false"
     >
-      <div class="create-form">
+      <form @submit.prevent="handleCreate" class="create-form">
         <STextField
           v-if="createType === 'guru_bk'"
           label="Username"
@@ -538,6 +596,7 @@ onMounted(fetchDaftar)
           v-model="createUsername"
           :required="true"
           maxlength="50"
+          autocomplete="username"
         />
         <div class="nuptk-field">
           <STextField
@@ -547,11 +606,13 @@ onMounted(fetchDaftar)
             v-model="createNuptk"
             :required="createType === 'guru'"
             maxlength="16"
-            :digitGuide="createType === 'guru' ? '16' : ''"
+            digitGuide="16"
             digitGroup="4"
+            :autocomplete="createType === 'guru' ? 'username' : 'off'"
           />
           <a href="https://gtk.belajar.kemendikdasmen.go.id/akun/ptk" target="_blank" rel="noopener noreferrer" class="nuptk-help">Cek NUPTK</a>
         </div>
+        <STextField label="Email" placeholder="Masukkan alamat email (cth: [REDACTED EMAIL])" variant="text" v-model="createEmail" :required="true" />
         <STextField label="Nama Lengkap" placeholder="Masukkan nama lengkap" variant="text" v-model="createNama" :required="true" />
         
         <template v-if="createType === 'guru'">
@@ -588,10 +649,11 @@ onMounted(fetchDaftar)
           <STextField 
             label="Password" 
             placeholder="Min. 8 karakter + huruf & angka" 
-            variant="text" 
+            variant="text"
             v-model="createPassword" 
             :required="true" 
             input-type="password" 
+            autocomplete="new-password"
           />
           <div class="password-rules" v-if="createPassword.length > 0">
             <div :class="['rule-item', isPasswordLengthValid ? 'valid' : 'invalid']">
@@ -606,7 +668,9 @@ onMounted(fetchDaftar)
             </div>
           </div>
         </div>
-      </div>
+        <!-- Hidden submit button for form trigger -->
+        <button type="submit" class="hidden"></button>
+      </form>
 
       <template #actions>
         <SButton label="Batal" variant="secondary" @click="showCreateDialog = false" />
@@ -629,6 +693,26 @@ onMounted(fetchDaftar)
         <SButton :label="verifyLoading ? 'Memverifikasi...' : 'Ya, Verifikasi'" variant="primary" :disabled="verifyLoading" @click="confirmVerify" />
       </template>
     </SDialog>
+
+    <!-- Success Modal: Account Created -->
+    <SDialog
+      v-model:visible="showSuccessCreateDialog"
+      title="Akun Berhasil Dibuat"
+      :message="createdAccountMessage"
+      confirmLabel="Selesai"
+      cancelLabel=""
+      @confirm="showSuccessCreateDialog = false"
+    />
+
+    <SDialog
+      :visible="showSuccessVerifyDialog"
+      variant="primary"
+      title="Siswa Terverifikasi"
+      :message="`Siswa ${verifiedSiswaName} berhasil diverifikasi. Akun tersebut kini dapat login dan mengakses seluruh fitur SIPORA sebagai siswa.`"
+      confirmLabel="OK"
+      cancelLabel=""
+      @confirm="showSuccessVerifyDialog = false"
+    />
   </div>
 </template>
 

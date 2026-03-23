@@ -22,6 +22,8 @@ interface User {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isSessionExpired = ref(false)
+  const isProfileLoaded = ref(false)
+  const profileLastFetched = ref(0)
 
   const isAuthenticated = computed(() => !!user.value)
 
@@ -158,11 +160,18 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchProfile() {
+    const CACHE_TIME = 5 * 60 * 1000 // 5 minutes
+    const isStale = Date.now() - profileLastFetched.value > CACHE_TIME
+
     const loader = useLoadingStore()
-    loader.show('Memuat profil...')
+    if (!isProfileLoaded.value || isStale) {
+      loader.show('Memuat profil...')
+    }
     try {
       const data = await apiAuthGet('akun/me/')
       setUser(data)
+      isProfileLoaded.value = true
+      profileLastFetched.value = Date.now()
       return data
     } finally {
       loader.hide()

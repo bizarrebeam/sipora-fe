@@ -62,11 +62,18 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
     const aspirasiList = ref<Aspirasi[]>([])
     const totalAspirasi = ref(0)
     const currentAspirasi = ref<Aspirasi | null>(null)
+    const isLoaded = ref(false)
+    const lastFetched = ref(0)
 
     const loadingStore = useLoadingStore()
 
     async function fetchAspirasi(params: { status?: string; search?: string; kategori?: string }) {
-        loadingStore.show('Memuat aspirasi...')
+        const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
+        const isStale = Date.now() - lastFetched.value > CACHE_TIME
+
+        if (!isLoaded.value || isStale) {
+            // loadingStore.show('Memuat aspirasi...')
+        }
         try {
             const queryParams: string[] = []
             if (params.status && params.status !== 'semua') {
@@ -85,15 +92,17 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
             
             aspirasiList.value = data.aspirasi
             totalAspirasi.value = data.total
+            isLoaded.value = true
+            lastFetched.value = Date.now()
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 
     async function fetchAspirasiDetail(id: string) {
-        loadingStore.show('Memuat detail aspirasi...')
+        // loadingStore.show('Memuat detail aspirasi...')
         try {
             const data = await apiAuthGet(`aspirasi/${id}/`)
             currentAspirasi.value = data
@@ -101,7 +110,7 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
         } catch (error: any) {
             throw error
         } finally {
-            loadingStore.hide()
+            // loadingStore.hide()
         }
     }
 
@@ -133,6 +142,7 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
                 throw new Error(errorMsg)
             }
             
+            isLoaded.value = false
             return json.data
         } catch (error: any) {
             throw error
