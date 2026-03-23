@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { watch, onBeforeUnmount } from 'vue'
+
 const props = withDefaults(defineProps<{
   visible: boolean
   variant?: 'primary' | 'plain' | 'danger'
@@ -27,6 +29,19 @@ function confirm() {
 function cancel() {
   emit('cancel')
 }
+
+// Global scroll lock when dialog is visible
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = ''
+})
 </script>
 
 <template>
@@ -116,6 +131,7 @@ function cancel() {
 .dialog-box {
   width: 90%;
   max-width: 572px;
+  max-height: 90dvh;
   margin: 16px;
   border-radius: 16px;
   border: 1px solid var(--color-general-border, #D9D9D9);
@@ -124,6 +140,7 @@ function cancel() {
   display: flex;
   flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 .dialog-close {
@@ -183,6 +200,8 @@ function cancel() {
   flex-direction: column;
   align-items: flex-end;
   gap: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .body-plain {

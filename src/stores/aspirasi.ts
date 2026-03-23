@@ -153,5 +153,21 @@ export const useAspirasiStore = defineStore('aspirasi', () => {
 
 
 
-    return { aspirasiList, totalAspirasi, currentAspirasi, fetchAspirasi, fetchAspirasiDetail, createAspirasi }
+    function reset() {
+        aspirasiList.value = []
+        totalAspirasi.value = 0
+        currentAspirasi.value = null
+        isLoaded.value = false
+        lastFetched.value = 0
+    }
+
+    return { 
+        aspirasiList, 
+        totalAspirasi, 
+        currentAspirasi, 
+        fetchAspirasi, 
+        fetchAspirasiDetail, 
+        createAspirasi,
+        reset
+    }
 })

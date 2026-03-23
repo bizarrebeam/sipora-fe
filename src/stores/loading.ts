@@ -15,5 +15,9 @@ export const useLoadingStore = defineStore('loading', () => {
     message.value = ''
   }
 
-  return { visible, message, show, hide }
+  function reset() {
+    hide()
+  }
+
+  return { visible, message, show, hide, reset }
 })

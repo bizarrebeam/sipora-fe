@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onActivated } from 'vue'
 import { useRouter } from 'vue-router'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
@@ -251,9 +251,11 @@ async function fetchData() {
 }
 
 onMounted(() => {
-	if (laporanStore.laporanList.length === 0) {
-		fetchData()
-	}
+	fetchData()
+})
+
+onActivated(() => {
+	fetchData()
 })
 </script>
 

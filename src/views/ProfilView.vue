@@ -6,9 +6,10 @@ import SButton from '@/components/SButton.vue'
 import SChip from '@/components/SChip.vue'
 import STextField from '@/components/STextField.vue'
 import SDialog from '@/components/SDialog.vue'
-import { toast } from 'vue-sonner'
+import { useAlertStore } from '@/stores/alert'
 
 const auth = useAuthStore()
+const alertStore = useAlertStore()
 
 const user = computed(() => auth.user)
 const isSiswa = computed(() => user.value?.role === 'siswa')
@@ -104,7 +105,7 @@ async function handleEditProfil() {
     await auth.fetchProfile()
     showSuccessUpdateDialog.value = true
   } catch (err: any) {
-    toast.error(err.message || 'Gagal menyimpan perubahan.')
+    alertStore.error(err.message || 'Gagal menyimpan perubahan.')
   } finally {
     editLoading.value = false
   }
@@ -112,11 +113,11 @@ async function handleEditProfil() {
 
 async function handleUbahPassword() {
   if (!passwordLama.value || !passwordBaru.value) {
-    toast.error('Harap isi semua field password.')
+    alertStore.error('Harap isi semua field password.')
     return
   }
   if (!isPasswordBaruValid.value) {
-    toast.error('Password baru harus minimal 8 karakter dan kombinasi huruf serta angka.')
+    alertStore.error('Password baru harus minimal 8 karakter dan kombinasi huruf serta angka.')
     return
   }
   passwordLoading.value = true
@@ -126,7 +127,7 @@ async function handleUbahPassword() {
     passwordBaru.value = ''
     showSuccessPasswordDialog.value = true
   } catch (err: any) {
-    toast.error(err.message || 'Gagal mengubah password.')
+    alertStore.error(err.message || 'Gagal mengubah password.')
   } finally {
     passwordLoading.value = false
   }

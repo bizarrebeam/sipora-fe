@@ -109,6 +109,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
                 throw new Error(json.message || 'Gagal membuat laporan')
             }
 
+            isLoaded.value = false
             await ambilLaporan()
             return json.data
         } catch (error: any) {
@@ -151,6 +152,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
                 throw new Error(json.message || 'Gagal mengedit laporan')
             }
 
+            isLoaded.value = false
             await ambilDetail(id)
             await ambilLaporan()
         } catch (error: any) {
@@ -168,6 +170,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             await apiAuthPut(`laporan-bullying/${id}/cancel/`, {
                 alasan_pembatalan: alasan
             })
+            isLoaded.value = false
             await ambilLaporan()
         } catch (error: any) {
             console.error('Gagal membatalkan laporan:', error.message)
@@ -175,6 +178,14 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         } finally {
             loader.hide()
         }
+    }
+
+    function reset() {
+        daftarLaporan.value = []
+        totalLaporan.value = 0
+        detailLaporan.value = null
+        isLoaded.value = false
+        lastFetched.value = 0
     }
 
     return {
@@ -185,6 +196,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         ambilDetail,
         buatLaporan,
         editLaporan,
-        batalkanLaporan
+        batalkanLaporan,
+        reset
     }
 })

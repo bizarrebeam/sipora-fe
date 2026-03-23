@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { toast } from 'vue-sonner'
 import SButton from '@/components/SButton.vue'
 import SCard from '@/components/SCard.vue'
 import SModal from '@/components/SModal.vue'
@@ -11,11 +10,13 @@ import SAlert from '@/components/SAlert.vue'
 import SChip from '@/components/SChip.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
+import { useAlertStore } from '@/stores/alert'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const laporanStore = useLaporanKerusakanStore()
+const alertStore = useAlertStore()
 
 const laporan = ref<any | null>(null)
 const loadError = ref('')
@@ -27,25 +28,6 @@ const fotoModalUrl = ref('')
 const cancelDialogVisible = ref(false)
 const alasanPembatalan = ref('')
 const alasanError = ref('')
-
-const alertVisible = ref(false)
-const alertType = ref<'default' | 'warning' | 'no-header'>('default')
-const alertTitle = ref('')
-const alertDescription = ref('')
-let alertOnPrimary: (() => void) | null = null
-
-function showAlert(opts: { type?: 'default' | 'warning' | 'no-header'; title?: string; description: string; onPrimary?: () => void }) {
-    alertType.value = opts.type ?? 'default'
-    alertTitle.value = opts.title ?? ''
-    alertDescription.value = opts.description
-    alertOnPrimary = opts.onPrimary ?? null
-    alertVisible.value = true
-}
-
-function handleAlertPrimary() {
-    alertVisible.value = false
-    if (alertOnPrimary) alertOnPrimary()
-}
 
 function openFoto(url: string) {
     fotoModalUrl.value = url
@@ -74,20 +56,16 @@ async function submitCancel() {
         await laporanStore.cancelLaporanKerusakan(id, alasanPembatalan.value.trim())
         laporan.value = laporanStore.currentLaporan
         cancelDialogVisible.value = false
-        showAlert({
+        alertStore.show({
             type: 'default',
             title: 'Laporan Dibatalkan',
-            description: 'Laporan berhasil dibatalkan',
-            onPrimary: () => {
-                    router.push(`/laporan-kerusakan/$({id}`)
-                } 
+            message: 'Laporan berhasil dibatalkan'
         })
+        // Note: the original had a router.push onPrimary, but SAlert in App.vue 
+        // currently only closes the alert. If we need navigation, we might need 
+        // to add callback support to alertStore.
     } catch (error: any) {
-        showAlert({
-            type: 'warning',
-            title: 'Gagal Membatalkan Laporan',
-            description: error?.message || 'Terjadi kesalahan. Silakan coba lagi.',
-        })
+        alertStore.error(error?.message || 'Terjadi kesalahan. Silakan coba lagi.', 'Gagal Membatalkan Laporan')
     }
 }
 
@@ -138,7 +116,7 @@ const fotoList = computed<{ url: string }[]>(() => {
 
 const pengirimNama = computed(() => laporan.value?.nama_lengkap || 'Pengguna Anonim')
 const kelasPengirim = computed(() => laporan.value?.kelas_pengirim || '-')
-
+// ... (lines 95-141)
 onMounted(async () => {
     const id = route.params.id as string
     try {
@@ -147,7 +125,7 @@ onMounted(async () => {
     } catch (err: any) {
         const msg = err.message || ''
         if (msg.includes('403') || msg.toLowerCase().includes('akses')) {
-            toast.error('Akses ditolak')
+            alertStore.error('Akses ditolak')
             router.replace('/laporan-kerusakan')
         } else if (msg.includes('401')) {
             router.replace('/login')
@@ -160,15 +138,6 @@ onMounted(async () => {
 
 <template>
     <div class="stf-page">
-        <SAlert
-            v-model:visible="alertVisible"
-            :type="alertType"
-            :title="alertTitle"
-            :description="alertDescription"
-            primary-button-text="OK"
-            @primary-click="handleAlertPrimary"
-        />
-
         <div class="laporan-container">
 
             <div v-if="loadError" class="feedback-state">
@@ -182,7 +151,10 @@ onMounted(async () => {
 
             <template v-else>
                 <div class="laporan-header">
-                    <div>
+                    <button @click="router.back()" class="back-btn" aria-label="Kembali">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <div class="header-content">
                         <h1 class="stf-page-title">Detail Laporan Kerusakan</h1>
                         <p class="stf-page-subtitle">{{ laporan.no_laporan }}</p>
                     </div>
@@ -381,9 +353,33 @@ onMounted(async () => {
 
 .laporan-header {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
     margin-bottom: 24px;
+}
+
+.back-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: #4b5563;
+}
+
+.back-btn:hover {
+    background: #f9fafb;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
 }
 
 .laporan-title {

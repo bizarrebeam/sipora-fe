@@ -7,7 +7,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useArtikelStore } from '@/stores/artikel'
-import { toast } from 'vue-sonner'
+import { useAlertStore } from '@/stores/alert'
 import STextField from '@/components/STextField.vue'
 import SButton from '@/components/SButton.vue'
 import SLoading from '@/components/SLoading.vue'
@@ -19,6 +19,7 @@ import SChip from '@/components/SChip.vue'
 const router = useRouter()
 const route = useRoute()
 const artikelStore = useArtikelStore()
+const alertStore = useAlertStore()
 
 // Loading and mode state
 const isLoading = ref(true)
@@ -122,12 +123,12 @@ const handleDrop = (event: DragEvent) => {
 const processFile = (file: File) => {
   // Validate size (max 5MB)
   if (file.size > MAX_FILE_SIZE) {
-    toast.error('Ukuran file maksimal 5MB')
+    alertStore.error('Ukuran file maksimal 5MB')
     return
   }
   // Validate type
   if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-    toast.error('Format file harus PNG, JPEG, atau WebP')
+    alertStore.error('Format file harus PNG, JPEG, atau WebP')
     return
   }
   selectedFile.value = file
@@ -205,33 +206,33 @@ const formatText = (startTag: string, endTag: string = '') => {
 const submitArticle = async (status: 'draft' | 'published') => {
   // Validate title
   if (!formData.value.judul.trim()) {
-    toast.error('Judul artikel wajib diisi')
+    alertStore.error('Judul artikel wajib diisi')
     return
   }
   if (formData.value.judul.length < JUDUL_MIN_CHARS) {
-    toast.error(`Judul minimal ${JUDUL_MIN_CHARS} karakter`)
+    alertStore.error(`Judul minimal ${JUDUL_MIN_CHARS} karakter`)
     return
   }
   if (formData.value.judul.length > JUDUL_MAX_CHARS) {
-    toast.error(`Judul maksimal ${JUDUL_MAX_CHARS} karakter`)
+    alertStore.error(`Judul maksimal ${JUDUL_MAX_CHARS} karakter`)
     return
   }
   // Validate content
   if (!formData.value.konten.trim()) {
-    toast.error('Isi artikel wajib diisi')
+    alertStore.error('Isi artikel wajib diisi')
     return
   }
   if (formData.value.konten.length < KONTEN_MIN_CHARS) {
-    toast.error(`Isi artikel minimal ${KONTEN_MIN_CHARS} karakter`)
+    alertStore.error(`Isi artikel minimal ${KONTEN_MIN_CHARS} karakter`)
     return
   }
   if (formData.value.konten.length > KONTEN_MAX_CHARS) {
-    toast.error(`Isi artikel maksimal ${KONTEN_MAX_CHARS} karakter`)
+    alertStore.error(`Isi artikel maksimal ${KONTEN_MAX_CHARS} karakter`)
     return
   }
   // Validate summary (optional, but must be valid if present)
   if (formData.value.ringkasan.length > RINGKASAN_MAX_CHARS) {
-    toast.error(`Ringkasan maksimal ${RINGKASAN_MAX_CHARS} karakter`)
+    alertStore.error(`Ringkasan maksimal ${RINGKASAN_MAX_CHARS} karakter`)
     return
   }
   isSubmitting.value = true
@@ -266,7 +267,7 @@ const submitArticle = async (status: 'draft' | 'published') => {
     }, 2000)
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Gagal menyimpan artikel'
-    toast.error(errorMessage)
+    alertStore.error(errorMessage)
   } finally {
     isSubmitting.value = false
   }
@@ -299,7 +300,7 @@ onMounted(async () => {
       }
     } catch (error) {
       console.error(error)
-      toast.error('Gagal mengambil data artikel')
+      alertStore.error('Gagal mengambil data artikel')
       router.push('/artikel')
     }
   }
@@ -610,6 +611,22 @@ onMounted(async () => {
   ::v-deep(.modal-actions) {
     padding: 0 12px 16px 12px;
     gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-wrapper {
+    padding: 24px 16px;
+    border-radius: 12px;
+    gap: 24px;
+  }
+  
+  .form-header h1 {
+    font-size: 20px;
+  }
+  
+  .form-header p {
+    font-size: 13px;
   }
 }
 </style>

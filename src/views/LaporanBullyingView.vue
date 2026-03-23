@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onActivated } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
@@ -238,6 +238,10 @@ onMounted(() => {
         router.replace({ query })
     }
 })
+
+onActivated(() => {
+    fetchData()
+})
 </script>
 
 <template>
@@ -300,12 +304,6 @@ onMounted(() => {
                         <option value="asc">Terlama</option>
                     </select>
                 </div>
-
-                <button class="filter-toggle-btn" @click="showFilterDrawer = true" aria-label="Filter">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-                    Filter
-                    <span v-if="selectedDate || apiSort !== 'desc'" class="filter-dot"></span>
-                </button>
             </div>
 
             <div v-if="loading && paginatedList.length === 0" class="loading-state">
@@ -422,49 +420,6 @@ onMounted(() => {
             </template>
         </div>
 
-        <Transition name="drawer-fade">
-            <div v-if="showFilterDrawer" class="drawer-overlay" @click.self="showFilterDrawer = false">
-                <div class="drawer">
-                    <div class="drawer-header">
-                        <span class="stf-section-title">Filter & Urutan</span>
-                        <button class="drawer-close" @click="showFilterDrawer = false" aria-label="Tutup">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
-                    </div>
-
-                    <div class="drawer-body">
-                        <div class="drawer-field">
-                            <label class="drawer-label">Tanggal Kejadian</label>
-                            <div class="relative">
-                                <button 
-                                    type="button"
-                                    class="filter-input w-full flex items-center gap-2 bg-white"
-                                    @click="showDatePicker = !showDatePicker"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                    {{ selectedDate || 'Pilih Tanggal' }}
-                                </button>
-                                <div v-if="showDatePicker" class="absolute left-0 bottom-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-bottom-left">
-                                    <SDatePicker v-model="selectedDateObj" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="drawer-field">
-                            <label class="drawer-label">Urutan</label>
-                            <select v-model="apiSort" class="filter-input">
-                                <option value="desc">Terbaru</option>
-                                <option value="asc">Terlama</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="drawer-footer">
-                        <button class="drawer-reset" @click="() => { selectedDate = ''; apiSort = 'desc'; }">Reset</button>
-                        <button class="drawer-apply" @click="applyFiltersAndClose">Terapkan</button>
-                    </div>
-                </div>
-            </div>
-        </Transition>
     </div>
 </template>
 
@@ -761,85 +716,45 @@ onMounted(() => {
 }
 .drawer-apply:hover { background: var(--color-blue-700); }
 
-/* ════════════════════════════════════════════
-   RESPONSIVE
-   ════════════════════════════════════════════ */
-
-/* ── Tablet (601px – 900px) ── */
-@media (min-width: 601px) and (max-width: 900px) {
-    .laporan-page { padding: 20px 16px; }
-    .laporan-title { font-size: 20px; }
-    .card-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-    .filter-input { min-width: 120px; }
-}
-
-/* ── Mobile (≤ 600px) ── */
-@media (max-width: 600px) {
-    /* Shell */
+/* ── Mobile (≤ 768px) ── */
+@media (max-width: 768px) {
     .stf-page {
-        padding: 0 0 env(safe-area-inset-bottom, 24px);
-        background: var(--color-general-frame);
+        padding: 24px 16px;
+        overflow-y: auto;
     }
     .laporan-container { padding: 0; }
 
-    /* Header */
     .laporan-header {
-        background: white;
-        padding: 16px;
-        margin-bottom: 0;
-        border-bottom: 1px solid #f3f4f6;
-        gap: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 20px;
     }
 
-    /* Tabs: full-bleed scroll */
-    .tabs-wrapper {
-        background: white;
-        padding: 0;
-        border-bottom: 1px solid #f3f4f6;
-        -webkit-mask-image: none;
-        mask-image: none;
-    }
-    .tabs-scroll { padding: 10px 16px 10px; gap: 6px; }
-    .tab-btn { font-size: 12px; padding: 6px 12px; }
-    .tab-badge { font-size: 9px; }
-
-    /* Filters */
     .filters-row {
-        padding: 12px 16px;
-        background: white;
-        border-bottom: 1px solid #f3f4f6;
-        margin-bottom: 0;
-        gap: 8px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 24px;
     }
-    .filter-extras { display: none; } /* hidden — use drawer instead */
-    .filter-toggle-btn { display: inline-flex; }
 
-    /* Admin table: horizontal scroll */
-    .section-card { border-radius: 0; box-shadow: none; margin: 0; }
-    .section-title { font-size: 15px; }
-    .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-    /* Card grid: single column */
-    .card-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 12px 16px;
-        margin-bottom: 0;
+    .filter-search {
+        width: 100%;
     }
-    .report-card {
-        border-radius: 12px;
-        padding: 14px;
-        gap: 8px;
+
+    .filter-extras {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        width: 100%;
     }
-    .report-card:hover { transform: none; }
-    .report-card__title { font-size: 14px; }
-    .report-card__date  { font-size: 10px; }
-    /* Badge removed */
 
-    /* Pagination */
-    .card-pagination { margin-top: 16px; padding-bottom: 16px; }
+    .filter-input {
+        width: 100%;
+        min-width: 0;
+    }
 
-    .card-view-count { padding: 10px 16px 0; margin-bottom: 0; }
+    .article-card { min-height: auto; }
 }
 
 /* ── Very small (≤ 360px) ── */

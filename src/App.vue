@@ -2,12 +2,18 @@
 import SNavbar from '@/components/SNavbar.vue'
 import SLoading from '@/components/SLoading.vue'
 import SDialog from '@/components/SDialog.vue'
-import { Toaster } from 'vue-sonner'
+import SAlert from '@/components/SAlert.vue'
 import { useAuthStore } from '@/stores/auth'
-import { useRouter } from 'vue-router'
+import { useAlertStore } from '@/stores/alert'
+import { useRouter, useRoute } from 'vue-router'
+import { computed } from 'vue'
 
 const authStore = useAuthStore()
+const alertStore = useAlertStore()
 const router = useRouter()
+const route = useRoute()
+
+const isGuestRoute = computed(() => route.meta.guest === true)
 
 function handleSessionExpired() {
   authStore.setSessionExpired(false)
@@ -36,14 +42,23 @@ function handleSessionExpired() {
     @confirm="handleSessionExpired"
   />
 
+  <SAlert
+    v-model:visible="alertStore.visible"
+    :type="alertStore.type"
+    :title="alertStore.title"
+    :description="alertStore.message"
+    :primaryButtonText="alertStore.primaryButtonText"
+    @primaryClick="alertStore.hide"
+  />
+
   <SLoading />
-  <Toaster position="top-right" :duration="3000" rich-colors />
 </template>
 
 <style>
 .main-layout {
   min-height: calc(100vh - 64px);
   width: 100%;
+  padding-top: 64px;
   display: flex;
   flex-direction: column;
 }
@@ -51,6 +66,6 @@ function handleSessionExpired() {
 body {
   margin: 0;
   padding: 0;
-  overflow-y: scroll; 
+  overflow-y: auto; 
 }
 </style>

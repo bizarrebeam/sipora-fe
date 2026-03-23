@@ -197,8 +197,10 @@ async function confirmLogout() {
 <style scoped>
 /* ── Navbar Container ── */
 .navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100%;
   z-index: 1000;
   background: var(--color-blue-600);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);

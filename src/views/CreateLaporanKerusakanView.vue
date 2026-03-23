@@ -702,11 +702,11 @@ async function handleSubmit() {
 }
 
 @media (max-width: 600px) {
-    .create-laporan-page {
+    .stf-page {
         padding: 16px 8px;
     }
 
-    .form-container {
+    .form-wrapper {
         padding: 20px 16px;
         border-radius: 16px;
     }

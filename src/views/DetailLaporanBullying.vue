@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanBullyingStore } from '@/stores/laporanBullying'
-import { toast } from 'vue-sonner'
+import { useAlertStore } from '@/stores/alert'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SDialog from '@/components/SDialog.vue'
@@ -13,6 +13,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const laporanStore = useLaporanBullyingStore()
+const alertStore = useAlertStore()
 
 const id = route.params.id as string
 const loading = ref(true)
@@ -42,10 +43,10 @@ async function fetchDetail() {
         const errorMsg = String(error?.message || error)
         // Asumsi jika error berkaitan dengan hak akses:
         if (errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
-            toast.error('Anda tidak memiliki akses untuk melihat detail laporan ini')
+            alertStore.error('Anda tidak memiliki akses untuk melihat detail laporan ini')
             router.push({ path: '/laporan-bullying', query: { unauthorized: 'true' } })
         } else {
-            toast.error('Gagal memuat detail laporan')
+            alertStore.error('Gagal memuat detail laporan')
             router.push('/laporan-bullying')
         }
     } finally {
@@ -90,12 +91,12 @@ function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
 
 async function handleBatalkan() {
     if (!alasanPembatalan.value || alasanPembatalan.value.length < 50) {
-        toast.error('Alasan pembatalan wajib diisi minimal 50 karakter')
+        alertStore.error('Alasan pembatalan wajib diisi minimal 50 karakter')
         return
     }
     try {
         await laporanStore.batalkanLaporan(id, alasanPembatalan.value)
-        toast.success('Laporan berhasil dibatalkan')
+        alertStore.success('Laporan berhasil dibatalkan')
         showBatalkanDialog.value = false
         fetchDetail()
     } catch (error) {}
@@ -103,7 +104,7 @@ async function handleBatalkan() {
 
 async function handleProses() {
     try {
-        toast.success('Status laporan diubah menjadi diproses')
+        alertStore.success('Status laporan diubah menjadi diproses')
         showProsesDialog.value = false
         fetchDetail()
     } catch (error) {}
@@ -111,11 +112,11 @@ async function handleProses() {
 
 async function handleTolak() {
     if (!alasanPenolakan.value) {
-        toast.error('Alasan penolakan wajib diisi')
+        alertStore.error('Alasan penolakan wajib diisi')
         return
     }
     try {
-        toast.success('Laporan berhasil ditolak')
+        alertStore.success('Laporan berhasil ditolak')
         showTolakDialog.value = false
         fetchDetail()
     } catch (error) {}
@@ -123,7 +124,7 @@ async function handleTolak() {
 
 async function handleSelesai() {
     try {
-        toast.success('Laporan ditandai selesai')
+        alertStore.success('Laporan ditandai selesai')
         showSelesaiDialog.value = false
         fetchDetail()
     } catch (error) {}

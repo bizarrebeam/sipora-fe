@@ -48,7 +48,7 @@ watch(selectedDateObj, (newVal: Date | null) => {
 })
 
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 const totalData = ref(0)
 const totalPages = ref(1)
 
@@ -63,8 +63,13 @@ function debouncedFetch() {
   }, 400)
 }
 
-watch([sortOrder, searchQuery, selectedDate, selectedModule], () => {
+watch([sortOrder, searchQuery, selectedDate, selectedModule, pageSize], () => {
   debouncedFetch()
+})
+
+// Watch page change
+watch(currentPage, (newVal) => {
+  fetchLogs(newVal)
 })
 
 const columns = [
@@ -240,20 +245,21 @@ onMounted(() => {
         </div>
 
         <!-- Table -->
-        <STable
-          :columns="columns"
-          :data="sortedLogs"
-          :total-data="totalData"
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :sort-key="sortKey"
-          :sort-order="sortOrder"
-          :loading="loadingLogs"
-          :error="logError"
-          @sort="sortBy"
-          @update:currentPage="fetchLogs"
-          @update:pageSize="fetchLogs(1)"
-        >
+        <div class="table-wrapper">
+          <STable
+            :columns="columns"
+            :data="sortedLogs"
+            :total-data="totalData"
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :sort-key="sortKey"
+            :sort-order="sortOrder"
+            :loading="loadingLogs"
+            :error="logError"
+            @sort="sortBy"
+            @update:currentPage="fetchLogs"
+            @update:pageSize="fetchLogs(1)"
+          >
           <template #body-cell-waktu="{ row }">
             <span class="text-xs font-mono text-gray-500">{{ formatDate(row.waktu) }}</span>
           </template>
@@ -300,9 +306,10 @@ onMounted(() => {
              <div class="min-w-[300px] leading-relaxed">{{ row.deskripsi }}</div>
           </template>
         </STable>
-
       </div>
+
     </div>
+  </div>
 </template>
 
 <style scoped>
@@ -315,6 +322,11 @@ onMounted(() => {
   gap: 12px;
   margin-bottom: 24px;
   align-items: stretch;
+}
+.table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  margin-top: 8px;
 }
 .filter-search { flex: 1; min-width: 0; }
 .filter-extras {
@@ -348,29 +360,29 @@ onMounted(() => {
 /* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
   .filters-row {
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .filter-search {
+    width: 100%;
   }
   .filter-extras {
     width: 100%;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   .filter-input {
-    flex: 1;
-    min-width: 120px;
+    width: 100%;
+    min-width: 0;
   }
 }
 
 /* ── Small Mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  .filter-extras {
-    flex-direction: column;
-  }
-  .filter-input {
-    width: 100%;
-    min-width: unset;
-  }
+  /* Keep 2 columns if possible, but allow stacking if very narrow */
+  /* User wants rows, so grid is better than column flex here */
 }
 
 /* ── iPhone SE (≤ 375px) ── */

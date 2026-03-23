@@ -9,10 +9,12 @@ import SDialog from '@/components/SDialog.vue'
 import STable from '@/components/STable.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
 import { useLoadingStore } from '@/stores/loading'
-
-const loadingStore = useLoadingStore()
-import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
+import { useAlertStore } from '@/stores/alert'
+
+const alertStore = useAlertStore()
+const loadingStore = useLoadingStore()
+const auth = useAuthStore()
 
 interface AkunItem {
   id: string
@@ -59,16 +61,6 @@ function debouncedFetch() {
   }, 400)
 }
 
-watch([sortOrder, search, selectedDate], () => {
-  sortState.value.siswa.key = 'date_joined'
-  sortState.value.siswa.order = sortOrder.value
-  sortState.value.guru.key = 'date_joined'
-  sortState.value.guru.order = sortOrder.value
-  sortState.value.guruBk.key = 'date_joined'
-  sortState.value.guruBk.order = sortOrder.value
-  
-  debouncedFetch()
-})
 const loading = ref(false)
 const isLoaded = ref(false)
 
@@ -76,7 +68,6 @@ const isPasswordLengthValid = computed(() => createPassword.value.length >= 8)
 const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.value) && /[0-9]/.test(createPassword.value))
 const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
 
-const auth = useAuthStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 
 const showCreateDialog = ref(false)
@@ -100,10 +91,12 @@ const selectedSiswa = ref<AkunItem | null>(null)
 const createTitle = computed(() => createType.value === 'guru' ? 'Buat Akun Guru' : 'Buat Akun Guru BK')
 
 const pagination = ref({
-  siswa: { page: 1, pageSize: 20 },
-  guru: { page: 1, pageSize: 20 },
-  guruBk: { page: 1, pageSize: 20 }
+  siswa: { page: 1, pageSize: 10 },
+  guru: { page: 1, pageSize: 10 },
+  guruBk: { page: 1, pageSize: 10 }
 })
+
+const isVerifiedFilter = ref('false') // 'all', 'true', 'false'
 
 const sortState = ref({
   siswa: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' },
@@ -111,21 +104,46 @@ const sortState = ref({
   guruBk: { key: 'date_joined', order: 'desc' as 'asc' | 'desc' }
 })
 
+watch([sortOrder, search, selectedDate, isVerifiedFilter], () => {
+  // Reset page to 1 when filters change
+  pagination.value.siswa.page = 1
+  pagination.value.guru.page = 1
+  pagination.value.guruBk.page = 1
+  
+  sortState.value.siswa.key = 'date_joined'
+  sortState.value.siswa.order = sortOrder.value
+  sortState.value.guru.key = 'date_joined'
+  sortState.value.guru.order = sortOrder.value
+  sortState.value.guruBk.key = 'date_joined'
+  sortState.value.guruBk.order = sortOrder.value
+  
+  debouncedFetch()
+})
+
+// Specifically watch pagination to trigger fetch
+watch(() => [
+  pagination.value.siswa.page, pagination.value.siswa.pageSize,
+  pagination.value.guru.page, pagination.value.guru.pageSize,
+  pagination.value.guruBk.page, pagination.value.guruBk.pageSize
+], () => {
+  fetchDaftar()
+})
+
 const activeTab = ref('siswa')
 
 const accountTabs = computed(() => {
-  const tabs = [{ value: 'siswa', label: 'Siswa', count: siswaTotal.value }]
-  if (isKemahasiswaan.value) {
-    tabs.push(
+  return [
+    { value: 'siswa', label: 'Siswa', count: siswaTotal.value },
+    ...(isKemahasiswaan.value ? [
       { value: 'guru', label: 'Guru', count: guruTotal.value },
-      { value: 'guru_bk', label: 'Guru BK', count: guruBkTotal.value }
-    )
-  }
-  return tabs
+      { value: 'guruBk', label: 'Guru BK', count: guruBkTotal.value }
+    ] : [])
+  ]
 })
 
 function handleTabChange(tab: string) {
   activeTab.value = tab
+  fetchDaftar()
 }
 
 const siswaColumns = [
@@ -196,49 +214,51 @@ const siswaSorted = computed(() => getSortedList(applyDateFilter(siswaList.value
 const guruSorted = computed(() => getSortedList(applyDateFilter(guruList.value), 'guru'))
 const guruBkSorted = computed(() => getSortedList(applyDateFilter(guruBkList.value), 'guruBk'))
 
-const paginatedSiswaList = computed(() => {
-  const start = (pagination.value.siswa.page - 1) * pagination.value.siswa.pageSize
-  return siswaSorted.value.slice(start, start + pagination.value.siswa.pageSize)
-})
-
-const paginatedGuruList = computed(() => {
-  const start = (pagination.value.guru.page - 1) * pagination.value.guru.pageSize
-  return guruSorted.value.slice(start, start + pagination.value.guru.pageSize)
-})
-
-const paginatedGuruBkList = computed(() => {
-  const start = (pagination.value.guruBk.page - 1) * pagination.value.guruBk.pageSize
-  return guruBkSorted.value.slice(start, start + pagination.value.guruBk.pageSize)
-})
+const paginatedSiswaList = computed(() => siswaList.value)
+const paginatedGuruList = computed(() => guruList.value)
+const paginatedGuruBkList = computed(() => guruBkList.value)
 
 async function fetchDaftar() {
   loading.value = true
-  // Only show mascot if not loaded yet
-  if (!isLoaded.value) {
-    // loadingStore.show('Memuat daftar akun...')
-  }
+  const role = activeTab.value
+  const pg = pagination.value[role as keyof typeof pagination.value]
+  
   try {
     const query = new URLSearchParams()
+    // Convert camelCase to snake_case for API: guruBk -> guru_bk
+    const apiRole = role === 'guruBk' ? 'guru_bk' : role
+    query.set('role', apiRole)
+    query.set('page', pg.page.toString())
+    query.set('page_size', pg.pageSize.toString())
+    
     if (search.value) query.set('search', search.value)
+    
+    if (role === 'siswa' && isVerifiedFilter.value !== 'all') {
+      query.set('is_verified', isVerifiedFilter.value)
+    }
+
     if (sortOrder.value) {
-      query.set('sort', sortOrder.value)
-      // Standard DRF ordering
       query.set('ordering', sortOrder.value === 'desc' ? '-date_joined' : 'date_joined')
     }
     
     const data = await apiAuthGet(`akun/admin/daftar/?${query.toString()}`)
-    siswaList.value = data.siswa.data
-    siswaTotal.value = data.siswa.total
-    guruList.value = data.guru.data
-    guruTotal.value = data.guru.total
-    guruBkList.value = data.guru_bk.data
-    guruBkTotal.value = data.guru_bk.total
+    
+    if (role === 'siswa') {
+      siswaList.value = data.results
+      siswaTotal.value = data.count
+    } else if (role === 'guru') {
+      guruList.value = data.results
+      guruTotal.value = data.count
+    } else if (role === 'guruBk') {
+      guruBkList.value = data.results
+      guruBkTotal.value = data.count
+    }
+    
     isLoaded.value = true
   } catch (err: any) {
-    toast.error(err.message || 'Gagal memuat daftar akun.')
+    alertStore.error(err.message || 'Gagal memuat daftar akun.')
   } finally {
     loading.value = false
-    // loadingStore.hide()
   }
 }
 
@@ -247,7 +267,7 @@ async function handleVerify(id: string) {
     await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
     await fetchDaftar()
   } catch (err: any) {
-    toast.error(err.message || 'Gagal memverifikasi akun.')
+    alertStore.error(err.message || 'Gagal memverifikasi akun.')
   }
 }
 
@@ -293,50 +313,50 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 
 async function handleCreate() {
   if (createType.value === 'guru_bk' && !createUsername.value) {
-    toast.error('Username wajib diisi untuk Guru BK.')
+    alertStore.error('Username wajib diisi untuk Guru BK.')
     return
   }
   if (!createNama.value) {
-    toast.error('Nama lengkap wajib diisi.')
+    alertStore.error('Nama lengkap wajib diisi.')
     return
   }
   if (!createEmail.value) {
-    toast.error('Email wajib diisi.')
+    alertStore.error('Email wajib diisi.')
     return
   }
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(createEmail.value)) {
-    toast.error('Format email tidak valid.')
+    alertStore.error('Format email tidak valid.')
     return
   }
   if (!createPassword.value) {
-    toast.error('Password wajib diisi.')
+    alertStore.error('Password wajib diisi.')
     return
   }
   if (!isPasswordValid.value) {
-    toast.error('Password harus minimal 8 karakter dan mengandung huruf serta angka.')
+    alertStore.error('Password harus minimal 8 karakter dan mengandung huruf serta angka.')
     return
   }
   
   // NUPTK is only mandatory for 'guru', optional for 'guru_bk'
   if (createType.value === 'guru') {
     if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
-      toast.error('NUPTK harus terdiri dari 16 digit angka.')
+      alertStore.error('NUPTK harus terdiri dari 16 digit angka.')
       return
     }
   } else if (createNuptk.value && (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value))) {
-    toast.error('Jika diisi, NUPTK harus terdiri dari 16 digit angka.')
+    alertStore.error('Jika diisi, NUPTK harus terdiri dari 16 digit angka.')
     return
   }
   if (createType.value === 'guru') {
     const validMapels = createMapels.value.filter(m => m.trim().length > 0)
     if (validMapels.length === 0) {
-      toast.error('Mata pelajaran wajib diisi untuk guru.')
+      alertStore.error('Mata pelajaran wajib diisi untuk guru.')
       return
     }
   }
   if (createPassword.value.length < 6) {
-    toast.error('Password minimal 6 karakter.')
+    alertStore.error('Password minimal 6 karakter.')
     return
   }
 
@@ -360,7 +380,7 @@ async function handleCreate() {
     showSuccessCreateDialog.value = true
     await fetchDaftar()
   } catch (err: any) {
-    toast.error(err.message || 'Gagal membuat akun.')
+    alertStore.error(err.message || 'Gagal membuat akun.')
   } finally {
     createLoading.value = false
   }
@@ -403,7 +423,7 @@ onMounted(() => {
             @click="openCreateDialog('guru')" 
           />
           <SButton 
-            v-if="activeTab === 'guru_bk'" 
+            v-if="activeTab === 'guruBk'" 
             label="+ Buat Akun Guru BK" 
             variant="primary" 
             @click="openCreateDialog('guru_bk')" 
@@ -449,6 +469,14 @@ onMounted(() => {
             <div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
               <SDatePicker v-model="selectedDateObj" />
             </div>
+          </div>
+          <div v-if="activeTab === 'siswa'" class="flex items-center gap-2">
+            <span class="filter-label">Status:</span>
+            <select v-model="isVerifiedFilter" class="filter-input">
+              <option value="all">Semua Status</option>
+              <option value="true">Terverifikasi</option>
+              <option value="false">Belum Verifikasi</option>
+            </select>
           </div>
           <select v-model="sortOrder" class="filter-input">
             <option value="desc">Terbaru</option>
@@ -547,7 +575,7 @@ onMounted(() => {
           </div>
         </SCard>
 
-        <SCard v-if="activeTab === 'guru_bk' && isKemahasiswaan" class="section-card">
+        <SCard v-if="activeTab === 'guruBk' && isKemahasiswaan" class="section-card">
           <div class="section-header">
             <div>
               <h3 class="stf-section-title">Guru BK</h3>
@@ -770,6 +798,12 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  margin-top: 8px;
+}
+
 .section-count {
   font-family: "Be Vietnam Pro", sans-serif;
   font-weight: 500;
@@ -873,6 +907,14 @@ onMounted(() => {
   color: #EF4444; /* red-500 */
 }
 
+.filter-label {
+  font-family: var(--font-be-vietnam);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-neutral-500);
+  white-space: nowrap;
+}
+
 @media (min-width: 480px) {
   .admin-page {
     padding: 32px 24px;
@@ -885,18 +927,40 @@ onMounted(() => {
 /* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
   .filters-row {
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .filter-search {
+    width: 100%;
   }
   .filter-extras {
     width: 100%;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
   .filter-input {
-    flex: 1;
-    min-width: 120px;
+    width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    justify-content: center;
+    padding-left: 10px;
+    padding-right: 32px; /* For the select arrow */
   }
+  /* If in the grid and it's the 3rd item (Sort in Siswa tab) */
+  .filter-extras > *:nth-child(3) {
+    grid-column: span 2;
+  }
+  .filter-label {
+    display: none;
+  }
+@media (max-width: 375px) {
+  .filter-input {
+    font-size: 13px;
+  }
+}
   .stf-header {
     flex-direction: column;
     align-items: flex-start;
@@ -906,13 +970,7 @@ onMounted(() => {
 
 /* ── Small Mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  .filter-extras {
-    flex-direction: column;
-  }
-  .filter-input {
-    width: 100%;
-    min-width: unset;
-  }
+  /* Keep grid 2 columns if possible, standard pattern */
 }
 
 /* ── iPhone SE (≤ 375px) ── */
