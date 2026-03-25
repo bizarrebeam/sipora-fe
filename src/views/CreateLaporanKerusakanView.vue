@@ -390,8 +390,15 @@ async function handleSubmit() {
                     </div>
 
                     <div class="form-group">
-                        <STextField v-model="deskripsi" label="Deskripsi Kerusakan" :required="true"
-                            :placeholder="'Ketik di sini...'" :variant="'textarea'" :disabled="false"
+                        <div class="custom-label-row flex justify-between w-full">
+                            <div>
+                                <label class="custom-label">Deskripsi Kerusakan</label>
+                                <span class="custom-asterisk">*</span>
+                            </div>
+                            <span class="file-count">{{ deskripsi.length }} karakter</span>
+                        </div>
+                        <STextField v-model="deskripsi" label=""
+                            :placeholder="'Ketik detail kerusakan di sini...'" :variant="'textarea'" :disabled="false"
                             @blur="validateField('deskripsi')" />
                         <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
                     </div>
@@ -616,7 +623,7 @@ async function handleSubmit() {
 }
 
 .error-msg {
-    color: var(--color-blue-200);
+    color: var(--color-general-red);
     font-size: 12px;
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 600;

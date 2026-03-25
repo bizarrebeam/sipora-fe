@@ -42,6 +42,7 @@ interface LaporanKerusakan {
     catatan_admin?: string
     updated_at?: string
     riwayat_status?: RiwayatStatus[]
+    akun_terverifikasi?: boolean
 }
 
 interface CreateLaporanPayload {
