@@ -120,7 +120,6 @@ const kelasPengirim = computed(() => {
                 </div>
             </div>
 
-            <!-- ── Loading ── -->
             <div v-if="loading" class="loading-state">
                 <p>Memuat detail laporan...</p>
             </div>
