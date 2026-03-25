@@ -41,17 +41,12 @@ const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isAdmin = computed(() => isKemahasiswaan.value)
 const isPelapor = computed(() => !isAdmin.value)
 
-const today = new Date()
-const defaultY = today.getFullYear()
-const defaultM = String(today.getMonth() + 1).padStart(2, '0')
-const defaultD = String(today.getDate()).padStart(2, '0')
-
 const loading = ref(false)
 const search = ref('')
 const selectedStatus = ref('semua')
 const selectedKategori = ref('semua')
-const selectedDate = ref(`${defaultY}-${defaultM}-${defaultD}`)
-const selectedDateObj = ref<Date | null>(today)
+const selectedDate = ref('')
+const selectedDateObj = ref<Date | null>(null)
 const showDatePicker = ref(false)
 
 watch(selectedDateObj, (newVal) => {
