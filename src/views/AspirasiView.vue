@@ -66,7 +66,7 @@ const sortKey = ref('no_laporan')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(isAdmin.value ? 10 : 6)
 
 const showDetailDialog = ref(false)
 const selectedLaporan = ref<Aspirasi | null>(null)
@@ -98,9 +98,14 @@ function kategoriLabel(key: string) {
 
 const aspirasiList = computed(() => unref(aspirasiStore.aspirasiList))
 
+// Use backend totals for pagination
+const totalData = computed(() => aspirasiStore.totalAspirasi)
+const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
+const paginatedList = computed(() => aspirasiList.value || [])
+
 const kategoriCounts = computed(() => {
     const list = aspirasiList.value || []
-    const counts: Record<string, number> = { semua: list.length }
+    const counts: Record<string, number> = { semua: totalData.value }
     
     kategoriTabs.forEach(tab => {
         if (tab.value !== 'semua') {
@@ -113,7 +118,7 @@ const kategoriCounts = computed(() => {
 const statusCounts = computed(() => {
     const list = aspirasiList.value || []
     return {
-        semua: list.length,
+        semua: totalData.value,
         ditandai: list.filter(l => l.status_ditandai === 'ditandai').length,
         tidak_ditandai: list.filter(l => l.status_ditandai === 'tidak_ditandai').length
     }
@@ -139,92 +144,6 @@ const columns = [
 	{ key: 'status_ditandai', label: 'Ditandai', sortable: true },
 	{ key: 'aksi', label: 'Aksi', sortable: false },
 ]
-
-const filteredList = computed(() => {
-	let list = aspirasiList.value ? [...aspirasiList.value] : []
-
-	if (selectedKategori.value && selectedKategori.value !== 'semua') {
-		list = list.filter(l => l.kategori === selectedKategori.value)
-	}
-
-	if (selectedStatus.value && selectedStatus.value !== 'semua') {
-		list = list.filter(l => l.status_ditandai === selectedStatus.value)
-	}
-
-	if (selectedDate.value) {
-		list = list.filter(l => {
-			const d = new Date(l.tanggal_aspirasi)
-			const yyyy = d.getFullYear()
-			const mm = String(d.getMonth() + 1).padStart(2, '0')
-			const dd = String(d.getDate()).padStart(2, '0')
-			return `${yyyy}-${mm}-${dd}` === selectedDate.value
-		})
-	}
-
-	if (search.value && search.value.trim()) {
-		const q = search.value.toLowerCase()
-		list = list.filter(l => {
-			return (
-				(l.no_laporan && l.no_laporan.toLowerCase().includes(q)) ||
-				(l.judul && l.judul.toLowerCase().includes(q)) ||
-				(l.kategori && l.kategori.toLowerCase().includes(q)) ||
-				(l.deskripsi && l.deskripsi.toLowerCase().includes(q))
-			)
-		})
-	}
-
-	if (selectedDate.value) {
-		list = list.filter(l => {
-			if (!l.tanggal_aspirasi) return false
-			const d = new Date(l.tanggal_aspirasi)
-			const y = d.getFullYear()
-			const m = String(d.getMonth() + 1).padStart(2, '0')
-			const day = String(d.getDate()).padStart(2, '0')
-			return `${y}-${m}-${day}` === selectedDate.value
-		})
-	}
-
-	if (selectedDate.value) {
-		list = list.filter(l => {
-			if (!l.tanggal_aspirasi) return false
-			const d = new Date(l.tanggal_aspirasi)
-			const y = d.getFullYear()
-			const m = String(d.getMonth() + 1).padStart(2, '0')
-			const day = String(d.getDate()).padStart(2, '0')
-			return `${y}-${m}-${day}` === selectedDate.value
-		})
-	}
-
-	if (sortKey.value) {
-		list.sort((a, b) => {
-			let valA = a[sortKey.value as keyof typeof a]
-			let valB = b[sortKey.value as keyof typeof b]
-			
-			// Handle date sorting specifically
-			if (sortKey.value === 'tanggal_aspirasi') {
-				const dateA = new Date(valA as string).getTime()
-				const dateB = new Date(valB as string).getTime()
-				return sortOrder.value === 'asc' ? dateA - dateB : dateB - dateA
-			}
-
-			if (valA == null) return 1
-			if (valB == null) return -1
-			if (typeof valA === 'string') {
-				return sortOrder.value === 'asc' ? valA.localeCompare(valB as string) : (valB as string).localeCompare(valA)
-			}
-			return sortOrder.value === 'asc' ? (valA as any) - (valB as any) : (valB as any) - (valA as any)
-		})
-	}
-
-	return list
-})
-
-const totalData = computed(() => filteredList.value.length)
-const totalPages = computed(() => Math.ceil(totalData.value / pageSize.value))
-const paginatedList = computed(() => {
-	const start = (currentPage.value - 1) * pageSize.value
-	return filteredList.value.slice(start, start + pageSize.value)
-})
 
 function formatDate(dateStr: string) {
 	if (!dateStr) return '-'
@@ -277,6 +196,7 @@ function handleSort(key: string) {
 		sortKey.value = key
 		sortOrder.value = 'asc'
 	}
+	currentPage.value = 1
 }
 
 let fetchTimeout: ReturnType<typeof setTimeout>
@@ -288,8 +208,20 @@ function debouncedFetch() {
 	}, 400)
 }
 
+// Re-fetch when filters, sorting, or page changes
 watch([search, selectedDate, selectedStatus, selectedKategori, sortOrder], () => {
     debouncedFetch()
+})
+
+watch(currentPage, (newVal, oldVal) => {
+	if (newVal !== oldVal) fetchData()
+})
+
+watch(pageSize, (newVal, oldVal) => {
+	if (newVal !== oldVal) {
+		currentPage.value = 1
+		fetchData()
+	}
 })
 
 function onSearchInput() {
@@ -317,15 +249,17 @@ function confirmStatusUpdate() {
 	statusTarget.value = null
 }
 
-watch([search, selectedKategori, selectedStatus, selectedDate, sortKey, sortOrder], () => {
-    currentPage.value = 1; 
-}, { immediate: false })
-
 async function fetchData() {
     loading.value = true
     try {
         await aspirasiStore.fetchAspirasi({
-            search: search.value, 
+            search: search.value,
+            status: selectedStatus.value,
+            kategori: selectedKategori.value,
+            date: selectedDate.value || undefined,
+            sort: sortOrder.value,
+            page: currentPage.value,
+            pageSize: pageSize.value,
         })
     } catch (error) {
         console.error('Error fetching Aspirasi:', error)

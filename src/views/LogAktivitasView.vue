@@ -85,7 +85,7 @@ const moduleTabs = [
   { label: 'Lap. Kerusakan', value: 'kerusakan' },
   { label: 'Konsultasi BK', value: 'konsultasi_bk' },
   { label: 'Aspirasi', value: 'aspirasi' },
-  { label: 'Lap. Bullying', value: 'bullying' },
+  { label: 'Lap. Bullying', value: 'laporan_bullying' },
   { label: 'Artikel', value: 'artikel' },
 ]
 

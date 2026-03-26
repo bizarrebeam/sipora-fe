@@ -3,6 +3,7 @@ import SNavbar from '@/components/SNavbar.vue'
 import SLoading from '@/components/SLoading.vue'
 import SDialog from '@/components/SDialog.vue'
 import SAlert from '@/components/SAlert.vue'
+import SNotFound from '@/components/SNotFound.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAlertStore } from '@/stores/alert'
 import { useRouter, useRoute } from 'vue-router'
@@ -24,10 +25,11 @@ function handleSessionExpired() {
 <template>
   <SNavbar />
   <main class="main-layout">
-    <router-view v-slot="{ Component }">
-      <keep-alive>
+    <router-view v-slot="{ Component, route }">
+      <keep-alive v-if="route.meta.keepAlive">
         <component :is="Component" />
       </keep-alive>
+      <component v-else :is="Component" />
     </router-view>
   </main>
 
@@ -41,6 +43,9 @@ function handleSessionExpired() {
     persistent
     @confirm="handleSessionExpired"
   />
+
+  <!-- 404 / Unauthorized Popup -->
+  <SNotFound />
 
   <SAlert
     v-model:visible="alertStore.visible"
@@ -68,4 +73,6 @@ body {
   padding: 0;
   overflow-y: auto; 
 }
+
 </style>
+```

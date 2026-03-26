@@ -7,6 +7,7 @@ import SButton from '@/components/SButton.vue'
 import SAlert from '@/components/SAlert.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
 import { useLaporanBullyingStore } from '@/stores/laporanBullying'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const router = useRouter()
 const route = useRoute()
@@ -90,10 +91,16 @@ onMounted(async () => {
             anonimitas.value = laporan.anonimitas || false
         }
     } catch (error: any) {
+        const errorMsg = String(error?.message || error)
+        if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
+            router.replace('/laporan-bullying')
+            return
+        }
+
         showAlert({
             type: 'warning',
             title: 'Gagal Memuat Laporan',
-            description: error?.message || 'Data laporan tidak ditemukan.',
+            description: errorMsg || 'Data laporan tidak ditemukan.',
             onPrimary: () => router.push('/laporan-bullying')
         })
     }

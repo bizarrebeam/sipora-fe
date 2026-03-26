@@ -24,6 +24,7 @@ import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit ar
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { keepAlive: true },
     },
     {
       path: '/login',
@@ -79,25 +81,25 @@ const router = createRouter({
       path: '/profil',
       name: 'profil',
       component: ProfilView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, keepAlive: true },
     },
     {
       path: '/manajemen-akun',
       name: 'manajemenAkun',
       component: ManajemenAkunView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru_bk'], keepAlive: true },
     },
     {
       path: '/log-aktivitas',
       name: 'logAktivitas',
       component: LogAktivitasView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'], keepAlive: true },
     },
     {
       path: '/laporan-kerusakan',
       name: 'laporanKerusakan',
       component: LaporanKerusakanView,
-      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'], keepAlive: true },
     },
     {
       path: '/laporan-kerusakan/:id',
@@ -115,25 +117,25 @@ const router = createRouter({
       path: '/laporan-bullying',
       name: 'laporanBullying',
       component: LaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru', 'guru_bk', 'kemahasiswaan'], keepAlive: true },
     },
     {
       path: '/laporan-bullying/:id',
       name: 'detailLaporanBullying',
       component: DetailLaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru', 'guru_bk', 'kemahasiswaan'] },
     },
     {
       path: '/create-bullying',
       name: 'createLaporanBullying',
       component: CreateLaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
     },
     {
       path: '/laporan-bullying/:id/edit',
       name: 'editLaporanBullying',
       component: EditLaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
     },
     {
       path: '/laporan-kerusakan/:id/edit',
@@ -145,7 +147,7 @@ const router = createRouter({
       path: '/aspirasi',
       name: 'aspirasi',
       component: AspirasiView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, keepAlive: true },
     },
     {
       path: '/create-aspirasi',
@@ -163,19 +165,26 @@ const router = createRouter({
       path: '/artikel',
       name: 'kelolaArtikel',
       component: KelolaArtikelView,
+      meta: { keepAlive: true },
       // No auth required - guests can read articles, admins can manage
     },
     {
       path: '/create-artikel',
       name: 'createArtikel',
       component: CreateArtikelView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'] },
     },
     {
       path: '/edit-artikel/:id',
       name: 'editArtikel',
       component: CreateArtikelView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'] },
+    },
+    // Catch-all 404
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'notFound',
+      component: { template: '<div></div>' }
     },
   ],
 })
@@ -196,10 +205,30 @@ router.beforeEach((to, from, next) => {
 
   const allowedRoles = to.meta.allowedRoles as string[] | undefined
 
+  // Catch-all 404 handler
+  if (to.name === 'notFound') {
+    const notFoundStore = useNotFoundStore()
+    notFoundStore.show()
+    if (from.name) {
+      next(false)
+    } else {
+      next('/')
+    }
+    return
+  }
+
   if (to.meta.requiresAuth && !isUserLoggedIn) {
     next('/login')
   } else if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
-    next('/')
+    // Show 404 popup instead of revealing the page
+    const notFoundStore = useNotFoundStore()
+    notFoundStore.show()
+    // Stay on current page if possible, otherwise go home
+    if (from.name) {
+      next(false)
+    } else {
+      next('/')
+    }
   } else if (to.meta.guest && isUserLoggedIn) {
     next('/')
   } else {

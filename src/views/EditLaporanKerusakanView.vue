@@ -8,6 +8,7 @@ import SAlert from '@/components/SAlert.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 import { useAuthStore } from '@/stores/auth'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const router = useRouter()
 const route = useRoute()
@@ -241,7 +242,13 @@ onMounted(async () => {
             anonimitas: anonimitas.value
         }
 
-    } catch (e) {
+    } catch (e: any) {
+        const errorMsg = String(e?.message || e)
+        if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || e?.response?.status === 403) {
+            router.replace({ name: 'laporanKerusakan' })
+            return
+        }
+        
         showAlert({ type: 'warning', title: 'Error', description: 'Gagal memuat data laporan' })
         router.push({ name: 'laporanKerusakan' })
     }

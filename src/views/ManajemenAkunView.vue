@@ -184,35 +184,7 @@ function handleSort(type: 'siswa' | 'guru' | 'guruBk', key: string) {
   }
 }
 
-function getSortedList(list: AkunItem[], type: 'siswa' | 'guru' | 'guruBk') {
-  const { key, order } = sortState.value[type]
-  if (!key) return list
-  return [...list].sort((a: any, b: any) => {
-    let valA = a[key]
-    let valB = b[key]
-    
-    if (key === 'date_joined') {
-      valA = new Date(valA).getTime()
-      valB = new Date(valB).getTime()
-    }
-    
-    if (valA < valB) return order === 'asc' ? -1 : 1
-    if (valA > valB) return order === 'asc' ? 1 : -1
-    return 0
-  })
-}
 
-function applyDateFilter(list: AkunItem[]) {
-  if (!selectedDate.value) return list
-  return list.filter(item => {
-    if (!item.date_joined) return false
-    return item.date_joined.startsWith(selectedDate.value)
-  })
-}
-
-const siswaSorted = computed(() => getSortedList(applyDateFilter(siswaList.value), 'siswa'))
-const guruSorted = computed(() => getSortedList(applyDateFilter(guruList.value), 'guru'))
-const guruBkSorted = computed(() => getSortedList(applyDateFilter(guruBkList.value), 'guruBk'))
 
 const paginatedSiswaList = computed(() => siswaList.value)
 const paginatedGuruList = computed(() => guruList.value)
@@ -232,6 +204,7 @@ async function fetchDaftar() {
     query.set('page_size', pg.pageSize.toString())
     
     if (search.value) query.set('search', search.value)
+    if (selectedDate.value) query.set('date_joined', selectedDate.value)
     
     if (role === 'siswa' && isVerifiedFilter.value !== 'all') {
       query.set('is_verified', isVerifiedFilter.value)
@@ -312,6 +285,12 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 }
 
 async function handleCreate() {
+  // Trim all text fields
+  createUsername.value = createUsername.value.trim()
+  createNuptk.value = createNuptk.value.trim()
+  createEmail.value = createEmail.value.trim()
+  createNama.value = createNama.value.trim()
+
   if (createType.value === 'guru_bk' && !createUsername.value) {
     alertStore.error('Username wajib diisi untuk Guru BK.')
     return
@@ -349,15 +328,12 @@ async function handleCreate() {
     return
   }
   if (createType.value === 'guru') {
-    const validMapels = createMapels.value.filter(m => m.trim().length > 0)
-    if (validMapels.length === 0) {
-      alertStore.error('Mata pelajaran wajib diisi untuk guru.')
+    // Validate that ALL matpel fields have content (not just at least one)
+    const hasEmpty = createMapels.value.some(m => m.trim().length === 0)
+    if (hasEmpty) {
+      alertStore.error('Semua kolom mata pelajaran harus diisi. Hapus kolom yang tidak diperlukan.')
       return
     }
-  }
-  if (createPassword.value.length < 6) {
-    alertStore.error('Password minimal 6 karakter.')
-    return
   }
 
   createLoading.value = true
@@ -379,6 +355,7 @@ async function handleCreate() {
     showCreateDialog.value = false
     showSuccessCreateDialog.value = true
     await fetchDaftar()
+    await fetchCounts()
   } catch (err: any) {
     alertStore.error(err.message || 'Gagal membuat akun.')
   } finally {
@@ -398,7 +375,19 @@ function removeMapel(index: number) {
   createMapels.value.splice(index, 1)
 }
 
-onMounted(() => {
+async function fetchCounts() {
+  try {
+    const data = await apiAuthGet('akun/admin/jumlah/')
+    if (data.siswa !== undefined) siswaTotal.value = data.siswa
+    if (data.guru !== undefined) guruTotal.value = data.guru
+    if (data.guru_bk !== undefined) guruBkTotal.value = data.guru_bk
+  } catch {
+    // silently fail — counts will update when tabs are clicked
+  }
+}
+
+onMounted(async () => {
+  fetchCounts()
   if (siswaList.value.length === 0 && guruList.value.length === 0 && guruBkList.value.length === 0) {
     fetchDaftar()
   }

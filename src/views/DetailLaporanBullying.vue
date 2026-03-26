@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanBullyingStore } from '@/stores/laporanBullying'
 import { useAlertStore } from '@/stores/alert'
+import { useNotFoundStore } from '@/stores/notFound'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SDialog from '@/components/SDialog.vue'
@@ -41,10 +42,14 @@ async function fetchDetail() {
         // Jika berhasil mengambil data, berarti backend sudah memvalidasi bahwa user ini authorized
     } catch (error: any) {
         const errorMsg = String(error?.message || error)
-        // Asumsi jika error berkaitan dengan hak akses:
-        if (errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
-            alertStore.error('Anda tidak memiliki akses untuk melihat detail laporan ini')
-            router.push({ path: '/laporan-bullying', query: { unauthorized: 'true' } })
+        
+        if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
+            router.replace('/laporan-bullying')
+            return
+        }
+
+        if (errorMsg.includes('401')) {
+            router.push('/login')
         } else {
             alertStore.error('Gagal memuat detail laporan')
             router.push('/laporan-bullying')
