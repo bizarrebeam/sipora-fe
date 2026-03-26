@@ -42,6 +42,7 @@ interface LaporanKerusakan {
     catatan_admin?: string
     updated_at?: string
     riwayat_status?: RiwayatStatus[]
+    akun_terverifikasi?: boolean
 }
 
 interface CreateLaporanPayload {
@@ -77,6 +78,8 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         search?: string
         date?: string
         sort?: 'asc' | 'desc'
+        page?: number
+        pageSize?: number
     }) {
         const CACHE_TIME = 2 * 60 * 1000 // 2 minutes
         const isStale = Date.now() - lastFetched.value > CACHE_TIME
@@ -97,6 +100,12 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
             }
             if (params.sort) {
                 queryParams.push(`sort=${params.sort}`)
+            }
+            if (params.page) {
+                queryParams.push(`page=${params.page}`)
+            }
+            if (params.pageSize) {
+                queryParams.push(`page_size=${params.pageSize}`)
             }
             
             const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : ''

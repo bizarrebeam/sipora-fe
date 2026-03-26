@@ -39,7 +39,7 @@ const currentPage = ref(1)
 /**
  * Number of articles per page
  */
-const pageSize = ref(9)
+const pageSize = ref(4)
 /**
  * Loading state for data fetching
  */

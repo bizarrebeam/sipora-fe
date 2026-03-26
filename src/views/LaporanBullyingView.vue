@@ -49,7 +49,7 @@ const sortKey = ref('')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(isAdmin.value ? 10 : 6)
 
 const showStatusDialog = ref(false)
 const statusTarget = ref<any | null>(null)

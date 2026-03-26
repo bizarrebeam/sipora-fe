@@ -32,6 +32,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { keepAlive: true },
     },
     {
       path: '/login',
@@ -79,25 +80,25 @@ const router = createRouter({
       path: '/profil',
       name: 'profil',
       component: ProfilView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, keepAlive: true },
     },
     {
       path: '/manajemen-akun',
       name: 'manajemenAkun',
       component: ManajemenAkunView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, keepAlive: true },
     },
     {
       path: '/log-aktivitas',
       name: 'logAktivitas',
       component: LogAktivitasView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, keepAlive: true },
     },
     {
       path: '/laporan-kerusakan',
       name: 'laporanKerusakan',
       component: LaporanKerusakanView,
-      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'], keepAlive: true },
     },
     {
       path: '/laporan-kerusakan/:id',
@@ -115,7 +116,7 @@ const router = createRouter({
       path: '/laporan-bullying',
       name: 'laporanBullying',
       component: LaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, keepAlive: true },
     },
     {
       path: '/laporan-bullying/:id',
@@ -145,7 +146,7 @@ const router = createRouter({
       path: '/aspirasi',
       name: 'aspirasi',
       component: AspirasiView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, keepAlive: true },
     },
     {
       path: '/create-aspirasi',
@@ -163,6 +164,7 @@ const router = createRouter({
       path: '/artikel',
       name: 'kelolaArtikel',
       component: KelolaArtikelView,
+      meta: { keepAlive: true },
       // No auth required - guests can read articles, admins can manage
     },
     {
