@@ -106,6 +106,24 @@ const router = createRouter({
       name: 'detailLaporanKerusakan',
       component: DetailLaporanKerusakanView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
+      beforeEnter: async (to, from, next) => {
+        try {
+          const { useLaporanKerusakanStore } = await import('@/stores/laporanKerusakan')
+          await useLaporanKerusakanStore().fetchLaporanDetail(to.params.id as string)
+          next()
+        } catch (e: any) {
+          const { useNotFoundStore } = await import('@/stores/notFound')
+          if (useNotFoundStore().visible) {
+            if (from.name) {
+              next(false)
+            } else {
+              next('/')
+            }
+          } else {
+            next()
+          }
+        }
+      }
     },
     {
       path: '/create-kerusakan',
@@ -124,6 +142,24 @@ const router = createRouter({
       name: 'detailLaporanBullying',
       component: DetailLaporanBullyingView,
       meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru', 'guru_bk', 'kemahasiswaan'] },
+      beforeEnter: async (to, from, next) => {
+        try {
+          const { useLaporanBullyingStore } = await import('@/stores/laporanBullying')
+          await useLaporanBullyingStore().ambilDetail(to.params.id as string)
+          next()
+        } catch (e: any) {
+          const { useNotFoundStore } = await import('@/stores/notFound')
+          if (useNotFoundStore().visible) {
+            if (from.name) {
+              next(false)
+            } else {
+              next('/')
+            }
+          } else {
+            next()
+          }
+        }
+      }
     },
     {
       path: '/create-bullying',
@@ -136,12 +172,48 @@ const router = createRouter({
       name: 'editLaporanBullying',
       component: EditLaporanBullyingView,
       meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
+      beforeEnter: async (to, from, next) => {
+        try {
+          const { useLaporanBullyingStore } = await import('@/stores/laporanBullying')
+          await useLaporanBullyingStore().ambilDetail(to.params.id as string)
+          next()
+        } catch (e: any) {
+          const { useNotFoundStore } = await import('@/stores/notFound')
+          if (useNotFoundStore().visible) {
+            if (from.name) {
+              next(false)
+            } else {
+              next('/')
+            }
+          } else {
+            next()
+          }
+        }
+      }
     },
     {
       path: '/laporan-kerusakan/:id/edit',
       name: 'editLaporanKerusakan',
       component: EditLaporanKerusakanView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
+      beforeEnter: async (to, from, next) => {
+        try {
+          const { useLaporanKerusakanStore } = await import('@/stores/laporanKerusakan')
+          await useLaporanKerusakanStore().fetchLaporanDetail(to.params.id as string)
+          next()
+        } catch (e: any) {
+          const { useNotFoundStore } = await import('@/stores/notFound')
+          if (useNotFoundStore().visible) {
+            if (from.name) {
+              next(false)
+            } else {
+              next('/')
+            }
+          } else {
+            next()
+          }
+        }
+      }
     },
     {
       path: '/aspirasi',
