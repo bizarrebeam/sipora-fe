@@ -41,10 +41,13 @@ async function fetchDetail() {
         await laporanStore.ambilDetail(id)
         // Jika berhasil mengambil data, berarti backend sudah memvalidasi bahwa user ini authorized
     } catch (error: any) {
-        const notFoundStore = useNotFoundStore()
-        if (notFoundStore.visible) return
-        
         const errorMsg = String(error?.message || error)
+        
+        if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
+            router.replace('/laporan-bullying')
+            return
+        }
+
         if (errorMsg.includes('401')) {
             router.push('/login')
         } else {

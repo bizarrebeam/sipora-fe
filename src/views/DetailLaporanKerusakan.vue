@@ -1,88 +1,76 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import SButton from '@/components/SButton.vue'
-import SCard from '@/components/SCard.vue'
-import SModal from '@/components/SModal.vue'
-import SDialog from '@/components/SDialog.vue'
-import STextField from '@/components/STextField.vue'
-import SAlert from '@/components/SAlert.vue'
-import SChip from '@/components/SChip.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 import { useAlertStore } from '@/stores/alert'
+import SCard from '@/components/SCard.vue'
+import SButton from '@/components/SButton.vue'
+import SDialog from '@/components/SDialog.vue'
+import SChip from '@/components/SChip.vue'
 import { useNotFoundStore } from '@/stores/notFound'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
 const laporanStore = useLaporanKerusakanStore()
 const alertStore = useAlertStore()
 
-const laporan = ref<any | null>(null)
-const loadError = ref('')
+const id = route.params.id as string
+const loading = ref(true)
 
-const fotoModalVisible = ref(false)
-const fotoModalUrl = ref('')
-
-// Cancel dialog state
-const cancelDialogVisible = ref(false)
-const alasanPembatalan = ref('')
-const alasanError = ref('')
-
-function openFoto(url: string) {
-    fotoModalUrl.value = url
-    fotoModalVisible.value = true
-}
-
-function openCancelDialog() {
-    alasanPembatalan.value = ''
-    alasanError.value = ''
-    cancelDialogVisible.value = true
-}
-
-async function submitCancel() {
-    alasanError.value = ''
-    if (!alasanPembatalan.value || alasanPembatalan.value.trim().length === 0) {
-        alasanError.value = 'Alasan pembatalan wajib diisi'
-        return
-    }
-    if (alasanPembatalan.value.trim().length < 50) {
-        alasanError.value = 'Alasan pembatalan wajib minimal 50 karakter'
-        return
-    }
-
-    try {
-        const id = route.params.id as string
-        await laporanStore.cancelLaporanKerusakan(id, alasanPembatalan.value.trim())
-        laporan.value = laporanStore.currentLaporan
-        cancelDialogVisible.value = false
-        alertStore.show({
-            type: 'default',
-            title: 'Laporan Dibatalkan',
-            message: 'Laporan berhasil dibatalkan'
-        })
-        // Note: the original had a router.push onPrimary, but SAlert in App.vue 
-        // currently only closes the alert. If we need navigation, we might need 
-        // to add callback support to alertStore.
-    } catch (error: any) {
-        alertStore.error(error?.message || 'Terjadi kesalahan. Silakan coba lagi.', 'Gagal Membatalkan Laporan')
-    }
-}
-
-
-const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
+const laporan = computed(() => laporanStore.currentLaporan)
+const isKemahasiswaan = computed(() => authStore.user?.role === 'kemahasiswaan')
 const isPelapor = computed(() => !isKemahasiswaan.value)
 
-function statusLabel(s: string) {
+const showBatalkanDialog = ref(false)
+const showBuktiDialog = ref(false)
+const alasanPembatalan = ref('')
+
+async function fetchDetail() {
+    loading.value = true
+    try {
+        await laporanStore.fetchLaporanDetail(id)
+    } catch (error: any) {
+        const errorMsg = String(error?.message || error)
+        if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
+            router.replace('/laporan-kerusakan')
+            return
+        }
+        
+        alertStore.error('Gagal memuat detail laporan')
+        router.push('/laporan-kerusakan')
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(() => { fetchDetail() })
+
+function formatDate(dateStr: string) {
+    if (!dateStr) return '-'
+    const d = new Date(dateStr)
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+    return d.toLocaleDateString('id-ID', options).replace(' pukul ', ', ')
+}
+
+function formatImageUrl(path: string | undefined): string {
+    if (!path) return ''
+    if (path.startsWith('http://') || path.startsWith('https://')) return path
+    if (path.startsWith('/media/')) return path
+    if (path.startsWith('/')) return `/media${path}`
+    return `/media/${path}`
+}
+
+function statusLabel(status: string) {
     const map: Record<string, string> = {
-        menunggu: 'Menunggu Verifikasi',
+        menunggu: 'Menunggu Konfirmasi',
         diproses: 'Diproses',
         selesai: 'Selesai',
-        ditolak: 'Ditolak',
         dibatalkan: 'Dibatalkan',
+        ditolak: 'Ditolak'
     }
-    return map[s] || s
+    return map[status] || status
 }
 
 function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
@@ -92,273 +80,290 @@ function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
     return 'danger'
 }
 
-function formatDate(d: string) {
-    if (!d) return '-'
-    return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-}
-
-function formatDatetime(d: string) {
-    if (!d) return '-'
-    return new Date(d).toLocaleString('id-ID', {
-        day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    })
-}
-
-const fotoList = computed<{ url: string }[]>(() => {
-    if (laporan.value?.foto_bukti?.length) {
-        return laporan.value.foto_bukti.map((f: any) => ({ url: f.foto }))
+async function handleBatalkan() {
+    if (!alasanPembatalan.value || alasanPembatalan.value.length < 50) {
+        alertStore.error('Alasan pembatalan wajib diisi minimal 50 karakter')
+        return
     }
-    if (laporan.value?.foto_pendukung?.length) {
-        return laporan.value.foto_pendukung.map((url: string) => ({ url }))
-    }
-    return []
-})
-
-const pengirimNama = computed(() => laporan.value?.nama_lengkap || 'Pengguna Anonim')
-const kelasPengirim = computed(() => laporan.value?.kelas_pengirim || '-')
-// ... (lines 95-141)
-onMounted(async () => {
-    const id = route.params.id as string
     try {
-        await laporanStore.fetchLaporanDetail(id)
-        laporan.value = laporanStore.currentLaporan
-    } catch (err: any) {
-        const notFoundStore = useNotFoundStore()
-        if (notFoundStore.visible) return
+        await laporanStore.cancelLaporanKerusakan(id, alasanPembatalan.value)
+        alertStore.success('Laporan berhasil dibatalkan')
+        showBatalkanDialog.value = false
+        fetchDetail()
+    } catch (error) { }
+}
 
-        const msg = err.message || ''
-        if (msg.includes('401')) {
-            router.replace('/login')
-        } else {
-            loadError.value = msg || 'Gagal memuat laporan'
-        }
-    }
+const pengirimNama = computed(() => {
+    const lap = laporan.value
+    return lap?.nama_lengkap || lap?.pelapor_info?.nama_lengkap || 'Pengguna Anonim'
+})
+const kelasPengirim = computed(() => {
+    const lap = laporan.value
+    return lap?.pelapor_info?.kelas || '-'
 })
 </script>
 
 <template>
     <div class="stf-page">
-        <div class="laporan-container">
+        <div class="detail-inner">
 
-            <div v-if="loadError" class="feedback-state">
-                <p class="feedback-text">{{ loadError }}</p>
-                <SButton label="Kembali" variant="ghost" @click="router.push({ name: 'laporanKerusakan' })" />
-            </div>
-
-            <div v-else-if="!laporan" class="feedback-state">
-                <p class="feedback-text">Memuat data laporan...</p>
-            </div>
-
-            <template v-else>
-                <div class="laporan-header">
-                    <button @click="router.back()" class="back-btn" aria-label="Kembali">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    </button>
-                    <div class="header-content">
-                        <h1 class="stf-page-title">Detail Laporan Kerusakan</h1>
-                        <p class="stf-page-subtitle">{{ laporan.no_laporan }}</p>
-                    </div>
+            <!-- ── Header ── -->
+            <div class="detail-header">
+                <button @click="router.back()" class="back-btn" aria-label="Kembali">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
+                <div class="header-text">
+                    <h1 class="stf-page-title">Detail Laporan Kerusakan</h1>
+                    <p class="header-sub">Lihat detail dan tanggapi laporan kerusakan di bawah ini.</p>
                 </div>
+            </div>
 
-                <!-- Card 1: Status -->
-                <SCard class="section-card">
-                    <h3 class="stf-section-title">Status</h3>
-                    <div class="status-row">
-                        <SChip size="large" variant="solid" :tone="statusTone(laporan.status)" :label="statusLabel(laporan.status)" />
-                        <span class="status-updated">Terakhir diperbarui: {{ formatDatetime(laporan.updated_at || laporan.tanggal_laporan) }}</span>
-                    </div>
-                </SCard>
+            <div v-if="loading" class="loading-state">
+                <p>Memuat detail laporan...</p>
+            </div>
 
-                <!-- Card 2: Detail fields -->
-                <SCard class="section-card">
+            <!-- ── Content ── -->
+            <template v-else-if="laporan">
+                <div class="content-grid">
 
-                    <template v-if="isKemahasiswaan">
-                        <div class="field-group">
-                            <STextField
-                                label="ID Laporan"
-                                :modelValue="laporan.id"
-                                :disabled="true"
-                            />
-                        </div>
-                    </template>
+                    <!-- ══ Main Column ══ -->
+                    <div class="main-col">
 
-                    <div class="field-group">
-                        <STextField
-                            label="Judul Laporan"
-                            :modelValue="laporan.judul"
-                            :disabled="true"
-                        />
-                    </div>
-
-                    <div class="field-row-two">
-                        <div class="field-group">
-                            <STextField
-                                label="Tanggal Kejadian"
-                                :modelValue="formatDate(laporan.tanggal_kejadian)"
-                                :disabled="true"
-                            />
-                        </div>
-                        <div class="field-group">
-                            <STextField
-                                label="Lokasi Kejadian"
-                                :modelValue="laporan.lokasi"
-                                :disabled="true"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="field-group">
-                        <STextField
-                            label="Deskripsi Kejadian"
-                            variant="textarea"
-                            :modelValue="laporan.deskripsi"
-                            :disabled="true"
-                        />
-                    </div>
-
-                    <div class="field-row-two">
-                        <div class="field-group">
-                            <STextField
-                                label="Pengirim"
-                                :modelValue="pengirimNama"
-                                :disabled="true"
-                            />
-                        </div>
-                        <div class="field-group">
-                            <STextField
-                                label="Kelas"
-                                :modelValue="kelasPengirim"
-                                :disabled="true"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="field-group">
-                        <label class="field-label">Bukti Pendukung</label>
-                        <div v-if="fotoList.length > 0" class="foto-grid">
-                            <div v-for="(foto, idx) in fotoList" :key="idx" class="foto-item">
-                                <img :src="foto.url" :alt="`Bukti ${idx + 1}`" class="foto-thumb" />
-                                <button class="lihat-berkas-btn" @click="openFoto(foto.url)">
-                                    Lihat Berkas
-                                </button>
+                        <!-- Card: Info Utama -->
+                        <SCard class="card-section">
+                            <div class="card-title-row">
+                                <div class="card-title-text">
+                                    <h2 class="laporan-judul">{{ laporan.judul }}</h2>
+                                    <p class="laporan-no">{{ laporan.no_laporan }}</p>
+                                </div>
+                                <SChip size="large" variant="solid" :tone="statusTone(laporan.status)"
+                                    :label="statusLabel(laporan.status)" />
                             </div>
-                        </div>
-                        <p v-else class="field-value field-value--empty">Tidak ada foto bukti pendukung.</p>
-                    </div>
 
-                </SCard>
+                            <div class="section-body">
+                                <div>
+                                    <h3 class="section-label">Isi Laporan</h3>
+                                    <div class="deskripsi-box">{{ laporan.deskripsi }}</div>
+                                </div>
 
-                <SCard class="section-card">
-                    <h3 class="stf-section-title">Riwayat Status</h3>
-                    <div v-if="laporan.riwayat_status && laporan.riwayat_status.length" class="riwayat-list">
-                        <div
-                            v-for="(r, idx) in laporan.riwayat_status"
-                            :key="r.id"
-                            class="riwayat-item"
-                        >
-                            <div class="riwayat-dot" :class="`dot--${r.status}`"></div>
-                            <div class="riwayat-connector" v-if="(idx as number) < laporan.riwayat_status.length - 1"></div>
-                            <div class="riwayat-content">
-                                <SChip class="self-start" size="small" variant="solid" :tone="statusTone(r.status)" :label="statusLabel(r.status)" />
-                                <p class="riwayat-catatan" v-if="r.catatan">{{ r.catatan }}</p>
-                                <div class="riwayat-meta">
-                                    <span>{{ formatDatetime(r.waktu) }}</span>
+                                <div class="meta-grid">
+                                    <div class="meta-item">
+                                        <h3 class="meta-label">Lokasi Kejadian</h3>
+                                        <p class="meta-value">{{ laporan.lokasi }}</p>
+                                    </div>
+                                    <div class="meta-item">
+                                        <h3 class="meta-label">Tanggal Kejadian</h3>
+                                        <p class="meta-value">{{ formatDate(laporan.tanggal_kejadian) }}</p>
+                                    </div>
+                                    <div class="meta-item">
+                                        <h3 class="meta-label">Tanggal Lapor</h3>
+                                        <p class="meta-value meta-value--blue">{{ formatDate(laporan.tanggal_laporan) }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <p v-else class="field-value field-value--empty">Tidak ada riwayat status.</p>
-                </SCard>
+                        </SCard>
 
-                <!-- Pelapor: Batalkan + Ubah (row 1), Kembali (row 2) -->
-                <div v-if="isPelapor" class="action-bar action-bar--pelapor">
-                    <div v-if="laporan.status === 'menunggu'" class="action-bar__top">
-                        <SButton
-                            label="Batalkan Laporan"
-                            variant="primary"
-                            class="btn-danger"
-                            @click="openCancelDialog"
-                        />
-                        <SButton
-                            label="Ubah Laporan"
-                            variant="primary"
-                            @click="$router.push({name:'editLaporanKerusakan', params: { id: laporan.id }})"
-                        />
+                        <!-- Card: Bukti Pendukung -->
+                        <SCard class="card-section">
+                            <h3 class="stf-page-subtitle">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon-blue">
+                                    <path
+                                        d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                                    <circle cx="12" cy="13" r="3" />
+                                </svg>
+                                Bukti Pendukung
+                            </h3>
+                            <div v-if="laporan.foto_bukti && laporan.foto_bukti.length > 0">
+                                <SButton label="Lihat Bukti Pendukung" variant="primary" class="w-full justify-center"
+                                    @click="showBuktiDialog = true" />
+                            </div>
+                            <div v-else class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="empty-icon">
+                                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                                    <circle cx="9" cy="9" r="2" />
+                                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                                </svg>
+                                <p>Tidak ada bukti pendukung</p>
+                            </div>
+                        </SCard>
+
+                        <!-- Card: Riwayat Status -->
+                        <SCard class="card-section">
+                            <h3 class="stf-page-subtitle">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon-blue">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                Riwayat Status
+                            </h3>
+
+                            <div v-if="laporan.riwayat_status && laporan.riwayat_status.length > 0" class="timeline">
+                                <div v-for="(riwayat, index) in laporan.riwayat_status" :key="index"
+                                    class="timeline-item">
+                                    <span class="timeline-dot" :class="{
+                                        'dot--menunggu': riwayat.status === 'menunggu',
+                                        'dot--diproses': riwayat.status === 'diproses',
+                                        'dot--selesai': riwayat.status === 'selesai',
+                                        'dot--merah': riwayat.status === 'dibatalkan' || riwayat.status === 'ditolak',
+                                        'dot--abu': !['menunggu', 'diproses', 'selesai', 'dibatalkan', 'ditolak'].includes(riwayat.status)
+                                    }"></span>
+                                    <div class="timeline-content">
+                                        <div class="timeline-row">
+                                            <span class="timeline-status">{{ statusLabel(riwayat.status) }}</span>
+                                            <span class="timeline-date">{{ formatDate(riwayat.waktu) }}</span>
+                                        </div>
+                                        <p v-if="riwayat.catatan" class="timeline-catatan">{{ riwayat.catatan }} oleh {{
+                                            riwayat.diubah_oleh_nama }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="empty-state">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" class="empty-icon">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                <p>Belum ada riwayat status</p>
+                            </div>
+                        </SCard>
                     </div>
-                    <SButton
-                        label="Kembali"
-                        variant="ghost"
-                        class="btn-full"
-                        @click="router.push({ name: 'laporanKerusakan' })"
-                    />
-                </div>
-                <!-- Kemahasiswaan: Kembali + Ubah Status (single row) -->
-                <div v-else class="action-bar">
-                    <SButton
-                        label="Kembali"
-                        variant="ghost"
-                        @click="router.push({ name: 'laporanKerusakan' })"
-                    />
-                    <SButton
-                        label="Ubah Status Laporan"
-                        variant="primary"
-                        @click="$router.push(`/ubah-status-kerusakan/${laporan.id}`)"
-                    />
+
+                    <!-- ══ Sidebar ══ -->
+                    <div class="side-col">
+
+                        <!-- Card: Info Pelapor -->
+                        <SCard class="card-section">
+                            <h3 class="stf-page-subtitle">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="icon-blue">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                                Informasi Pelapor
+                            </h3>
+
+                            <div class="pelapor-body">
+                                <div class="info-field">
+                                    <span class="info-label">Nama Pelapor</span>
+                                    <span class="info-value">{{ pengirimNama }}</span>
+                                </div>
+                                <div class="info-field">
+                                    <span class="info-label">Kelas</span>
+                                    <span class="info-value">{{ kelasPengirim }}</span>
+                                </div>
+
+                                <div v-if="isKemahasiswaan" class="info-field">
+                                    <span class="info-label">Status Akun Pelapor</span>
+                                    <span class="info-verified" :class="laporan?.akun_terverifikasi ? 'verified--yes' : 'verified--no'">
+                                        <svg v-if="laporan?.akun_terverifikasi" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                                        {{ laporan?.akun_terverifikasi ? 'Terverifikasi' : 'Belum Terverifikasi' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </SCard>
+
+                        <!-- Card: Tindak Lanjut -->
+                        <SCard class="card-section card-action">
+                            <h3 class="card-subtitle card-subtitle--blue">Tindak Lanjut Laporan</h3>
+
+                            <div v-if="isPelapor" class="flex flex-col gap-3">
+                                <template v-if="laporan.status === 'menunggu'">
+                                    <SButton label="Edit Laporan" variant="primary" class="w-full justify-center"
+                                        @click="$router.push({ name: 'editLaporanKerusakan', params: { id: laporan.id } })" />
+                                    <SButton label="Batalkan Laporan" variant="danger" class="w-full justify-center"
+                                        @click="showBatalkanDialog = true" />
+                                </template>
+                                <template v-else>
+                                    <p class="action-note">Laporan ini sedang diproses atau telah selesai/dibatalkan.
+                                        Laporan tidak dapat dihapus lagi.</p>
+                                </template>
+                            </div>
+
+                            <div v-else class="flex flex-col gap-3">
+                                <SButton label="Ubah Status Laporan" variant="primary" class="w-full justify-center"
+                                    @click="$router.push(`/ubah-status-kerusakan/${laporan.id}`)" />
+                            </div>
+                        </SCard>
+                    </div>
                 </div>
             </template>
         </div>
 
-        <SDialog
-            :visible="cancelDialogVisible"
-            title="Konfirmasi Pembatalan"
-            confirmLabel="Ya, Batalkan"
-            cancelLabel="Kembali"
-            variant="danger"
-            @update:visible="cancelDialogVisible = $event"
-            @confirm="submitCancel"
-            @cancel="cancelDialogVisible = false"
-        >
-            <!-- ini kalau mau dimasukin component sdialog/bikin baru boleh ya -->
-            <div class="dialog-body-content">
-                <p class="text-general-black subheading-s7 text-center dialog-text">Apakah anda yakin untuk membatalkan laporan ini? Mohon berikan alasan pembatalan</p>
-                <STextField
-                    label="Alasan Pembatalan"
-                    variant="textarea"
-                    :modelValue="alasanPembatalan"
-                    @update:modelValue="(v) => (alasanPembatalan = v)"
-                />
-                <p v-if="alasanError" style="color:var(--color-general-red,#DC2626);font-size:13px;margin-top:8px">{{ alasanError }}</p>
+        <!-- ══ Modals ══ -->
+        <SDialog :visible="showBatalkanDialog" variant="danger" title="Batalkan Laporan"
+            @update:visible="showBatalkanDialog = $event" @close="showBatalkanDialog = false">
+            <div class="dialog-body">
+                <p class="dialog-text">Apakah Anda yakin ingin membatalkan laporan ini? Tindakan ini tidak dapat
+                    diurungkan.</p>
+                <div>
+                    <label class="dialog-label">Alasan Pembatalan (Min. 50 Karakter)</label>
+                    <textarea v-model="alasanPembatalan" class="dialog-textarea"
+                        placeholder="Masukkan alasan yang jelas mengapa laporan dibatalkan..."></textarea>
+                    <p class="dialog-char-count">{{ alasanPembatalan.length }} karakter</p>
+                </div>
             </div>
+            <template #actions>
+                <div class="dialog-actions">
+                    <SButton label="Batal" variant="secondary" @click="showBatalkanDialog = false" />
+                    <SButton label="Ya, Batalkan" variant="danger" @click="handleBatalkan"
+                        :disabled="alasanPembatalan.length < 50" />
+                </div>
+            </template>
         </SDialog>
 
-        <SModal :visible="fotoModalVisible" title="Bukti Pendukung" @update:visible="fotoModalVisible = $event">
-            <div class="foto-modal-content">
-                <img :src="fotoModalUrl" alt="Foto Bukti" class="foto-modal-img" />
+        <SDialog :visible="showBuktiDialog" variant="primary" title="Bukti Pendukung"
+            @update:visible="showBuktiDialog = $event" @close="showBuktiDialog = false">
+            <div class="bukti-scroll">
+                <div v-for="bukti in laporan?.foto_bukti || []" :key="bukti.id" class="bukti-item">
+                    <a :href="formatImageUrl(bukti.foto)" target="_blank" class="bukti-link">
+                        <img :src="formatImageUrl(bukti.foto)" alt="Bukti Pendukung" class="bukti-img" loading="lazy" />
+                    </a>
+                </div>
             </div>
-        </SModal>
+            <template #actions>
+                <div class="dialog-actions">
+                    <SButton label="Tutup" variant="secondary" @click="showBuktiDialog = false" />
+                </div>
+            </template>
+        </SDialog>
     </div>
 </template>
 
 <style scoped>
-.laporan-page {
+/* ─── Base font ─── */
+* { font-family: "Be Vietnam Pro", sans-serif; }
+
+/* ─── Page shell ─── */
+.detail-page {
     min-height: calc(100vh - 64px);
     background: var(--color-general-frame);
-    padding: 24px 16px;
+    padding: 32px 16px;
 }
-
-.laporan-container {
-    max-width: 1100px;
+.detail-inner {
+    max-width: 1024px;
     margin: 0 auto;
 }
 
-.laporan-header {
+/* ─── Header ─── */
+.detail-header {
     display: flex;
     align-items: center;
     gap: 16px;
     margin-bottom: 24px;
 }
-
 .back-btn {
     flex-shrink: 0;
     display: flex;
@@ -373,309 +378,412 @@ onMounted(async () => {
     transition: background 0.2s;
     color: #4b5563;
 }
-
-.back-btn:hover {
-    background: #f9fafb;
-}
-
-.header-content {
+.back-btn:hover { background: #f9fafb; }
+.header-text {
     display: flex;
     flex-direction: column;
 }
-
-.laporan-title {
-    font-family: var(--font-be-vietnam, "Be Vietnam Pro", sans-serif);
+.header-title {
+    font-size: 22px;
     font-weight: 700;
-    font-size: 24px;
-    color: var(--color-blue-500, #2E3094);
-    margin-bottom: 4px;
-}
-
-.laporan-subtitle {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 14px;
-    color: var(--color-neutral-500, #6B7280);
+    color: var(--color-general-black);
     margin: 0;
+    line-height: 1.3;
+}
+.header-sub {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 4px 0 0;
 }
 
-.section-card {
+/* ─── Loading ─── */
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 240px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* ─── Content grid ─── */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    align-items: start;
+}
+.main-col { display: flex; flex-direction: column; gap: 20px; }
+.side-col  { display: flex; flex-direction: column; gap: 20px; }
+
+/* ─── Cards ─── */
+.card-section {
+    padding: 24px;
+}
+.card-action {
+    background: var(--color-blue-50);
+    border: 1px solid var(--color-blue-100);
+}
+
+/* ─── Card title row ─── */
+.card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
     margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-wrap: wrap;
 }
-
-.section-title {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--color-general-black, #1E1E2D);
-    margin: 0 0 16px 0;
-}
-
-.status-row {
+.card-title-text {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    text-align: center;
+}
+.laporan-judul {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-general-black);
+    margin: 0;
+    line-height: 1.4;
+}
+.laporan-no {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 6px 0 0;
 }
 
-.status-updated {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 12px;
-    color: var(--color-neutral-400, #9CA3AF);
+/* ─── Section body ─── */
+.section-body { display: flex; flex-direction: column; gap: 20px; }
+.section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 8px;
+}
+.deskripsi-box {
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 14px;
+    color: #1f2937;
+    white-space: pre-wrap;
+    line-height: 1.7;
+    word-break: break-word;
 }
 
-.field-group {
-    margin-bottom: 20px;
-}
-
-.field-group:last-child {
-    margin-bottom: 0;
-}
-
-.field-row-two {
+/* ─── Meta grid ─── */
+.meta-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-@media (max-width: 600px) {
-    .field-row-two {
-        grid-template-columns: 1fr;
-    }
-}
-
-
-.field-label {
-    display: block;
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-general-black, #333333);
-    margin-bottom: 6px;
-    letter-spacing: 0.04em;
-}
-
-.section-card :deep(input:disabled),
-.section-card :deep(textarea:disabled) {
-    color: var(--color-general-black, #1E1E2D) !important;
-    opacity: 1 !important;
-}
-
-.field-value {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--color-general-black, #1E1E2D);
-    margin: 0;
-    line-height: 1.5;
-}
-
-.field-value--pre {
-    white-space: pre-wrap;
-}
-
-.field-value--empty {
-    color: var(--color-neutral-400, #9CA3AF);
-    font-size: 13px;
-    font-weight: 400;
-}
-
-.foto-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 12px;
-    margin-top: 8px;
 }
-
-.foto-item {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.foto-thumb {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
+.meta-item {
+    background: white;
+    border: 1px solid #f3f4f6;
     border-radius: 8px;
-    border: 1px solid var(--color-general-border, #D9D9D9);
-}
-
-.lihat-berkas-btn {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-blue-500, #2E3094);
-    background: var(--color-blue-50, #EAEAF4);
-    border: 1px solid var(--color-blue-500, #2E3094);
-    border-radius: 6px;
-    padding: 4px 8px;
-    cursor: pointer;
-    transition: background 0.15s;
-    text-align: center;
-}
-
-.lihat-berkas-btn:hover {
-    background: var(--color-blue-100, #d0d0f0);
-}
-
-.riwayat-list {
-    display: flex;
-    flex-direction: column;
-}
-
-.riwayat-item {
-    display: flex;
-    gap: 12px;
-    position: relative;
-    padding-bottom: 20px;
-}
-
-.riwayat-item:last-child {
-    padding-bottom: 0;
-}
-
-.riwayat-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    margin-top: 4px;
-    border: 2px solid transparent;
-}
-
-.dot--menunggu { background: #F59E0B; border-color: #F59E0B; }
-.dot--diproses  { background: var(--color-blue-500, #2E3094); border-color: var(--color-blue-500, #2E3094); }
-.dot--selesai   { background: #2E7D32; border-color: #2E7D32; }
-.dot--ditolak   { background: #DC2626; border-color: #DC2626; }
-.dot--dibatalkan   { background: #DC2626; border-color: #DC2626; }
-
-.riwayat-connector {
-    position: absolute;
-    left: 5px;
-    top: 18px;
-    bottom: 0;
-    width: 2px;
-    background: var(--color-general-border, #D9D9D9);
-}
-
-.dialog-text {
-  margin-bottom: 20px;
-}
-
-.riwayat-content {
+    padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex: 1;
 }
-
-.riwayat-catatan {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 13px;
-    color: var(--color-neutral-600, #4B5563);
-    margin: 2px 0 0;
-}
-
-.riwayat-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 11px;
-    color: var(--color-neutral-400, #9CA3AF);
-}
-
-.action-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.action-bar :deep(button) {
-    flex: 1;
-}
-
-.action-bar--pelapor {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    margin-top: 8px;
-}
-
-.action-bar__top {
-    display: flex;
-    gap: 12px;
-}
-
-.action-bar__top :deep(button) {
-    flex: 1;
-}
-
-.btn-full {
-    width: 100%;
-}
-
-@media (max-width: 600px) {
-    .action-bar {
-        flex-direction: column;
-    }
-
-    .action-bar :deep(button) {
-        width: 100%;
-    }
-
-    .action-bar__top {
-        flex-direction: column;
-    }
-}
-
-.btn-danger {
-    background: var(--color-general-red, #DC2626) !important;
-    border-color: var(--color-general-red, #DC2626) !important;
-    color: white !important;
-}
-
-.btn-danger:hover {
-    background: #f87171 !important;
-    border-color: #f87171 !important;
-}
-
-/* Status badges removed */
-
-.feedback-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    padding: 80px 24px;
-    text-align: center;
-}
-
-.feedback-text {
-    font-family: "Be Vietnam Pro", sans-serif;
-    font-size: 15px;
-    color: var(--color-neutral-500, #6B7280);
+.meta-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     margin: 0;
 }
+.meta-value {
+    font-size: 13px;
+    color: var(--color-general-black);
+    margin: 0;
+    word-break: break-word;
+}
+.meta-value--blue { color: #2563eb; }
 
-.foto-modal-content {
+/* ─── Card subtitle ─── */
+.stf-page-subtitle {
     display: flex;
-    justify-content: center;
     align-items: center;
-    padding: 16px;
-    max-height: 70vh;
-    overflow: auto;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 16px;
+}
+.card-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 16px;
+}
+.card-subtitle--blue { color: var(--color-blue-800, #1e40af); }
+.icon-blue { color: #2563eb; flex-shrink: 0; }
+
+/* ─── Empty state ─── */
+.empty-state {
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 32px 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+.empty-icon { color: #9ca3af; }
+.empty-state p { font-size: 13px; color: #6b7280; margin: 0; }
+
+/* ─── Timeline ─── */
+.timeline {
+    position: relative;
+    border-left: 2px solid #f3f4f6;
+    margin-left: 8px;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+.timeline-item {
+    position: relative;
+    padding-left: 24px;
+}
+.timeline-dot {
+    position: absolute;
+    left: -9px;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 4px white;
+    flex-shrink: 0;
+}
+.dot--menunggu  { background: #f59e0b; }
+.dot--diproses  { background: #3b82f6; }
+.dot--selesai   { background: #22c55e; }
+.dot--merah     { background: #ef4444; }
+.dot--abu       { background: #9ca3af; }
+
+.timeline-content { display: flex; flex-direction: column; gap: 4px; }
+.timeline-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+.timeline-status { font-size: 13px; font-weight: 700; color: #1f2937; }
+.timeline-date   { font-size: 11px; color: #6b7280; }
+.timeline-catatan {
+    font-size: 13px;
+    color: #4b5563;
+    background: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 8px;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+    margin: 4px 0 0;
+    word-break: break-word;
 }
 
-.foto-modal-img {
-    max-width: 100%;
-    max-height: 65vh;
+/* ─── Pelapor ─── */
+.pelapor-body { display: flex; flex-direction: column; gap: 14px; }
+.info-field { display: flex; flex-direction: column; gap: 3px; }
+.info-label { font-size: 11px; color: #6b7280; }
+.info-value { font-size: 13px; font-weight: 600; color: #1f2937; }
+.info-verified {
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 3px;
+}
+.verified--yes { color: #16a34a; }
+.verified--no  { color: #dc2626; }
+
+/* ─── Action card ─── */
+.action-note { font-size: 13px; color: #6b7280; font-style: italic; line-height: 1.5; }
+
+/* ─── Dialog ─── */
+.dialog-body   { display: flex; flex-direction: column; gap: 12px; }
+.dialog-text   { font-size: 14px; color: #4b5563; margin: 0; line-height: 1.6; }
+.dialog-label  { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
+.dialog-textarea {
+    width: 100%;
+    border: 1px solid #d1d5db;
     border-radius: 8px;
-    object-fit: contain;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: "Be Vietnam Pro", sans-serif;
+    min-height: 100px;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.dialog-textarea:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+.dialog-char-count { font-size: 11px; color: #6b7280; text-align: right; margin-top: 4px; }
+.dialog-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+/* ─── Bukti images ─── */
+.bukti-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 4px 2px;
+}
+.bukti-item {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #f3f4f6;
+    background: #f9fafb;
+    display: flex;
+    justify-content: center;
+    padding: 8px;
+}
+.bukti-link { display: flex; justify-content: center; width: 100%; }
+.bukti-img  { max-width: 100%; height: auto; border-radius: 6px; object-fit: contain; }
+
+/* ─── Utility classes ─── */
+.w-full { width: 100%; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.gap-3 { gap: 0.75rem; }
+.justify-center { justify-content: center; }
+
+/* ════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════ */
+
+/* ── Tablet narrow: collapse to single column ── */
+@media (max-width: 860px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    /* Sidebar goes below main on tablet, but above on mobile via order */
+    .side-col {
+        /* two-column row for sidebar cards */
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+}
+
+/* ── Tablet (601px – 860px) ── */
+@media (min-width: 601px) and (max-width: 860px) {
+    .detail-page { padding: 24px 16px; }
+    .header-title { font-size: 20px; }
+    .card-section { padding: 20px; }
+    .laporan-judul { font-size: 16px; }
+}
+
+/* ── Mobile (≤ 600px) ── */
+@media (max-width: 600px) {
+    /* Shell */
+    .detail-page {
+        padding: 0 0 env(safe-area-inset-bottom, 24px);
+        background: var(--color-general-frame);
+    }
+    .detail-inner {
+        padding: 0;
+    }
+
+    /* Header */
+    .detail-header {
+        background: white;
+        padding: 16px;
+        margin-bottom: 0;
+        border-bottom: 1px solid #f3f4f6;
+        gap: 12px;
+    }
+    .back-btn { width: 36px; height: 36px; }
+    .header-title { font-size: 16px; }
+    .header-sub { font-size: 12px; }
+
+    /* Content grid: single column, no gap between page sections */
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 12px;
+    }
+    .main-col { gap: 8px; }
+
+    /* Sidebar: stack vertically on mobile */
+    .side-col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Cards */
+    .card-section { padding: 16px; }
+
+    /* Title row: stack badge under title */
+    .card-title-row {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    .laporan-judul { font-size: 15px; }
+    .laporan-no    { font-size: 12px; }
+
+    /* Deskripsi */
+    .deskripsi-box { font-size: 13px; padding: 12px; }
+
+    /* Meta grid: 1 column on very small */
+    .meta-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .meta-label { font-size: 9px; }
+    .meta-value { font-size: 12px; }
+
+    /* Section label */
+    .section-label { font-size: 10px; }
+
+    /* Card subtitle */
+    .stf-page-subtitle { font-size: 12px; margin-bottom: 12px; }
+    .card-subtitle { font-size: 12px; margin-bottom: 12px; }
+
+    /* Timeline */
+    .timeline-status { font-size: 12px; }
+    .timeline-date   { font-size: 10px; }
+    .timeline-catatan{ font-size: 12px; padding: 8px 10px; }
+
+    /* Info */
+    .info-label { font-size: 10px; }
+    .info-value { font-size: 12px; }
+
+    /* Dialog actions: full width stack */
+    .dialog-actions {
+        flex-direction: column-reverse;
+    }
+    .dialog-actions > * { width: 100%; }
+    .dialog-text  { font-size: 13px; }
+    .dialog-label { font-size: 12px; }
+}
+
+/* ── Very small (≤ 360px) ── */
+@media (max-width: 360px) {
+    .header-title { font-size: 14px; }
+    .meta-grid { grid-template-columns: 1fr; }
+    .card-section { padding: 12px; }
+    .laporan-judul { font-size: 14px; }
 }
 </style>

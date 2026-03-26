@@ -242,9 +242,12 @@ onMounted(async () => {
             anonimitas: anonimitas.value
         }
 
-    } catch (e) {
-        const notFoundStore = useNotFoundStore()
-        if (notFoundStore.visible) return
+    } catch (e: any) {
+        const errorMsg = String(e?.message || e)
+        if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || e?.response?.status === 403) {
+            router.replace({ name: 'laporanKerusakan' })
+            return
+        }
         
         showAlert({ type: 'warning', title: 'Error', description: 'Gagal memuat data laporan' })
         router.push({ name: 'laporanKerusakan' })
