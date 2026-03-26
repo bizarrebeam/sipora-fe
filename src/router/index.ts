@@ -106,24 +106,6 @@ const router = createRouter({
       name: 'detailLaporanKerusakan',
       component: DetailLaporanKerusakanView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
-      beforeEnter: async (to, from, next) => {
-        try {
-          const { useLaporanKerusakanStore } = await import('@/stores/laporanKerusakan')
-          await useLaporanKerusakanStore().fetchLaporanDetail(to.params.id as string)
-          next()
-        } catch (e: any) {
-          const { useNotFoundStore } = await import('@/stores/notFound')
-          if (useNotFoundStore().visible) {
-            if (from.name) {
-              next(false)
-            } else {
-              next('/')
-            }
-          } else {
-            next()
-          }
-        }
-      }
     },
     {
       path: '/create-kerusakan',
@@ -142,24 +124,6 @@ const router = createRouter({
       name: 'detailLaporanBullying',
       component: DetailLaporanBullyingView,
       meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru', 'guru_bk', 'kemahasiswaan'] },
-      beforeEnter: async (to, from, next) => {
-        try {
-          const { useLaporanBullyingStore } = await import('@/stores/laporanBullying')
-          await useLaporanBullyingStore().ambilDetail(to.params.id as string)
-          next()
-        } catch (e: any) {
-          const { useNotFoundStore } = await import('@/stores/notFound')
-          if (useNotFoundStore().visible) {
-            if (from.name) {
-              next(false)
-            } else {
-              next('/')
-            }
-          } else {
-            next()
-          }
-        }
-      }
     },
     {
       path: '/create-bullying',
@@ -172,48 +136,12 @@ const router = createRouter({
       name: 'editLaporanBullying',
       component: EditLaporanBullyingView,
       meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
-      beforeEnter: async (to, from, next) => {
-        try {
-          const { useLaporanBullyingStore } = await import('@/stores/laporanBullying')
-          await useLaporanBullyingStore().ambilDetail(to.params.id as string)
-          next()
-        } catch (e: any) {
-          const { useNotFoundStore } = await import('@/stores/notFound')
-          if (useNotFoundStore().visible) {
-            if (from.name) {
-              next(false)
-            } else {
-              next('/')
-            }
-          } else {
-            next()
-          }
-        }
-      }
     },
     {
       path: '/laporan-kerusakan/:id/edit',
       name: 'editLaporanKerusakan',
       component: EditLaporanKerusakanView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru', 'siswa'] },
-      beforeEnter: async (to, from, next) => {
-        try {
-          const { useLaporanKerusakanStore } = await import('@/stores/laporanKerusakan')
-          await useLaporanKerusakanStore().fetchLaporanDetail(to.params.id as string)
-          next()
-        } catch (e: any) {
-          const { useNotFoundStore } = await import('@/stores/notFound')
-          if (useNotFoundStore().visible) {
-            if (from.name) {
-              next(false)
-            } else {
-              next('/')
-            }
-          } else {
-            next()
-          }
-        }
-      }
     },
     {
       path: '/aspirasi',
@@ -252,14 +180,11 @@ const router = createRouter({
       component: CreateArtikelView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'] },
     },
-    // Catch-all 404 route
+    // Catch-all 404
     {
       path: '/:pathMatch(.*)*',
       name: 'notFound',
-      redirect: (to) => {
-        // Will be handled in beforeEach to show popup
-        return { path: '/', query: { notFound: '1' } }
-      },
+      component: { template: '<div></div>' }
     },
   ],
 })
@@ -280,11 +205,15 @@ router.beforeEach((to, from, next) => {
 
   const allowedRoles = to.meta.allowedRoles as string[] | undefined
 
-  // Handle catch-all 404 redirect
-  if (to.query.notFound === '1') {
+  // Catch-all 404 handler
+  if (to.name === 'notFound') {
     const notFoundStore = useNotFoundStore()
     notFoundStore.show()
-    next({ path: '/', replace: true })
+    if (from.name) {
+      next(false)
+    } else {
+      next('/')
+    }
     return
   }
 
