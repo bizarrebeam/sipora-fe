@@ -3,11 +3,21 @@ import { useAuthStore } from '@/stores/auth'
 import { useNotFoundStore } from '@/stores/notFound'
 
 /**
- * All Django responses are wrapped by CoreJSONRenderer:
- * Success: { status: "success", message: "...", data: {...} }
- * Error:   { status: "error",   message: "...", data: {...} | null }
+ * Core API Service
+ * 
+ * Provides centralized network request methods with built-in JWT authentication,
+ * centralized error deserialization, and global interception for 401/403/404 statuses.
+ * 
+ * Note: All successful Django REST Framework responses are expected to be wrapped natively
+ * by CoreJSONRenderer: { status: "success", message: string, data: any }
  */
 
+/**
+ * Performs a lightweight health check to verify backend connectivity.
+ * 
+ * @throws {Error} If the server is unreachable or returns a 500 status.
+ * @returns {Promise<any>} The parsed health check JSON response.
+ */
 export async function getApiStatus() {
   const response = await fetch(API_BASE_URL, { 
     credentials: 'include',
@@ -20,15 +30,19 @@ export async function getApiStatus() {
   return json
 }
 
-// Parse the wrapped error from CoreJSONRenderer + core_exception_handler
+/**
+ * Extracts a human-readable string from Django's nested error responses.
+ * 
+ * @param json The deserialized error JSON payload.
+ * @param status The HTTP status code of the failed request.
+ * @returns {string} The prioritized error message.
+ */
 function parseError(json: any, status: number): string {
-  // CoreJSONRenderer now formats all errors as:
-  // { status: "error", message: "human-readable first error", data: {...field errors} }
   if (json.status === 'error' && json.message) {
     return json.message
   }
 
-  // Fallback: if data has field-level errors (shouldn't happen with fixed renderer)
+  // Fallback: concatenate detail or multi-field validation keys
   if (json.data && typeof json.data === 'object') {
     const messages: string[] = []
     for (const [key, value] of Object.entries(json.data)) {
@@ -40,10 +54,17 @@ function parseError(json: any, status: number): string {
     if (messages.length) return messages[0]!
   }
 
-  // Last resort
+  // Final fallback layer
   return json.detail || json.message || `Terjadi kesalahan (${status}).`
 }
 
+/**
+ * Executes a public (unauthenticated) GET request.
+ * 
+ * @param endpoint The API URI to request (relative to VITE_API_BASE_URL).
+ * @throws {Error} Extracted standard error message if the response is not OK.
+ * @returns {Promise<any>} The unwrapped `data` payload.
+ */
 export async function apiGet(endpoint: string) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, { 
     credentials: 'include',
@@ -56,6 +77,14 @@ export async function apiGet(endpoint: string) {
   return json.data
 }
 
+/**
+ * Executes a public (unauthenticated) POST request.
+ * 
+ * @param endpoint The API URI to request.
+ * @param payload The request body to be serialized as JSON.
+ * @throws {Error} Extracted standard error message if the response is not OK.
+ * @returns {Promise<any>} The unwrapped `data` payload.
+ */
 export async function apiPost(endpoint: string, payload: object) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
@@ -71,7 +100,15 @@ export async function apiPost(endpoint: string, payload: object) {
   return json.data
 }
 
-// Authenticated GET request
+/**
+ * Executes an authenticated GET request, silently attaching HTTP-Only session cookies.
+ * Globally intercepts 401 Unauthorized errors to purge expired client sessions.
+ * Globally intercepts 403 and 404 errors to trigger the global 'Priwitan' Not Found overlay.
+ * 
+ * @param endpoint The protected API URI to request.
+ * @throws {Error} Extracted standard error message if the response is not OK.
+ * @returns {Promise<any>} The unwrapped `data` payload.
+ */
 export async function apiAuthGet(endpoint: string) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     credentials: 'include',
@@ -95,7 +132,16 @@ export async function apiAuthGet(endpoint: string) {
   return json.data
 }
 
-// Authenticated POST request
+/**
+ * Executes an authenticated POST request, silently attaching HTTP-Only session cookies.
+ * Globally intercepts 401 Unauthorized errors to purge expired client sessions.
+ * Globally intercepts 403 Forbidden errors to trigger the global Not Found overlay.
+ * 
+ * @param endpoint The protected API URI to request.
+ * @param payload The request body to be serialized as JSON.
+ * @throws {Error} Extracted standard error message if the response is not OK.
+ * @returns {Promise<any>} The unwrapped `data` payload.
+ */
 export async function apiAuthPost(endpoint: string, payload: object) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
@@ -123,7 +169,16 @@ export async function apiAuthPost(endpoint: string, payload: object) {
   return json.data
 }
 
-// Authenticated PUT request
+/**
+ * Executes an authenticated PUT (update) request, silently attaching HTTP-Only session cookies.
+ * Globally intercepts 401 Unauthorized errors to purge expired client sessions.
+ * Globally intercepts 403 Forbidden errors to trigger the global Not Found overlay.
+ * 
+ * @param endpoint The protected API URI to request.
+ * @param payload The request body to be serialized as JSON.
+ * @throws {Error} Extracted standard error message if the response is not OK.
+ * @returns {Promise<any>} The unwrapped `data` payload.
+ */
 export async function apiAuthPut(endpoint: string, payload: object) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method: 'PUT',

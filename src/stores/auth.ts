@@ -8,6 +8,10 @@ import { useLaporanBullyingStore } from '@/stores/laporanBullying'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 import { useAlertStore } from '@/stores/alert'
 
+/**
+ * Current User Session Interface
+ * Represents the authenticated entity's aggregated profile data.
+ */
 interface User {
   id?: number
   role: string
@@ -24,6 +28,13 @@ interface User {
   date_joined?: string
 }
 
+/**
+ * Global Authentication Store
+ * 
+ * Manages the client-side lifecycle of the user session, encompassing login execution,
+ * caching of profile metadata, cross-module store clearing during sign-out, 
+ * and exposure of computed RBAC role identifiers.
+ */
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const isSessionExpired = ref(false)
@@ -32,7 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!user.value)
 
-  // Load user data from localStorage on init
+  // Rehydrate the ephemeral session state from standard LocalStorage on initialization
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
     try {
@@ -65,11 +76,20 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'
   })
 
+  /**
+   * Persists the authenticated user entity into local storage for immediate rehydration across hard reloads.
+   * 
+   * @param userData The parsed User object returned from the backend login or profile endpoint.
+   */
   function setUser(userData: User) {
     user.value = userData
     localStorage.setItem('user', JSON.stringify(userData))
   }
 
+  /**
+   * Completely purges the existing user session.
+   * Clears volatile tokens, LocalStorage caches, and broadcasts reset instructions to all ancillary Pinia stores.
+   */
   function clearAuth() {
     user.value = null
     localStorage.removeItem('access_token')
@@ -95,6 +115,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Authenticates the user credentials against the backend and populates the store.
+   * 
+   * @param identifier The username, NIS, or NUPTK identifying the account.
+   * @param password The plaintext security phrasing to verify.
+   * @param allowedRoles Optional whitelist of roles acceptable for the current portal. Throw if unmatched.
+   * @returns {Promise<any>} The authenticated payload metadata upon successful login.
+   */
   async function login(identifier: string, password: string, allowedRoles?: string[]) {
     const loader = useLoadingStore()
     loader.show('Sedang masuk...')
@@ -124,6 +152,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Dispatches a public registration payload specifically for new Siswa (Student) accounts.
+   */
   async function registerSiswa(
     nis: string,
     nama_lengkap: string,
@@ -141,6 +172,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Initiates the password recovery workflow for a student by dispatching a reset token to their email.
+   * 
+   * @param nis The student's primary identifier.
+   */
   async function forgotPassword(nis: string) {
     const loader = useLoadingStore()
     loader.show('Mengirim email reset...')
@@ -151,6 +187,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Finalizes the password recovery workflow, consummating the emailed token.
+   */
   async function resetPassword(uid: string, token: string, password: string, konfirmasi_password: string) {
     const loader = useLoadingStore()
     loader.show('Mengubah password...')
@@ -161,6 +200,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Gracefully revokes the user's active session by blacklisting the server-side refresh token
+   * and subsequently clearing local application state.
+   */
   async function logout() {
     const loader = useLoadingStore()
     loader.show('Keluar dari akun...')
@@ -175,6 +218,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Silently refreshes the detailed user profile entity from the backend.
+   * Incorporates an aggressive 5-minute cache bypass to prevent redundant network spam on component mounts.
+   */
   async function fetchProfile() {
     const CACHE_TIME = 5 * 60 * 1000 // 5 minutes
     const isStale = Date.now() - profileLastFetched.value > CACHE_TIME
@@ -194,6 +241,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Communicates demographic changes back to the user's root profile.
+   */
   async function editProfil(payload: { kelas?: string; mata_pelajaran?: string }) {
     const loader = useLoadingStore()
     loader.show('Menyimpan perubahan...')
@@ -206,6 +256,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Modifies the authenticated user's current password.
+   */
   async function ubahPassword(password_lama: string, password_baru: string) {
     const loader = useLoadingStore()
     loader.show('Mengubah password...')
