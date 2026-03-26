@@ -285,6 +285,12 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 }
 
 async function handleCreate() {
+  // Trim all text fields
+  createUsername.value = createUsername.value.trim()
+  createNuptk.value = createNuptk.value.trim()
+  createEmail.value = createEmail.value.trim()
+  createNama.value = createNama.value.trim()
+
   if (createType.value === 'guru_bk' && !createUsername.value) {
     alertStore.error('Username wajib diisi untuk Guru BK.')
     return
@@ -322,15 +328,12 @@ async function handleCreate() {
     return
   }
   if (createType.value === 'guru') {
-    const validMapels = createMapels.value.filter(m => m.trim().length > 0)
-    if (validMapels.length === 0) {
-      alertStore.error('Mata pelajaran wajib diisi untuk guru.')
+    // Validate that ALL matpel fields have content (not just at least one)
+    const hasEmpty = createMapels.value.some(m => m.trim().length === 0)
+    if (hasEmpty) {
+      alertStore.error('Semua kolom mata pelajaran harus diisi. Hapus kolom yang tidak diperlukan.')
       return
     }
-  }
-  if (createPassword.value.length < 6) {
-    alertStore.error('Password minimal 6 karakter.')
-    return
   }
 
   createLoading.value = true
@@ -352,6 +355,7 @@ async function handleCreate() {
     showCreateDialog.value = false
     showSuccessCreateDialog.value = true
     await fetchDaftar()
+    await fetchCounts()
   } catch (err: any) {
     alertStore.error(err.message || 'Gagal membuat akun.')
   } finally {
@@ -371,7 +375,19 @@ function removeMapel(index: number) {
   createMapels.value.splice(index, 1)
 }
 
-onMounted(() => {
+async function fetchCounts() {
+  try {
+    const data = await apiAuthGet('akun/admin/jumlah/')
+    if (data.siswa !== undefined) siswaTotal.value = data.siswa
+    if (data.guru !== undefined) guruTotal.value = data.guru
+    if (data.guru_bk !== undefined) guruBkTotal.value = data.guru_bk
+  } catch {
+    // silently fail — counts will update when tabs are clicked
+  }
+}
+
+onMounted(async () => {
+  fetchCounts()
   if (siswaList.value.length === 0 && guruList.value.length === 0 && guruBkList.value.length === 0) {
     fetchDaftar()
   }

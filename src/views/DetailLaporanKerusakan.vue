@@ -11,6 +11,7 @@ import SChip from '@/components/SChip.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 import { useAlertStore } from '@/stores/alert'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const route = useRoute()
 const router = useRouter()
@@ -123,11 +124,11 @@ onMounted(async () => {
         await laporanStore.fetchLaporanDetail(id)
         laporan.value = laporanStore.currentLaporan
     } catch (err: any) {
+        const notFoundStore = useNotFoundStore()
+        if (notFoundStore.visible) return
+
         const msg = err.message || ''
-        if (msg.includes('403') || msg.toLowerCase().includes('akses')) {
-            alertStore.error('Akses ditolak')
-            router.replace('/laporan-kerusakan')
-        } else if (msg.includes('401')) {
+        if (msg.includes('401')) {
             router.replace('/login')
         } else {
             loadError.value = msg || 'Gagal memuat laporan'

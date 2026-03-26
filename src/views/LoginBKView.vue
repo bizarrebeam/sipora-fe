@@ -16,6 +16,7 @@ const loading = ref(false)
 
 async function handleLogin() {
   errorMsg.value = ''
+  identifier.value = identifier.value.trim()
   if (!identifier.value || !password.value) {
     errorMsg.value = 'Harap isi semua field.'
     return
