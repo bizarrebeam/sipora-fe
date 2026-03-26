@@ -33,13 +33,13 @@ async function fetchDetail() {
         await laporanStore.fetchLaporanDetail(id)
     } catch (error: any) {
         const errorMsg = String(error?.message || error)
-        if (errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
-            alertStore.error('Anda tidak memiliki akses untuk melihat detail laporan ini')
-            router.push({ path: '/laporan-kerusakan', query: { unauthorized: 'true' } })
-        } else {
-            alertStore.error('Gagal memuat detail laporan')
-            router.push('/laporan-kerusakan')
+        if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
+            router.replace('/laporan-kerusakan')
+            return
         }
+        
+        alertStore.error('Gagal memuat detail laporan')
+        router.push('/laporan-kerusakan')
     } finally {
         loading.value = false
     }

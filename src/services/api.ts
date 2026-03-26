@@ -88,14 +88,6 @@ export async function apiAuthGet(endpoint: string) {
       const notFoundStore = useNotFoundStore()
       notFoundStore.show()
       
-      import('@/router').then(({ default: router }) => {
-        if (window.history.state && window.history.state.back) {
-          router.back()
-        } else {
-          router.replace('/')
-        }
-      })
-      
       throw new Error('Halaman tidak ditemukan.')
     }
     throw new Error(parseError(json, response.status))
@@ -124,14 +116,6 @@ export async function apiAuthPost(endpoint: string, payload: object) {
       const notFoundStore = useNotFoundStore()
       notFoundStore.show()
       
-      import('@/router').then(({ default: router }) => {
-        if (window.history.state && window.history.state.back) {
-          router.back()
-        } else {
-          router.replace('/')
-        }
-      })
-      
       throw new Error('Anda tidak memiliki akses.')
     }
     throw new Error(parseError(json, response.status))
@@ -159,14 +143,6 @@ export async function apiAuthPut(endpoint: string, payload: object) {
     if (response.status === 403) {
       const notFoundStore = useNotFoundStore()
       notFoundStore.show()
-      
-      import('@/router').then(({ default: router }) => {
-        if (window.history.state && window.history.state.back) {
-          router.back()
-        } else {
-          router.replace('/')
-        }
-      })
       
       throw new Error('Anda tidak memiliki akses.')
     }
