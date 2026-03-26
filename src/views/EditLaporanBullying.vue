@@ -7,6 +7,7 @@ import SButton from '@/components/SButton.vue'
 import SAlert from '@/components/SAlert.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
 import { useLaporanBullyingStore } from '@/stores/laporanBullying'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const router = useRouter()
 const route = useRoute()
@@ -90,6 +91,9 @@ onMounted(async () => {
             anonimitas.value = laporan.anonimitas || false
         }
     } catch (error: any) {
+        const notFoundStore = useNotFoundStore()
+        if (notFoundStore.visible) return
+
         showAlert({
             type: 'warning',
             title: 'Gagal Memuat Laporan',

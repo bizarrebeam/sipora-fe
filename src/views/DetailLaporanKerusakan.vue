@@ -8,6 +8,7 @@ import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SDialog from '@/components/SDialog.vue'
 import SChip from '@/components/SChip.vue'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const route = useRoute()
 const router = useRouter()

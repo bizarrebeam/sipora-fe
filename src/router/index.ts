@@ -24,6 +24,7 @@ import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit ar
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -86,13 +87,13 @@ const router = createRouter({
       path: '/manajemen-akun',
       name: 'manajemenAkun',
       component: ManajemenAkunView,
-      meta: { requiresAuth: true, keepAlive: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru_bk'], keepAlive: true },
     },
     {
       path: '/log-aktivitas',
       name: 'logAktivitas',
       component: LogAktivitasView,
-      meta: { requiresAuth: true, keepAlive: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'], keepAlive: true },
     },
     {
       path: '/laporan-kerusakan',
@@ -116,25 +117,25 @@ const router = createRouter({
       path: '/laporan-bullying',
       name: 'laporanBullying',
       component: LaporanBullyingView,
-      meta: { requiresAuth: true, keepAlive: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru', 'guru_bk', 'kemahasiswaan'], keepAlive: true },
     },
     {
       path: '/laporan-bullying/:id',
       name: 'detailLaporanBullying',
       component: DetailLaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru', 'guru_bk', 'kemahasiswaan'] },
     },
     {
       path: '/create-bullying',
       name: 'createLaporanBullying',
       component: CreateLaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
     },
     {
       path: '/laporan-bullying/:id/edit',
       name: 'editLaporanBullying',
       component: EditLaporanBullyingView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
     },
     {
       path: '/laporan-kerusakan/:id/edit',
@@ -171,13 +172,22 @@ const router = createRouter({
       path: '/create-artikel',
       name: 'createArtikel',
       component: CreateArtikelView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'] },
     },
     {
       path: '/edit-artikel/:id',
       name: 'editArtikel',
       component: CreateArtikelView,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'] },
+    },
+    // Catch-all 404 route
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'notFound',
+      redirect: (to) => {
+        // Will be handled in beforeEach to show popup
+        return { path: '/', query: { notFound: '1' } }
+      },
     },
   ],
 })
@@ -198,10 +208,26 @@ router.beforeEach((to, from, next) => {
 
   const allowedRoles = to.meta.allowedRoles as string[] | undefined
 
+  // Handle catch-all 404 redirect
+  if (to.query.notFound === '1') {
+    const notFoundStore = useNotFoundStore()
+    notFoundStore.show()
+    next({ path: '/', replace: true })
+    return
+  }
+
   if (to.meta.requiresAuth && !isUserLoggedIn) {
     next('/login')
   } else if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
-    next('/')
+    // Show 404 popup instead of revealing the page
+    const notFoundStore = useNotFoundStore()
+    notFoundStore.show()
+    // Stay on current page if possible, otherwise go home
+    if (from.name) {
+      next(false)
+    } else {
+      next('/')
+    }
   } else if (to.meta.guest && isUserLoggedIn) {
     next('/')
   } else {

@@ -38,6 +38,11 @@ const semesterInfo = computed(() => {
 async function handleRegister() {
   errorMsg.value = ''
 
+  // Trim all text fields (kecuali password)
+  nis.value = nis.value.trim()
+  namaLengkap.value = namaLengkap.value.trim()
+  email.value = email.value.trim()
+
   if (!nis.value || !namaLengkap.value || !email.value || !kelas.value || !password.value || !konfirmasiPassword.value) {
     errorMsg.value = 'Harap isi semua field.'
     return

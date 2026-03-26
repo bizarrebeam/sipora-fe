@@ -8,6 +8,7 @@ import SAlert from '@/components/SAlert.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
 import { useLaporanKerusakanStore } from '@/stores/laporanKerusakan'
 import { useAuthStore } from '@/stores/auth'
+import { useNotFoundStore } from '@/stores/notFound'
 
 const router = useRouter()
 const route = useRoute()
@@ -242,6 +243,9 @@ onMounted(async () => {
         }
 
     } catch (e) {
+        const notFoundStore = useNotFoundStore()
+        if (notFoundStore.visible) return
+        
         showAlert({ type: 'warning', title: 'Error', description: 'Gagal memuat data laporan' })
         router.push({ name: 'laporanKerusakan' })
     }
