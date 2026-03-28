@@ -103,9 +103,17 @@ function formatDate(dateStr: string) {
     return d.toLocaleString('id-ID', options)
 }
 
+function isOverdue(dateStr: string, status: string): boolean {
+    if (status !== 'menunggu' || !dateStr) return false
+    const then = new Date(dateStr)
+    const now = new Date()
+    const diffDays = (now.getTime() - then.getTime()) / (1000 * 3600 * 24)
+    return diffDays > 5
+}
+
 function statusLabel(status: string) {
     const map: Record<string, string> = {
-        menunggu: 'Menunggu Verifikasi',
+        menunggu: 'Menunggu Konfirmasi',
         diproses: 'Diproses',
         selesai: 'Selesai',
         dibatalkan: 'Dibatalkan',
@@ -333,13 +341,44 @@ onActivated(() => {
                             empty-message="Belum ada laporan bullying."
                         >
                             <template #body-cell-tanggal_laporan="{ row }">
-                                <span class="cell-muted">{{ formatDate(row.tanggal_laporan) }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="cell-muted">{{ formatDate(row.tanggal_laporan) }}</span>
+                                    <div 
+                                        v-if="isOverdue(row.tanggal_laporan, row.status)" 
+                                        class="group relative flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 text-orange-600 cursor-help shrink-0"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <polyline points="12 6 12 12 16 14"></polyline>
+                                        </svg>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl text-center z-[60] transition-all duration-200">
+                                            Laporan ini belum diproses lebih dari 5 hari
+                                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </template>
                             <template #body-cell-no_laporan="{ row }">
                                 <span class="cell-no">{{ row.no_laporan }}</span>
                             </template>
                             <template #body-cell-judul="{ row }">
-                                <span class="cell-bold">{{ row.judul }}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="cell-bold">{{ row.judul }}</span>
+                                    <div 
+                                        v-if="row.jenis_bullying === 'fisik'" 
+                                        class="group relative flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 cursor-help shrink-0"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                            <line x1="12" y1="9" x2="12" y2="13"/>
+                                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                        </svg>
+                                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl text-center z-[60] transition-all duration-200">
+                                            Bullying bersifat fisik harus segera anda tindak lanjut
+                                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </template>
                             <template #body-cell-lokasi="{ row }">
                                 <span>{{ row.lokasi }}</span>

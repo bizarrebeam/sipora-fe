@@ -62,6 +62,30 @@ const jenisBullyingOptions = [
     { value: 'lainnya', label: 'Lainnya' },
 ]
 
+const lokasiOptions = [
+    { value: 'Kelas 7A', label: 'Kelas 7A' },
+    { value: 'Kelas 7B', label: 'Kelas 7B' },
+    { value: 'Kelas 8A', label: 'Kelas 8A' },
+    { value: 'Kelas 8B', label: 'Kelas 8B' },
+    { value: 'Ruang Musik', label: 'Ruang Musik' },
+    { value: 'Ruang OSIS', label: 'Ruang OSIS' },
+    { value: 'Toilet', label: 'Toilet' },
+    { value: 'Lapangan', label: 'Lapangan' },
+    { value: 'Kantin', label: 'Kantin' },
+    { value: 'Perpustakaan', label: 'Perpustakaan' },
+    { value: 'Dapur', label: 'Dapur' },
+    { value: 'Ruang Guru', label: 'Ruang Guru' },
+    { value: 'Tenda Biru', label: 'Tenda Biru' },
+    { value: 'Kapel Desa Putera', label: 'Kapel Desa Putera' },
+    { value: 'Panti Asuhan Desa Putera', label: 'Panti Asuhan Desa Putera' },
+    { value: 'Graha Desa Putera', label: 'Graha Desa Putera' },
+    { value: 'Gua Maria', label: 'Gua Maria' },
+    { value: 'Kelas 9A', label: 'Kelas 9A' },
+    { value: 'Kelas 9B', label: 'Kelas 9B' },
+    { value: 'Lab Komputer', label: 'Lab Komputer' },
+    { value: 'Lainnya', label: 'Lainnya' },
+]
+
 const errors = ref({
     judul: '',
     tanggalKejadian: '',
@@ -76,7 +100,7 @@ const isFormValid = computed(() => {
         tanggalKejadian.value &&
         lokasi.value.trim() &&
         jenisBullying.value &&
-        deskripsi.value.trim() &&
+        deskripsi.value.trim().length >= 50 &&
         !buktiError.value
     )
 })
@@ -86,7 +110,14 @@ function validate() {
     errors.value.tanggalKejadian = !tanggalKejadian.value ? 'Tanggal wajib diisi' : ''
     errors.value.lokasi = !lokasi.value.trim() ? 'Lokasi wajib diisi' : ''
     errors.value.jenisBullying = !jenisBullying.value ? 'Jenis bullying wajib dipilih' : ''
-    errors.value.deskripsi = !deskripsi.value.trim() ? 'Deskripsi wajib diisi' : ''
+    
+    if (!deskripsi.value.trim()) {
+        errors.value.deskripsi = 'Deskripsi wajib diisi'
+    } else if (deskripsi.value.trim().length < 50) {
+        errors.value.deskripsi = 'Deskripsi minimal 50 karakter'
+    } else {
+        errors.value.deskripsi = ''
+    }
 }
 
 function triggerFileInput() {
@@ -261,15 +292,23 @@ async function handleSubmit() {
 
                 <!-- Lokasi -->
                 <div class="form-group">
-                    <STextField
-                        v-model="lokasi"
-                        label="Lokasi Kejadian"
-                        :required="true"
-                        :placeholder="'Ketik di sini...'"
-                        :variant="'text'"
-                        :disabled="false"
-                        @blur="validate"
-                    />
+                    <div class="custom-label-row">
+                        <label class="custom-label">Lokasi Kejadian</label>
+                        <span class="custom-asterisk">*</span>
+                    </div>
+                    <div class="relative w-full">
+                        <select 
+                            v-model="lokasi" 
+                            @change="validate"
+                            class="bullying-select"
+                            :class="{ 'placeholder-active': !lokasi }"
+                        >
+                            <option value="" disabled selected>Pilih lokasi kejadian...</option>
+                            <option v-for="option in lokasiOptions" :key="option.value" :value="option.value" class="text-general-black">
+                                {{ option.label }}
+                            </option>
+                        </select>
+                    </div>
                     <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                 </div>
 
@@ -302,7 +341,10 @@ async function handleSubmit() {
                             <label class="custom-label">Deskripsi Kejadian</label>
                             <span class="custom-asterisk">*</span>
                         </div>
-                        <span class="file-count">{{ deskripsi.length }} karakter</span>
+                        <span class="file-count" :style="deskripsi.length > 0 && deskripsi.length < 50 ? 'color: var(--color-general-red);' : ''">
+                            <span v-if="deskripsi.length < 50">Minimal 50 karakter ({{ deskripsi.length }} karakter)</span>
+                            <span v-else>{{ deskripsi.length }} karakter</span>
+                        </span>
                     </div>
                     <STextField
                         v-model="deskripsi"
