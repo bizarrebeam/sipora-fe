@@ -125,6 +125,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         deskripsi: string
         lokasi: string
         tanggal_kejadian: string
+        waktu_kejadian?: string
         jenis_bullying: string
         anonimitas: boolean
         foto_bukti?: File[]
@@ -138,6 +139,9 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             formData.append('deskripsi', payload.deskripsi)
             formData.append('lokasi', payload.lokasi)
             formData.append('tanggal_kejadian', payload.tanggal_kejadian)
+            if (payload.waktu_kejadian) {
+                formData.append('waktu_kejadian', payload.waktu_kejadian)
+            }
             formData.append('jenis_bullying', payload.jenis_bullying)
             formData.append('anonimitas', String(payload.anonimitas))
 
@@ -190,6 +194,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             if (payload.deskripsi) formData.append('deskripsi', payload.deskripsi)
             if (payload.lokasi) formData.append('lokasi', payload.lokasi)
             if (payload.tanggal_kejadian) formData.append('tanggal_kejadian', payload.tanggal_kejadian)
+            if (payload.waktu_kejadian) formData.append('waktu_kejadian', payload.waktu_kejadian)
             if (payload.jenis_bullying) formData.append('jenis_bullying', payload.jenis_bullying)
             if (payload.anonimitas !== undefined) formData.append('anonimitas', String(payload.anonimitas))
 

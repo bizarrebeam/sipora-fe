@@ -32,6 +32,7 @@ function handleAlertPrimary() {
 
 const judul = ref('')
 const tanggalKejadian = ref('')
+const waktuKejadian = ref('')
 const tanggalKejadianObj = ref<Date | null>(null)
 const showDatePicker = ref(false)
 const lokasi = ref('')
@@ -177,6 +178,7 @@ async function handleSubmit() {
             deskripsi: deskripsi.value.trim(),
             lokasi: lokasi.value.trim(),
             tanggal_kejadian: tanggalKejadian.value,
+            waktu_kejadian: waktuKejadian.value || undefined,
             jenis_bullying: jenisBullying.value,
             anonimitas: anonimitas.value,
             foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
@@ -186,6 +188,7 @@ async function handleSubmit() {
         deskripsi.value = ''
         lokasi.value = ''
         tanggalKejadian.value = ''
+        waktuKejadian.value = ''
         jenisBullying.value = ''
         anonimitas.value = false
         buktiPendukung.value = []
@@ -288,6 +291,21 @@ async function handleSubmit() {
                         </div>
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
+                </div>
+
+                <!-- Waktu Kejadian -->
+                <div class="form-group">
+                    <div class="custom-label-row">
+                        <label class="custom-label">Waktu Kejadian</label>
+                        <span class="optional-tag ml-1">(opsional)</span>
+                    </div>
+                    <div class="relative w-full">
+                        <input 
+                            type="time"
+                            v-model="waktuKejadian"
+                            class="time-input"
+                        />
+                    </div>
                 </div>
 
                 <!-- Lokasi -->
@@ -545,6 +563,28 @@ async function handleSubmit() {
     color: #d1d5db;
 }
 
+/* ─── Time input ─── */
+.time-input {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-radius: 8px;
+    border: 1px solid var(--color-general-border);
+    background: white;
+    padding: 10px 16px;
+    color: var(--color-general-black);
+    font-size: 15px;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 500;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+.time-input:hover,
+.time-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
 /* ─── Select ─── */
 .bullying-select {
     display: flex;
@@ -742,7 +782,8 @@ async function handleSubmit() {
         font-size: 15px;
     }
     .date-picker-btn,
-    .bullying-select {
+    .bullying-select,
+    .time-input {
         font-size: 14px;
         padding: 10px 14px;
     }
@@ -800,7 +841,8 @@ async function handleSubmit() {
 
     /* Inputs */
     .date-picker-btn,
-    .bullying-select {
+    .bullying-select,
+    .time-input {
         font-size: 13px;
         padding: 10px 12px;
         border-radius: 8px;
@@ -875,7 +917,8 @@ async function handleSubmit() {
         font-size: 12px;
     }
     .date-picker-btn,
-    .bullying-select {
+    .bullying-select,
+    .time-input {
         font-size: 12px;
         padding: 9px 10px;
     }

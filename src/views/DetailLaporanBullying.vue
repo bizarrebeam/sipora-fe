@@ -61,11 +61,20 @@ async function fetchDetail() {
 
 onMounted(() => { fetchDetail() })
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, includeTime = false) {
     if (!dateStr) return '-'
     const d = new Date(dateStr)
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
+    if (includeTime) {
+        options.hour = '2-digit'
+        options.minute = '2-digit'
+    }
     return d.toLocaleDateString('id-ID', options).replace(' pukul ', ', ')
+}
+
+function formatTime(timeStr: string) {
+    if (!timeStr) return '-'
+    return timeStr.slice(0, 5)
 }
 
 function formatImageUrl(path: string | undefined): string {
@@ -193,8 +202,12 @@ async function handleSelesai() {
                     <p class="meta-value">{{ formatDate(laporan.tanggal_kejadian) }}</p>
                   </div>
                   <div class="meta-item">
+                    <h3 class="meta-label">Waktu Kejadian</h3>
+                    <p class="meta-value">{{ formatTime(laporan.waktu_kejadian) }}</p>
+                  </div>
+                  <div class="meta-item">
                     <h3 class="meta-label">Tanggal Lapor</h3>
-                    <p class="meta-value meta-value--blue">{{ formatDate(laporan.tanggal_laporan) }}</p>
+                    <p class="meta-value meta-value--blue">{{ formatDate(laporan.tanggal_laporan, true) }}</p>
                   </div>
                 </div>
               </div>
@@ -234,7 +247,7 @@ async function handleSelesai() {
                   <div class="timeline-content">
                     <div class="timeline-row">
                       <span class="timeline-status">{{ statusLabel(riwayat.status) }}</span>
-                      <span class="timeline-date">{{ formatDate(riwayat.created_at) }}</span>
+                      <span class="timeline-date">{{ formatDate(riwayat.created_at, true) }}</span>
                     </div>
                     <p v-if="riwayat.catatan" class="timeline-catatan">{{ riwayat.catatan }} oleh {{ riwayat.user?.nama }}</p>
                   </div>
