@@ -109,6 +109,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function setSessionExpired(value: boolean) {
+    if (value && isSessionExpired.value) {
+      // Already expired — don't trigger duplicate popups
+      return
+    }
     isSessionExpired.value = value
     if (value) {
       clearAuth()
