@@ -70,10 +70,13 @@ function formatDate(dateStr: string) {
 
 function formatImageUrl(path: string | undefined): string {
     if (!path) return ''
+    // Google Drive & other external URLs — return as-is
     if (path.startsWith('http://') || path.startsWith('https://')) return path
-    if (path.startsWith('/media/')) return path
-    if (path.startsWith('/')) return `/media${path}`
-    return `/media/${path}`
+    // Local development fallback
+    const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/api\/?$/, '')
+    if (path.startsWith('/media/')) return `${API_BASE}${path}`
+    if (path.startsWith('/')) return `${API_BASE}/media${path}`
+    return `${API_BASE}/media/${path}`
 }
 
 function statusLabel(status: string) {
