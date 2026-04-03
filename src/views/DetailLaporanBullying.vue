@@ -355,8 +355,9 @@ const onImageLoad = (id: string) => {
     <SDialog :visible="showBuktiDialog" variant="primary" title="Bukti Pendukung" @update:visible="showBuktiDialog = $event" @close="showBuktiDialog = false">
       <div class="bukti-scroll">
         <div v-for="bukti in laporan.foto_bukti" :key="bukti.id" class="bukti-item">
-          <div v-show="!loadedImages[bukti.id]" class="skeleton-loader">
-            <div class="skeleton-shimmer"></div>
+          <div v-show="!loadedImages[bukti.id]" class="simple-loader">
+            <div class="simple-spinner"></div>
+            <p>Memuat foto...</p>
           </div>
           <a :href="formatImageUrl(bukti.foto)" target="_blank" class="bukti-link">
             <img :src="formatImageUrl(bukti.foto)" alt="Bukti Pendukung" 
@@ -812,34 +813,32 @@ const onImageLoad = (id: string) => {
     .laporan-judul { font-size: 14px; }
 }
 
-/* ─── Skeleton Loader ─── */
-.skeleton-loader {
+/* ─── Simple Loader ─── */
+.simple-loader {
     width: 100%;
-    height: 300px;
-    background-color: #e5e7eb;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    background-color: #f9fafb;
     border-radius: 8px;
-    position: relative;
-    overflow: hidden;
+    color: #6b7280;
+    font-size: 14px;
 }
 
-.skeleton-shimmer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0) 0,
-        rgba(255, 255, 255, 0.4) 50%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    animation: shimmer 1.5s infinite;
+.simple-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e5e7eb;
+    border-top-color: var(--color-blue-600);
+    border-radius: 50%;
+    animation: simple-spin 1s linear infinite;
 }
 
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+@keyframes simple-spin {
+    to { transform: rotate(360deg); }
 }
 
 .opacity-0 {
