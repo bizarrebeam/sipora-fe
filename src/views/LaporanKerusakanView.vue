@@ -303,7 +303,7 @@ onActivated(() => {
 						</button>
 						<div v-if="showDatePicker"
 							class="absolute right-0 top-13 z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
-							<SDatePicker v-model="selectedDateObj" />
+							<SDatePicker @close="showDatePicker = false" v-model="selectedDateObj" />
 						</div>
 					</div>
 					<select v-model="sortOrder" class="filter-input" @change="currentPage = 1">

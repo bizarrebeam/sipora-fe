@@ -137,6 +137,10 @@ const selectToday = () => {
   emit('close')
 }
 
+const resetDate = () => {
+  emit('update:modelValue', null)
+  emit('close')
+}
 </script>
 
 <template>
@@ -211,14 +215,22 @@ const selectToday = () => {
           </div>
         </div>
 
-        <!-- Hari Ini Button -->
-        <div class="flex w-full justify-center mt-2">
+        <!-- Actions Button -->
+        <div class="flex w-full items-center justify-center gap-6 mt-2 pt-3 border-t border-general-border">
           <button 
             type="button" 
             class="text-blue-500 hover:text-blue-700 font-semibold text-[14px] transition-colors font-['Be_Vietnam_Pro']"
             @click="selectToday"
           >
             Pilih Hari Ini
+          </button>
+          
+          <button 
+            type="button" 
+            class="text-red-500 hover:text-red-700 font-semibold text-[14px] transition-colors font-['Be_Vietnam_Pro']"
+            @click="resetDate"
+          >
+            Reset Tanggal
           </button>
         </div>
       </div>

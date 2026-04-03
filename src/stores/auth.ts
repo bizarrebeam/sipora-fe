@@ -26,6 +26,7 @@ interface User {
   tahun_ajaran?: string
   semester?: string
   date_joined?: string
+  riwayat_mengajar?: any[]
 }
 
 /**
@@ -248,7 +249,7 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * Communicates demographic changes back to the user's root profile.
    */
-  async function editProfil(payload: { kelas?: string; mata_pelajaran?: string }) {
+  async function editProfil(payload: any) {
     const loader = useLoadingStore()
     loader.show('Menyimpan perubahan...')
     try {

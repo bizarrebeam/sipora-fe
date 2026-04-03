@@ -158,12 +158,12 @@ const decodeHtmlEntities = (text: string) => {
         </div>
 
         <!-- Body Section -->
-        <div class="p-6 md:p-8 flex flex-col">
+        <div class="p-6 md:p-10 md:pt-4 flex flex-col">
 
           <!-- Content Wrapper -->
           <div class="w-full">
             <!-- Author Block -->
-            <div class="flex items-center gap-4 pb-6 border-b border-[#d9d9d9] mb-8">
+            <div class="flex items-center gap-4 pb-5 border-b border-[#d9d9d9] mb-6">
               <div class="w-12 h-12 bg-[#eaeaf4] rounded-full flex items-center justify-center text-[#2e3094]">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="shrink-0 text-[#2e3094]">
                   <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

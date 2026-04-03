@@ -584,7 +584,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 }
 
 .article-card-content {
-	padding: 8px 20px 20px 20px;
+	padding: 12px 16px 16px 16px;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -594,7 +594,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
-	margin-bottom: 8px;
+	margin-bottom: 4px;
 	gap: 12px;
 }
 
@@ -618,10 +618,10 @@ watch(searchQuery, () => { currentPage.value = 1 })
 .article-card__title {
 	font-family: "Be Vietnam Pro", sans-serif;
 	font-weight: 800;
-	font-size: 20px;
-	line-height: 28px;
+	font-size: 18px;
+	line-height: 26px;
 	color: var(--color-neutral-900);
-	margin: 0 0 8px 0;
+	margin: 0 0 6px 0;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
