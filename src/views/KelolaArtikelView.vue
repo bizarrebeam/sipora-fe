@@ -584,7 +584,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 }
 
 .article-card-content {
-	padding: 16px 12px;
+	padding: 8px 20px 20px 20px;
 	display: flex;
 	flex-direction: column;
 	height: 100%;
@@ -594,21 +594,21 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-start;
-	margin-bottom: 12px;
+	margin-bottom: 8px;
 	gap: 12px;
 }
 
 .author-tag {
 	font-family: "Be Vietnam Pro", sans-serif;
 	font-weight: 600;
-	font-size: 10px;
+	font-size: 13px;
 	color: var(--color-blue-500);
 	flex: 1;
 }
 
 .article-card__date {
 	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 10px;
+	font-size: 12px;
 	color: var(--color-neutral-600);
 	flex: 1;
 	text-align: right;
@@ -618,10 +618,10 @@ watch(searchQuery, () => { currentPage.value = 1 })
 .article-card__title {
 	font-family: "Be Vietnam Pro", sans-serif;
 	font-weight: 800;
-	font-size: 16px;
-	line-height: 24px;
+	font-size: 20px;
+	line-height: 28px;
 	color: var(--color-neutral-900);
-	margin: 0 0 4px 0;
+	margin: 0 0 8px 0;
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
@@ -631,15 +631,15 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
 .article-card__desc {
   font-family: "Be Vietnam Pro", sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-neutral-600);
-  line-height: 16px;
+  line-height: 20px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
   text-align: justify;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -662,8 +662,8 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	border-radius: 8px;
 	font-weight: 600;
 	font-family: "Be Vietnam Pro", sans-serif;
-	font-size: 12px;
-	line-height: 16px;
+	font-size: 14px;
+	line-height: 20px;
 	border: none;
 	cursor: pointer;
 	transition: background 0.2s;
