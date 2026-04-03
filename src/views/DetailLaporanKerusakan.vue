@@ -104,6 +104,11 @@ const kelasPengirim = computed(() => {
     const lap = laporan.value
     return lap?.pelapor_info?.kelas || '-'
 })
+
+const loadedImages = ref<Record<string, boolean>>({})
+const onImageLoad = (id: string) => {
+    loadedImages.value[id] = true
+}
 </script>
 
 <template>
@@ -331,8 +336,15 @@ const kelasPengirim = computed(() => {
             @update:visible="showBuktiDialog = $event" @close="showBuktiDialog = false">
             <div class="bukti-scroll">
                 <div v-for="bukti in laporan?.foto_bukti || []" :key="bukti.id" class="bukti-item">
+                    <div v-show="!loadedImages[bukti.id]" class="skeleton-loader">
+                        <div class="skeleton-shimmer"></div>
+                    </div>
                     <a :href="formatImageUrl(bukti.foto)" target="_blank" class="bukti-link">
-                        <img :src="formatImageUrl(bukti.foto)" alt="Bukti Pendukung" class="bukti-img" loading="lazy" />
+                        <img :src="formatImageUrl(bukti.foto)" alt="Bukti Pendukung" 
+                             class="bukti-img" 
+                             :class="{ 'opacity-0': !loadedImages[bukti.id] }"
+                             @load="onImageLoad(bukti.id)" 
+                             loading="lazy" />
                     </a>
                 </div>
             </div>
@@ -788,5 +800,39 @@ const kelasPengirim = computed(() => {
     .meta-grid { grid-template-columns: 1fr; }
     .card-section { padding: 12px; }
     .laporan-judul { font-size: 14px; }
+}
+
+/* ─── Skeleton Loader ─── */
+.skeleton-loader {
+    width: 100%;
+    height: 300px;
+    background-color: #e5e7eb;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.skeleton-shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0,
+        rgba(255, 255, 255, 0.4) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.opacity-0 {
+    opacity: 0;
 }
 </style>
