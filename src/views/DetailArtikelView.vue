@@ -87,7 +87,7 @@ const decodeHtmlEntities = (text: string) => {
   <div class="min-h-screen bg-[#f5f5f5] py-10 px-6 md:py-[60px] md:px-[80px]">
 
     <div v-if="isLoading" class="flex justify-center items-center h-64">
-      <SLoading />
+      <p class="text-[#868686] font-['Be_Vietnam_Pro'] text-[15px]">Memuat data artikel...</p>
     </div>
 
     <div v-else-if="artikel" class="max-w-[996px] mx-auto w-full flex flex-col gap-6">
