@@ -335,15 +335,15 @@ const onImageLoad = (id: string) => {
         <SDialog :visible="showBuktiDialog" variant="primary" title="Bukti Pendukung"
             @update:visible="showBuktiDialog = $event" @close="showBuktiDialog = false">
             <div class="bukti-scroll">
-                <div v-for="bukti in laporan?.foto_bukti || []" :key="bukti.id" class="bukti-item">
+                <div v-for="bukti in laporan?.foto_bukti || []" :key="bukti.id" class="bukti-item fixed-container">
                     <div v-show="!loadedImages[bukti.id]" class="simple-loader">
                         <div class="simple-spinner"></div>
                         <p>Memuat foto...</p>
                     </div>
-                    <a :href="formatImageUrl(bukti.foto)" target="_blank" class="bukti-link">
+                    <a :href="formatImageUrl(bukti.foto)" target="_blank" class="bukti-link" :class="{ 'hidden-link': !loadedImages[bukti.id] }">
                         <img :src="formatImageUrl(bukti.foto)" alt="Bukti Pendukung" 
                              class="bukti-img" 
-                             :class="{ 'opacity-0': !loadedImages[bukti.id] }"
+                             :class="{ 'opacity-100': loadedImages[bukti.id], 'opacity-0': !loadedImages[bukti.id] }"
                              @load="onImageLoad(bukti.id)" 
                              loading="lazy" />
                     </a>
@@ -674,10 +674,28 @@ const onImageLoad = (id: string) => {
     background: #f9fafb;
     display: flex;
     justify-content: center;
-    padding: 8px;
 }
-.bukti-link { display: flex; justify-content: center; width: 100%; }
-.bukti-img  { max-width: 100%; height: auto; border-radius: 6px; object-fit: contain; }
+.fixed-container {
+    height: 350px;
+    width: 100%;
+    position: relative;
+}
+.bukti-link { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    width: 100%; 
+    height: 100%;
+}
+.hidden-link { pointer-events: none; }
+
+.bukti-img { 
+    width: 100%; 
+    height: 100%;
+    object-fit: contain; 
+    border-radius: 6px; 
+    transition: opacity 0.4s ease-in-out;
+}
 
 /* ─── Utility classes ─── */
 .w-full { width: 100%; }
@@ -805,17 +823,20 @@ const onImageLoad = (id: string) => {
 
 /* ─── Simple Loader ─── */
 .simple-loader {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 200px;
+    height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 12px;
     background-color: #f9fafb;
-    border-radius: 8px;
     color: #6b7280;
     font-size: 14px;
+    z-index: 10;
 }
 
 .simple-spinner {
@@ -831,7 +852,6 @@ const onImageLoad = (id: string) => {
     to { transform: rotate(360deg); }
 }
 
-.opacity-0 {
-    opacity: 0;
-}
+.opacity-0 { opacity: 0; }
+.opacity-100 { opacity: 1; }
 </style>
