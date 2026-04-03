@@ -13,6 +13,7 @@ import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
 import SPagination from '@/components/SPagination.vue'
 import SCard from '@/components/SCard.vue'
+import SImage from '@/components/SImage.vue'
 
 // Store and router setup
 const artikelStore = useArtikelStore()
@@ -308,7 +309,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
                 Draft
               </div>
 
-              <img v-if="artikel.gambar" :src="artikel.gambar" :alt="artikel.judul" />
+              <SImage v-if="artikel.gambar" :src="artikel.gambar" :alt="artikel.judul" object-fit="cover" />
             </div>
 
             <div class="article-card-content">

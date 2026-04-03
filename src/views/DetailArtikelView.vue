@@ -5,6 +5,7 @@ import { apiAuthGet } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import SLoading from '@/components/SLoading.vue'
 import SButton from '@/components/SButton.vue'
+import SImage from '@/components/SImage.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -119,11 +120,12 @@ const decodeHtmlEntities = (text: string) => {
 
         <!-- Hero Section -->
         <div class="relative w-full h-[320px] md:h-[451px] bg-gradient-to-br from-[#7374b7] via-[#5a5c99] to-[#2e3094]">
-          <img
+          <SImage 
             v-if="artikel.gambar"
-            :src="artikel.gambar"
-            :alt="artikel.judul"
-            class="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay"
+            :src="artikel.gambar" 
+            :alt="artikel.judul" 
+            object-fit="cover"
+            class="absolute inset-0 w-full h-full opacity-80 mix-blend-overlay"
           />
           <!-- Subtle diagonal pattern overlay -->
           <div v-else class="absolute inset-0 opacity-10">
