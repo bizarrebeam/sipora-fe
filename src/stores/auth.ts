@@ -54,6 +54,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Cross-tab session synchronization:
+  // If the user's session changes in another tab (logout or login),
+  // we force this tab to reload to stay in a consistent and secure state.
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'user' || event.key === 'access_token') {
+      if (event.oldValue !== event.newValue) {
+        window.location.reload()
+      }
+    }
+  })
+
   const namaDepan = computed(() => {
     if (!user.value?.nama_lengkap) return ''
     return user.value.nama_lengkap.split(' ')[0]
