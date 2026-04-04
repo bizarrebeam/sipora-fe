@@ -43,3 +43,6 @@ _screenshots_/
 .env.local
 .env.*.local
 .env.*
+
+# Ignore README for Dev Branch
+README.md
