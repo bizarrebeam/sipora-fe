@@ -285,6 +285,29 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Silently attempts to refresh the active session using the HTT-Only Refresh Cookie.
+   * Directly interfaces with /akun/token/refresh/ in the backend.
+   */
+  async function refreshSession() {
+    try {
+      await apiPost('akun/token/refresh/', {})
+      return true
+    } catch (err) {
+      return false
+    }
+  }
+
+  /**
+   * Emergency localized sanitization.
+   * Clears all frontend storage without necessarily talking to the backend.
+   * Used for 'Self-Healing' when authentication states become inconsistent.
+   */
+  function clearLocalSession() {
+    clearAuth()
+    window.localStorage.clear() // Aggressive clear for students' browser state
+  }
+
   return {
     user,
     isSessionExpired,
@@ -301,7 +324,10 @@ export const useAuthStore = defineStore('auth', () => {
     fetchProfile,
     editProfil,
     ubahPassword,
+    refreshSession,
     clearAuth,
+    clearLocalSession,
     setSessionExpired,
   }
 })
+

@@ -149,10 +149,28 @@ export async function apiPost(endpoint: string, payload: object) {
   }
 }
 
+let refreshingPromise: Promise<boolean> | null = null
+
+/**
+ * Centrally manages the token refresh lifecycle.
+ * Ensures only one refresh request is active at a time to prevent token race conditions.
+ * 
+ * @returns {Promise<boolean>} True if refresh succeeded, False otherwise.
+ */
+async function handleRefresh() {
+  if (refreshingPromise) return refreshingPromise
+  
+  const authStore = useAuthStore()
+  refreshingPromise = authStore.refreshSession()
+  
+  const result = await refreshingPromise
+  refreshingPromise = null
+  return result
+}
+
 /**
  * Executes an authenticated GET request, silently attaching HTTP-Only session cookies.
- * Globally intercepts 401 Unauthorized errors to purge expired client sessions.
- * Globally intercepts 403 and 404 errors to trigger the global 'Priwitan' Not Found overlay.
+ * Globally intercepts 401 Unauthorized errors to attempt a 'Silent Refresh' before failing.
  * 
  * @param endpoint The protected API URI to request.
  * @throws {Error} Extracted standard error message if the response is not OK.
@@ -165,19 +183,25 @@ export async function apiAuthGet(endpoint: string) {
       cache: 'no-store'
     })
 
+    if (response.status === 401) {
+      const refreshed = await handleRefresh()
+      if (refreshed) {
+        // Retry the original request exactly once
+        return await apiAuthGet(endpoint)
+      }
+      
+      const authStore = useAuthStore()
+      authStore.setSessionExpired(true)
+      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+    }
+
     checkServerError(response.status)
 
     const json = await response.json()
     if (!response.ok || json.status === 'error') {
-      if (response.status === 401) {
-        const authStore = useAuthStore()
-        authStore.setSessionExpired(true)
-        throw new Error('Sesi telah berakhir. Silakan login kembali.')
-      }
       if (response.status === 403 || response.status === 404) {
         const notFoundStore = useNotFoundStore()
         notFoundStore.show()
-        
         throw new Error('Halaman tidak ditemukan.')
       }
       throw new Error(parseError(json, response.status))
@@ -190,8 +214,7 @@ export async function apiAuthGet(endpoint: string) {
 
 /**
  * Executes an authenticated POST request, silently attaching HTTP-Only session cookies.
- * Globally intercepts 401 Unauthorized errors to purge expired client sessions.
- * Globally intercepts 403 Forbidden errors to trigger the global Not Found overlay.
+ * Globally intercepts 401 Unauthorized errors to attempt a 'Silent Refresh' before failing.
  * 
  * @param endpoint The protected API URI to request.
  * @param payload The request body to be serialized as JSON.
@@ -209,19 +232,24 @@ export async function apiAuthPost(endpoint: string, payload: object) {
       body: JSON.stringify(payload)
     })
 
+    if (response.status === 401) {
+      const refreshed = await handleRefresh()
+      if (refreshed) {
+        return await apiAuthPost(endpoint, payload)
+      }
+      
+      const authStore = useAuthStore()
+      authStore.setSessionExpired(true)
+      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+    }
+
     checkServerError(response.status)
 
     const json = await response.json()
     if (!response.ok || json.status === 'error') {
-      if (response.status === 401) {
-        const authStore = useAuthStore()
-        authStore.setSessionExpired(true)
-        throw new Error('Sesi telah berakhir. Silakan login kembali.')
-      }
       if (response.status === 403) {
         const notFoundStore = useNotFoundStore()
         notFoundStore.show()
-        
         throw new Error('Anda tidak memiliki akses.')
       }
       throw new Error(parseError(json, response.status))
@@ -234,8 +262,7 @@ export async function apiAuthPost(endpoint: string, payload: object) {
 
 /**
  * Executes an authenticated PUT (update) request, silently attaching HTTP-Only session cookies.
- * Globally intercepts 401 Unauthorized errors to purge expired client sessions.
- * Globally intercepts 403 Forbidden errors to trigger the global Not Found overlay.
+ * Globally intercepts 401 Unauthorized errors to attempt a 'Silent Refresh' before failing.
  * 
  * @param endpoint The protected API URI to request.
  * @param payload The request body to be serialized as JSON.
@@ -253,19 +280,24 @@ export async function apiAuthPut(endpoint: string, payload: object) {
       body: JSON.stringify(payload)
     })
 
+    if (response.status === 401) {
+      const refreshed = await handleRefresh()
+      if (refreshed) {
+        return await apiAuthPut(endpoint, payload)
+      }
+      
+      const authStore = useAuthStore()
+      authStore.setSessionExpired(true)
+      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+    }
+
     checkServerError(response.status)
 
     const json = await response.json()
     if (!response.ok || json.status === 'error') {
-      if (response.status === 401) {
-        const authStore = useAuthStore()
-        authStore.setSessionExpired(true)
-        throw new Error('Sesi telah berakhir. Silakan login kembali.')
-      }
       if (response.status === 403) {
         const notFoundStore = useNotFoundStore()
         notFoundStore.show()
-        
         throw new Error('Anda tidak memiliki akses.')
       }
       throw new Error(parseError(json, response.status))
