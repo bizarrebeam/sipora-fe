@@ -319,7 +319,7 @@ onMounted(async () => {
                             <span v-else class="text-neutral-300">Pilih tanggal...</span>
                         </button>
                         <div v-show="showDatePicker" class="absolute left-0 top-[52px] z-50 shadow-2xl border rounded-2xl overflow-hidden scale-90 origin-top-left bg-white">
-                            <SDatePicker v-model="tanggalKejadianObj" />
+                            <SDatePicker @close="showDatePicker = false" v-model="tanggalKejadianObj" />
                         </div>
                     </div>
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>

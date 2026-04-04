@@ -180,14 +180,11 @@ const router = createRouter({
       component: CreateArtikelView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'] },
     },
-    // Catch-all 404 route
+    // Catch-all 404
     {
       path: '/:pathMatch(.*)*',
       name: 'notFound',
-      redirect: (to) => {
-        // Will be handled in beforeEach to show popup
-        return { path: '/', query: { notFound: '1' } }
-      },
+      component: { template: '<div></div>' }
     },
   ],
 })
@@ -208,11 +205,15 @@ router.beforeEach((to, from, next) => {
 
   const allowedRoles = to.meta.allowedRoles as string[] | undefined
 
-  // Handle catch-all 404 redirect
-  if (to.query.notFound === '1') {
+  // Catch-all 404 handler
+  if (to.name === 'notFound') {
     const notFoundStore = useNotFoundStore()
     notFoundStore.show()
-    next({ path: '/', replace: true })
+    if (from.name) {
+      next(false)
+    } else {
+      next('/')
+    }
     return
   }
 

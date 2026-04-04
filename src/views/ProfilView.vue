@@ -32,18 +32,19 @@ const semesterInfo = computed(() => {
 
 // Edit profile
 const editKelas = ref('')
-const mapels = ref<string[]>([])
+const mapels = ref<{nama_mata_pelajaran: string, kelas_diajar: string[]}[]>([{nama_mata_pelajaran: '', kelas_diajar: []}])
 const editLoading = ref(false)
 const showSuccessUpdateDialog = ref(false)
+const showSemesterNotification = ref(false)
 
 function addMapel() {
-  mapels.value.push('')
+  mapels.value.push({ nama_mata_pelajaran: '', kelas_diajar: [] })
 }
 
 function removeMapel(index: number) {
   mapels.value.splice(index, 1)
   if (mapels.value.length === 0) {
-    mapels.value.push('')
+    mapels.value.push({ nama_mata_pelajaran: '', kelas_diajar: [] })
   }
 }
 
@@ -61,11 +62,22 @@ onMounted(async () => {
   try {
     await auth.fetchProfile()
     if (user.value?.kelas) editKelas.value = user.value.kelas
-    if (user.value?.mata_pelajaran) {
-      mapels.value = user.value.mata_pelajaran.split(',').map((m: string) => m.trim()).filter((m: string) => m.length > 0)
-    }
-    if (mapels.value.length === 0) {
-      mapels.value.push('')
+    
+    if (isGuru.value) {
+      const u = user.value as any
+      if (u?.riwayat_mengajar && u.riwayat_mengajar.length > 0) {
+        // Filter mapped subjects for current active semester only to show in Edit View
+        const currentHistory = u.riwayat_mengajar.filter((r: any) => 
+          r.semester === u?.semester && r.tahun_ajaran === u?.tahun_ajaran
+        )
+        if (currentHistory.length > 0) {
+          mapels.value = JSON.parse(JSON.stringify(currentHistory))
+        } else {
+          showSemesterNotification.value = true
+        }
+      } else {
+        showSemesterNotification.value = true
+      }
     }
   } catch {
     // Profile could fail if token expired
@@ -97,9 +109,36 @@ const identifierLabel = computed(() => {
 async function handleEditProfil() {
   editLoading.value = true
   try {
-    const payload: Record<string, string> = {}
-    if (isSiswa.value) payload.kelas = editKelas.value
-    if (isGuru.value) payload.mata_pelajaran = mapels.value.map(m => m.trim()).filter(m => m.length > 0).join(', ')
+    const payload: any = {}
+    if (isSiswa.value) {
+      if (!editKelas.value) {
+        alertStore.error("Silakan pilih kelas terlebih dahulu.")
+        editLoading.value = false
+        return
+      }
+      payload.kelas = editKelas.value
+    }
+    if (isGuru.value) {
+      // Robust check for blank names or missing classes
+      const hasInvalid = mapels.value.some(m => !m.nama_mata_pelajaran || m.nama_mata_pelajaran.trim().length === 0)
+      if (hasInvalid) {
+        alertStore.error("Nama mata pelajaran tidak boleh kosong atau hanya berisi spasi.")
+        editLoading.value = false
+        return
+      }
+      
+      const hasNoClass = mapels.value.some(m => !m.kelas_diajar || m.kelas_diajar.length === 0)
+      if (hasNoClass) {
+        alertStore.error("Tiap mata pelajaran harus memiliki setidaknya 1 kelas diajar.")
+        editLoading.value = false
+        return
+      }
+
+      payload.riwayat_mengajar = mapels.value.map(m => ({
+        nama_mata_pelajaran: m.nama_mata_pelajaran.trim(),
+        kelas_diajar: m.kelas_diajar
+      }))
+    }
     await auth.editProfil(payload)
     // Re-fetch to update user data
     await auth.fetchProfile()
@@ -132,6 +171,29 @@ async function handleUbahPassword() {
     passwordLoading.value = false
   }
 }
+
+const groupedRiwayat = computed(() => {
+  const u = user.value as any
+  if (!u?.riwayat_mengajar) return []
+  const groups: Record<string, { semester: string, tahun_ajaran: string, items: any[] }> = {}
+  
+  u.riwayat_mengajar.forEach((item: any) => {
+    const key = `${item.semester}-${item.tahun_ajaran}`
+    if (!groups[key]) {
+      groups[key] = {
+        semester: item.semester,
+        tahun_ajaran: item.tahun_ajaran,
+        items: []
+      }
+    }
+    groups[key].items.push(item)
+  })
+  
+  return Object.values(groups).sort((a, b) => {
+    if (a.tahun_ajaran !== b.tahun_ajaran) return b.tahun_ajaran.localeCompare(a.tahun_ajaran)
+    return b.semester.localeCompare(a.semester)
+  })
+})
 </script>
 
 <template>
@@ -155,7 +217,7 @@ async function handleUbahPassword() {
             <h2 class="info-nama">{{ user?.nama_lengkap }}</h2>
             <div class="info-badges">
               <span class="badge badge--role">{{ roleLabel }}</span>
-              <span class="badge badge--semester">{{ semesterInfo }}</span>
+              <span class="badge badge--semester font-medium">{{ semesterInfo }}</span>
               <SChip
                 v-if="isSiswa"
                 :label="user?.is_verified ? 'Terverifikasi' : 'Belum Terverifikasi'"
@@ -180,9 +242,16 @@ async function handleUbahPassword() {
             <span class="info-label">Kelas</span>
             <span class="info-value">{{ user?.kelas || '-' }}</span>
           </div>
-          <div v-if="isGuru || isGuruBk" class="info-item">
-            <span class="info-label">Mata Pelajaran</span>
-            <span class="info-value">{{ user?.mata_pelajaran || '-' }}</span>
+          <div v-if="isGuruBk" class="info-item">
+            <span class="info-label">JABATAN</span>
+            <span class="info-value">Bimbingan Konseling</span>
+          </div>
+          <div v-if="isGuru" class="info-item">
+            <span class="info-label">Mata Pelajaran Semester Saat Ini</span>
+            <span v-if="!(user as any)?.riwayat_mengajar || mapels.filter(m => m.nama_mata_pelajaran && m.kelas_diajar.length > 0).length === 0" class="info-value italic text-neutral-400">Belum di set</span>
+            <span v-else class="info-value">
+              {{ mapels.filter(m => m.nama_mata_pelajaran && m.kelas_diajar.length > 0).map(m => m.nama_mata_pelajaran).join(', ') }}
+            </span>
           </div>
           <div class="info-item">
             <span class="info-label">Terdaftar Pada</span>
@@ -191,50 +260,119 @@ async function handleUbahPassword() {
         </div>
       </SCard>
 
-      <!-- Edit Profile (Siswa: kelas, Guru: mapel) -->
-      <SCard v-if="isSiswa || isGuru" class="profil-card">
-        <h3 class="stf-section-title">Ubah Detail Profil</h3>
-
-        <!-- Siswa: kelas dropdown -->
-        <div v-if="isSiswa" class="edit-field">
-          <div class="s-textfield__label-row">
-            <label class="s-textfield__label">Kelas</label>
-          </div>
-          <select v-model="editKelas" class="kelas-select">
-            <option value="" disabled>Pilih kelas...</option>
-            <option v-for="k in kelasOptions" :key="k" :value="k">{{ k }}</option>
-          </select>
+      <!-- Riwayat Mengajar (Guru Only) -->
+      <SCard v-if="isGuru" class="profil-card" gap="gap-0">
+        <div class="flex flex-col gap-1.5 mb-3">
+          <h3 class="stf-section-title !mb-0">Riwayat Mengajar</h3>
+          <p class="text-[13px] text-neutral-500 font-['Be_Vietnam_Pro'] m-0 p-0">Rekam jejak mata pelajaran yang Anda ampu di setiap semester.</p>
         </div>
+        
+        <div v-if="!user?.riwayat_mengajar || user.riwayat_mengajar.length === 0" class="text-sm text-neutral-400 italic py-8 text-center bg-neutral-50 rounded-xl border border-dashed border-neutral-200 font-['Be_Vietnam_Pro']">
+          Belum ada data riwayat mengajar yang tercatat.
+        </div>
+        
+        <div v-else class="flex flex-col gap-6 font-['Be_Vietnam_Pro']">
+          <div 
+            v-for="(group, gIdx) in groupedRiwayat" 
+            :key="gIdx"
+            class="flex flex-col gap-4"
+          >
+            <!-- Semester Header -->
+            <div class="flex items-center gap-3">
+              <div class="h-px flex-1 bg-neutral-200"></div>
+              <span class="text-[12px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                {{ group.semester }} {{ group.tahun_ajaran }}
+              </span>
+              <div class="h-px flex-1 bg-neutral-200"></div>
+            </div>
 
-        <!-- Guru: mapel text -->
-        <div v-if="isGuru" class="edit-field">
-          <div class="s-textfield__label-row">
-            <label class="s-textfield__label">Mata Pelajaran</label>
+            <!-- Subjects in this semester -->
+            <div class="grid grid-cols-1 gap-3">
+              <div 
+                v-for="(mapel, mIdx) in group.items" 
+                :key="mIdx"
+                class="flex flex-col gap-3 p-4 bg-white border border-neutral-200 rounded-xl shadow-sm hover:border-blue-200 transition-colors"
+              >
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-[15px] text-neutral-800">{{ mapel.nama_mata_pelajaran }}</span>
+                  <span v-if="mapel.semester === user?.semester && mapel.tahun_ajaran === user?.tahun_ajaran" class="text-[10px] font-bold uppercase py-0.5 px-2 bg-green-100 text-green-700 rounded border border-green-200">Aktif</span>
+                </div>
+                
+                <div class="flex flex-wrap gap-1.5 font-['Be_Vietnam_Pro']">
+                  <span 
+                    v-for="k in mapel.kelas_diajar" 
+                    :key="k"
+                    class="text-[12px] font-medium bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg"
+                  >
+                    Kelas {{ k }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="flex flex-col gap-3 mt-2">
-            <div v-for="(mapel, index) in mapels" :key="index" class="flex items-center gap-2">
-              <STextField
-                placeholder="cth: Matematika"
-                variant="text"
-                v-model="mapels[index]"
-              />
-              <button v-if="mapels.length > 1" type="button" @click="removeMapel(index)" class="flex size-11 shrink-0 items-center justify-center rounded-lg border border-general-red text-general-red hover:bg-red-50 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+      </SCard>
+
+      <!-- Edit Profile (Siswa: kelas, Guru: mapel) -->
+      <SCard v-if="isSiswa || isGuru" class="profil-card" gap="gap-0">
+        <div class="flex flex-col gap-5">
+          <h3 class="stf-section-title !mb-0">Ubah Detail Profil</h3>
+
+          <!-- Siswa: kelas dropdown -->
+          <div v-if="isSiswa" class="edit-field">
+            <div class="s-textfield__label-row">
+              <label class="s-textfield__label">Kelas</label>
+            </div>
+            <select v-model="editKelas" class="kelas-select">
+              <option value="" disabled>Pilih kelas...</option>
+              <option v-for="k in kelasOptions" :key="k" :value="k">{{ k }}</option>
+            </select>
+          </div>
+
+          <!-- Guru: mapel text -->
+          <div v-if="isGuru" class="edit-field !mb-0">
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-2">
+                <label class="s-textfield__label">Mata Pelajaran</label>
+                <div class="flex flex-col gap-4">
+                  <div v-for="(mapel, index) in mapels" :key="index" class="flex flex-col gap-3 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
+                    <div class="flex items-end gap-2">
+                      <STextField
+                        placeholder="Ketik di sini (cth: Matematika)"
+                        variant="text"
+                        v-model="mapel.nama_mata_pelajaran"
+                        class="flex-1"
+                      />
+                      <button v-if="mapels.length > 1" type="button" @click="removeMapel(index)" class="flex size-[42px] shrink-0 items-center justify-center rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors bg-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                      <span class="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">Kelas Diajar <span class="text-general-red">*</span></span>
+                      <div class="flex flex-wrap gap-2">
+                        <label v-for="k in kelasOptions" :key="k" class="flex items-center gap-2 px-3 py-1.5 border border-general-border rounded-lg cursor-pointer transition-colors text-sm" :class="mapel.kelas_diajar.includes(k) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white hover:bg-neutral-50'">
+                          <input type="checkbox" :value="k" v-model="mapel.kelas_diajar" class="hidden">
+                          <span class="font-['Be_Vietnam_Pro'] font-medium select-none">{{ k }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" @click="addMapel" class="text-blue-500 hover:text-blue-600 font-['Be_Vietnam_Pro'] font-semibold text-[13px] text-left self-start border border-blue-200 bg-white px-4 py-2 rounded-lg transition-colors hover:border-blue-300">
+                <span class="mr-1">+</span> Tambah mata pelajaran
               </button>
             </div>
-            <button type="button" @click="addMapel" class="text-blue-500 hover:text-blue-600 font-['Be_Vietnam_Pro'] font-semibold text-sm text-left self-start mt-1">
-              + Tambah mata pelajaran
-            </button>
           </div>
-        </div>
 
-        <div class="edit-actions">
-          <SButton
-            :label="editLoading ? 'Menyimpan...' : 'Simpan Perubahan'"
-            variant="primary"
-            :disabled="editLoading"
-            @click="handleEditProfil"
-          />
+          <div class="edit-actions !mt-0">
+            <SButton
+              :label="editLoading ? 'Menyimpan...' : 'Simpan Perubahan'"
+              variant="primary"
+              :disabled="editLoading"
+              @click="handleEditProfil"
+            />
+          </div>
         </div>
       </SCard>
 
@@ -286,8 +424,18 @@ async function handleUbahPassword() {
       title="Profil Diperbarui"
       message="Perubahan profil Anda telah berhasil disimpan."
       confirmLabel="Tutup"
-      cancelLabel=""
       @confirm="showSuccessUpdateDialog = false"
+    />
+
+    <!-- Notification Modal: Update Mapel on New Semester -->
+    <SDialog
+      v-model:visible="showSemesterNotification"
+      title="Semester Baru Dimulai"
+      variant="primary"
+      :message="`Selamat datang kembali di ${semesterInfo}. Anda belum menyetel mata pelajaran dan kelas yang diajarkan pada semester ini. Silakan atur sekarang di Ubah Detail Profil.`"
+      confirmLabel="Atur Sekarang"
+      cancelLabel=""
+      @confirm="showSemesterNotification = false"
     />
 
     <!-- Success Modal: Password Changed -->

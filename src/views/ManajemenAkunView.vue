@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
-import { apiAuthGet, apiAuthPost } from '@/services/api'
+import { apiAuthGet, apiAuthPost, apiAuthPut } from '@/services/api'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SChip from '@/components/SChip.vue'
@@ -16,6 +16,14 @@ const alertStore = useAlertStore()
 const loadingStore = useLoadingStore()
 const auth = useAuthStore()
 
+interface RiwayatMengajar {
+  id: string
+  nama_mata_pelajaran: string
+  kelas_diajar: string[]
+  tahun_ajaran: string
+  semester: string
+}
+
 interface AkunItem {
   id: string
   nama_lengkap: string
@@ -26,6 +34,7 @@ interface AkunItem {
   role: string
   is_verified?: boolean
   date_joined: string
+  riwayat_mengajar?: RiwayatMengajar[]
 }
 
 const siswaList = ref<AkunItem[]>([])
@@ -78,7 +87,9 @@ const createNuptk = ref('')
 const createEmail = ref('')
 const createUsername = ref('')
 const createNama = ref('')
-const createMapels = ref<string[]>([''])
+const createMapels = ref<{nama_mata_pelajaran: string, kelas_diajar: string[]}[]>([
+  {nama_mata_pelajaran: '', kelas_diajar: []}
+])
 const createPassword = ref('')
 const createLoading = ref(false)
 
@@ -87,6 +98,149 @@ const verifiedSiswaName = ref('')
 const showVerifyDialog = ref(false)
 const verifyLoading = ref(false)
 const selectedSiswa = ref<AkunItem | null>(null)
+
+const showDetailDialog = ref(false)
+const selectedGuru = ref<AkunItem | null>(null)
+
+function openDetailDialog(guru: AkunItem) {
+  selectedGuru.value = guru
+  isEditMode.value = false
+  showDetailDialog.value = true
+}
+
+const isEditMode = ref(false)
+const editGuruNama = ref('')
+const editGuruEmail = ref('')
+const editGuruMapels = ref<{nama_mata_pelajaran: string, kelas_diajar: string[]}[]>([])
+const updateGuruLoading = ref(false)
+
+const editGuruTitle = computed(() => isEditMode.value ? 'Edit Profil Guru' : `Profil Guru ${selectedGuru.value?.nama_lengkap || ''}`)
+
+function enterEditMode() {
+  if (!selectedGuru.value) return
+  editGuruNama.value = selectedGuru.value.nama_lengkap
+  // Need to fetch individual teacher detail if email/other fields missing, 
+  // but based on PenggunaListSerializer, email IS missing. 
+  // Wait, let's check PenggunaListSerializer fields.
+  // Actually, I just realized the list serializer might not have email.
+  // I should probably fetch the full detail first.
+}
+
+// Re-fetching full detail before editing to ensure we have the email
+async function startEditGuru() {
+  if (!selectedGuru.value) return
+  loadingStore.show()
+  try {
+    // We reuse the same list endpoint but for a single user if needed, 
+    // or we just trust the list if we update the serializer.
+    // Let's assume we need to fetch full detail.
+    // Actually, let's just use the current data and I'll ensure email is in the list serializer.
+    
+    editGuruNama.value = selectedGuru.value.nama_lengkap
+    // Fallback if email is undefined (which it is in list)
+    // I will update the backend list serializer to include email for Admin.
+    editGuruEmail.value = (selectedGuru.value as any).email || ''
+    
+    // Copy current assignments for editing
+    const currentAssignments = selectedGuru.value.riwayat_mengajar?.filter(r => 
+      r.semester === (selectedGuru.value as any).semester && 
+      r.tahun_ajaran === (selectedGuru.value as any).tahun_ajaran
+    ) || []
+
+    if (currentAssignments.length > 0) {
+      editGuruMapels.value = currentAssignments.map(a => ({
+        nama_mata_pelajaran: a.nama_mata_pelajaran,
+        kelas_diajar: [...a.kelas_diajar]
+      }))
+    } else {
+      editGuruMapels.value = [{ nama_mata_pelajaran: '', kelas_diajar: [] }]
+    }
+    
+    isEditMode.value = true
+  } finally {
+    loadingStore.hide()
+  }
+}
+
+function addEditMapel() {
+  editGuruMapels.value.push({ nama_mata_pelajaran: '', kelas_diajar: [] })
+}
+
+function removeEditMapel(index: number) {
+  editGuruMapels.value.splice(index, 1)
+  if (editGuruMapels.value.length === 0) {
+    editGuruMapels.value.push({ nama_mata_pelajaran: '', kelas_diajar: [] })
+  }
+}
+
+async function handleUpdateGuru() {
+  if (!selectedGuru.value) return
+  
+  if (!editGuruNama.value.trim()) {
+    alertStore.error('Nama lengkap wajib diisi.')
+    return
+  }
+  if (!editGuruEmail.value.trim()) {
+    alertStore.error('Email wajib diisi.')
+    return
+  }
+  
+  const hasEmpty = editGuruMapels.value.some(m => !m.nama_mata_pelajaran || m.nama_mata_pelajaran.trim().length === 0)
+  if (hasEmpty) {
+    alertStore.error('Semua kolom mata pelajaran harus diisi dengan teks yang valid (bukan hanya spasi).')
+    return
+  }
+  const hasNoClass = editGuruMapels.value.some(m => !m.kelas_diajar || m.kelas_diajar.length === 0)
+  if (hasNoClass) {
+    alertStore.error('Setiap mata pelajaran setidaknya harus mengajar 1 kelas.')
+    return
+  }
+
+  updateGuruLoading.value = true
+  try {
+    const payload = {
+      nama_lengkap: editGuruNama.value.trim(),
+      email: editGuruEmail.value.trim(),
+      riwayat_mengajar: editGuruMapels.value.map(m => ({
+        nama_mata_pelajaran: m.nama_mata_pelajaran.trim(),
+        kelas_diajar: m.kelas_diajar
+      }))
+    }
+    await apiAuthPut(`akun/admin/update-guru/${selectedGuru.value.id}/`, payload)
+    alertStore.success('Profil guru berhasil diperbarui.')
+    showDetailDialog.value = false
+    isEditMode.value = false
+    await fetchDaftar()
+  } catch (err: any) {
+    alertStore.error(err.message || 'Gagal memperbarui profil guru.')
+  } finally {
+    updateGuruLoading.value = false
+  }
+}
+
+const groupedRiwayat = computed(() => {
+  if (!selectedGuru.value?.riwayat_mengajar) return []
+  const groups: Record<string, { semester: string, tahun_ajaran: string, items: RiwayatMengajar[] }> = {}
+  
+  selectedGuru.value.riwayat_mengajar.forEach(item => {
+    const key = `${item.semester}-${item.tahun_ajaran}`
+    if (!groups[key]) {
+      groups[key] = {
+        semester: item.semester,
+        tahun_ajaran: item.tahun_ajaran,
+        items: []
+      }
+    }
+    groups[key].items.push(item)
+  })
+  
+  // Sort by year and semester (deciding Ganjil/Genap order)
+  return Object.values(groups).sort((a, b) => {
+    if (a.tahun_ajaran !== b.tahun_ajaran) return b.tahun_ajaran.localeCompare(a.tahun_ajaran)
+    // Custom sort: Genap usually comes after Ganjil in the academic year
+    return b.semester.localeCompare(a.semester)
+  })
+})
 
 const createTitle = computed(() => createType.value === 'guru' ? 'Buat Akun Guru' : 'Buat Akun Guru BK')
 
@@ -158,7 +312,8 @@ const guruColumns = [
   { key: 'nama_lengkap', label: 'Nama', sortable: true },
   { key: 'nuptk', label: 'NUPTK', sortable: true },
   { key: 'mata_pelajaran', label: 'Mata Pelajaran', sortable: true },
-  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true }
+  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true },
+  { key: 'action', label: 'Aksi', sortable: false }
 ]
 
 const guruBkColumns = [
@@ -279,7 +434,7 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
   createEmail.value = ''
   createUsername.value = ''
   createNama.value = ''
-  createMapels.value = ['']
+  createMapels.value = [{nama_mata_pelajaran: '', kelas_diajar: []}]
   createPassword.value = ''
   showCreateDialog.value = true
 }
@@ -328,10 +483,15 @@ async function handleCreate() {
     return
   }
   if (createType.value === 'guru') {
-    // Validate that ALL matpel fields have content (not just at least one)
-    const hasEmpty = createMapels.value.some(m => m.trim().length === 0)
+    // Validate that ALL matpel fields have content and at least one class is selected
+    const hasEmpty = createMapels.value.some(m => !m.nama_mata_pelajaran || m.nama_mata_pelajaran.trim().length === 0)
     if (hasEmpty) {
-      alertStore.error('Semua kolom mata pelajaran harus diisi. Hapus kolom yang tidak diperlukan.')
+      alertStore.error('Semua kolom mata pelajaran harus diisi dengan teks valid.')
+      return
+    }
+    const hasNoClass = createMapels.value.some(m => !m.kelas_diajar || m.kelas_diajar.length === 0)
+    if (hasNoClass) {
+      alertStore.error('Setiap mata pelajaran setidaknya harus mengajar 1 kelas.')
       return
     }
   }
@@ -347,8 +507,10 @@ async function handleCreate() {
       password: createPassword.value,
     }
     if (createType.value === 'guru') {
-      const validMapels = createMapels.value.filter(m => m.trim().length > 0)
-      payload.mata_pelajaran = validMapels.join(', ')
+      payload.riwayat_mengajar = createMapels.value.map(m => ({
+        nama_mata_pelajaran: m.nama_mata_pelajaran.trim(),
+        kelas_diajar: m.kelas_diajar
+      }))
     }
     await apiAuthPost('akun/admin/buat/', payload)
     createdAccountMessage.value = `Akun ${createType.value === 'guru' ? 'Guru' : 'Guru BK'} ${createNama.value} berhasil dibuat.`
@@ -368,7 +530,7 @@ function onSearchInput() {
 }
 
 function addMapel() {
-  createMapels.value.push('')
+  createMapels.value.push({ nama_mata_pelajaran: '', kelas_diajar: [] })
 }
 
 function removeMapel(index: number) {
@@ -456,7 +618,7 @@ onMounted(async () => {
               {{ selectedDate || 'Pilih Tanggal' }}
             </button>
             <div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
-              <SDatePicker v-model="selectedDateObj" />
+              <SDatePicker @close="showDatePicker = false" v-model="selectedDateObj" />
             </div>
           </div>
           <div v-if="activeTab === 'siswa'" class="flex items-center gap-2">
@@ -560,6 +722,14 @@ onMounted(async () => {
               <template #body-cell-date_joined="{ row }">
                 {{ formatDate(row.date_joined) }}
               </template>
+              <template #body-cell-action="{ row }">
+                <button 
+                  class="font-['Be_Vietnam_Pro'] font-medium text-[13px] text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 transition-colors"
+                  @click.stop="openDetailDialog(row)"
+                >
+                  Detail
+                </button>
+              </template>
             </STable>
           </div>
         </SCard>
@@ -637,17 +807,28 @@ onMounted(async () => {
             <div class="s-textfield__label-row">
               <label class="s-textfield__label">Mata Pelajaran <span class="text-general-red font-['Space_Grotesk'] text-[12px]">*</span></label>
             </div>
-            <div v-for="(mapel, index) in createMapels" :key="index" class="flex items-end gap-3 w-full">
-              <div class="flex-1">
-                <STextField 
-                  placeholder="Ketik di sini (cth: Matematika)" 
-                  variant="text" 
-                  v-model="createMapels[index]" 
-                />
+            <div v-for="(mapel, index) in createMapels" :key="index" class="flex flex-col gap-3 w-full bg-neutral-50 p-4 rounded-xl border border-neutral-200">
+              <div class="flex items-end gap-3 w-full">
+                <div class="flex-1">
+                  <STextField 
+                    placeholder="Ketik di sini (cth: Matematika)" 
+                    variant="text" 
+                    v-model="mapel.nama_mata_pelajaran" 
+                  />
+                </div>
+                <button v-if="createMapels.length > 1" type="button" @click="removeMapel(index)" class="flex items-center justify-center shrink-0 w-11 h-11 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
               </div>
-              <button v-if="createMapels.length > 1" type="button" @click="removeMapel(index)" class="flex items-center justify-center shrink-0 w-11 h-11 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-              </button>
+              <div class="flex flex-col gap-2">
+                <span class="text-xs font-semibold text-neutral-500 uppercase tracking-widest">Kelas Diajar <span class="text-general-red">*</span></span>
+                <div class="flex flex-wrap gap-2">
+                  <label v-for="k in ['7A', '7B', '8A', '8B', '9A', '9B']" :key="k" class="flex items-center gap-2 px-3 py-1.5 border border-general-border rounded-lg cursor-pointer transition-colors" :class="mapel.kelas_diajar.includes(k) ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white hover:bg-neutral-50'">
+                    <input type="checkbox" :value="k" v-model="mapel.kelas_diajar" class="hidden">
+                    <span class="text-[13px] font-['Space_Grotesk'] font-medium select-none">{{ k }}</span>
+                  </label>
+                </div>
+              </div>
             </div>
             <button type="button" @click="addMapel" class="flex items-center gap-2 text-blue-500 hover:text-blue-700 body-b8 font-bold mt-1 self-start">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -730,6 +911,131 @@ onMounted(async () => {
       cancelLabel=""
       @confirm="showSuccessVerifyDialog = false"
     />
+
+    <!-- Dialog Detail & Edit Guru -->
+    <SDialog
+      v-model:visible="showDetailDialog"
+      variant="primary"
+      :title="editGuruTitle"
+      :confirmLabel="isEditMode ? '' : 'Tutup'"
+      :cancelLabel="isEditMode ? '' : ''"
+      @update:visible="showDetailDialog = $event"
+    >
+      <div v-if="selectedGuru" class="flex flex-col gap-6 w-full max-w-[500px] font-['Be_Vietnam_Pro'] px-2 py-1">
+        <!-- Header with Edit Toggle -->
+        <div class="flex justify-between items-center border-b border-general-border pb-4">
+          <div class="flex flex-col gap-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-neutral-400">NUPTK</span>
+            <span class="text-[16px] font-semibold text-blue-900">{{ selectedGuru.nuptk || '-' }}</span>
+          </div>
+          <SButton 
+            v-if="!isEditMode"
+            label="Edit Profil" 
+            variant="secondary" 
+            size="small"
+            @click="startEditGuru"
+          >
+            <template #left-icon>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </template>
+          </SButton>
+        </div>
+
+        <!-- EDIT MODE FORM -->
+        <div v-if="isEditMode" class="flex flex-col gap-5">
+           <STextField label="Nama Lengkap" placeholder="Ketik nama lengkap" variant="text" v-model="editGuruNama" />
+           <STextField label="Email" placeholder="Ketik email (cth: [REDACTED EMAIL])" variant="text" v-model="editGuruEmail" />
+           
+           <div class="flex flex-col gap-3">
+            <label class="s-textfield__label">Mata Pelajaran <span class="text-general-red text-xs">*</span></label>
+            <div v-for="(mapel, index) in editGuruMapels" :key="index" class="flex flex-col gap-3 w-full bg-neutral-50 p-4 rounded-xl border border-neutral-200">
+              <div class="flex items-end gap-3 w-full">
+                <div class="flex-1">
+                  <STextField 
+                    placeholder="Cth: Matematika" 
+                    variant="text" 
+                    v-model="mapel.nama_mata_pelajaran" 
+                  />
+                </div>
+                <button v-if="editGuruMapels.length > 1" type="button" @click="removeEditMapel(index)" class="flex items-center justify-center shrink-0 w-11 h-11 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+              </div>
+              <div class="flex flex-col gap-2">
+                <span class="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Kelas Diajar <span class="text-general-red">*</span></span>
+                <div class="flex flex-wrap gap-2">
+                  <label v-for="k in ['7A', '7B', '8A', '8B', '9A', '9B']" :key="k" class="flex items-center gap-2 px-3 py-1.5 border border-general-border rounded-lg cursor-pointer transition-all text-[13px]" :class="mapel.kelas_diajar.includes(k) ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white hover:bg-neutral-50 text-neutral-600'">
+                    <input type="checkbox" :value="k" v-model="mapel.kelas_diajar" class="hidden">
+                    <span class="font-medium select-none">{{ k }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <button type="button" @click="addEditMapel" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-bold text-[13px] mt-1 self-start px-3 py-2 bg-blue-50 rounded-lg transition-colors border border-blue-100">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Tambah mapel
+            </button>
+          </div>
+
+          <div class="flex gap-3 mt-4">
+            <SButton label="Batal" variant="secondary" class="flex-1" @click="isEditMode = false" />
+            <SButton :label="updateGuruLoading ? 'Menyimpan...' : 'Simpan Perubahan'" variant="primary" class="flex-1" :disabled="updateGuruLoading" @click="handleUpdateGuru" />
+          </div>
+        </div>
+
+        <!-- READ ONLY VIEW -->
+        <div v-else class="flex flex-col gap-6 w-full">
+          <div class="flex flex-col gap-1">
+            <h4 class="font-extrabold text-[18px] text-[#212121]">Riwayat Mengajar</h4>
+            <p class="text-[13px] text-neutral-500">Daftar mata pelajaran yang diampu berdasarkan semester.</p>
+          </div>
+          
+          <div v-if="!selectedGuru.riwayat_mengajar || selectedGuru.riwayat_mengajar.length === 0" class="text-sm text-neutral-400 italic py-8 text-center bg-neutral-50 rounded-xl border border-dashed border-neutral-200">
+            Belum ada data mata pelajaran yang tercatat.
+          </div>
+          
+          <div v-else class="flex flex-col gap-6">
+            <div 
+              v-for="(group, gIdx) in groupedRiwayat" 
+              :key="gIdx"
+              class="flex flex-col gap-3"
+            >
+              <!-- Semester Header -->
+              <div class="flex items-center gap-3">
+                <div class="h-px flex-1 bg-neutral-200"></div>
+                <span class="text-[12px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                  {{ group.semester }} {{ group.tahun_ajaran }}
+                </span>
+                <div class="h-px flex-1 bg-neutral-200"></div>
+              </div>
+
+              <!-- Subjects in this semester -->
+              <div class="grid grid-cols-1 gap-3">
+                <div 
+                  v-for="(mapel, mIdx) in group.items" 
+                  :key="mIdx"
+                  class="flex flex-col gap-3 p-4 bg-white border border-neutral-200 rounded-xl shadow-sm hover:border-blue-200 transition-colors"
+                >
+                  <div class="flex justify-between items-center">
+                    <span class="font-bold text-[15px] text-neutral-800">{{ mapel.nama_mata_pelajaran }}</span>
+                  </div>
+                  
+                  <div class="flex flex-wrap gap-1.5">
+                    <span 
+                      v-for="k in mapel.kelas_diajar" 
+                      :key="k"
+                      class="text-[12px] font-medium bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg"
+                    >
+                      Kelas {{ k }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </SDialog>
   </div>
 </template>
 

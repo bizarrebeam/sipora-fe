@@ -5,6 +5,7 @@ import { apiAuthGet } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import SLoading from '@/components/SLoading.vue'
 import SButton from '@/components/SButton.vue'
+import SImage from '@/components/SImage.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -83,13 +84,13 @@ const decodeHtmlEntities = (text: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f5f5f5] py-10 px-6 md:py-[60px] md:px-[80px]">
+  <div class="stf-page">
 
     <div v-if="isLoading" class="flex justify-center items-center h-64">
-      <SLoading />
+      <p class="text-[#868686] font-['Be_Vietnam_Pro'] text-[15px]">Memuat data artikel...</p>
     </div>
 
-    <div v-else-if="artikel" class="max-w-[996px] mx-auto w-full flex flex-col gap-6">
+    <div v-else-if="artikel" class="stf-container flex flex-col gap-6">
 
       <!-- Top Action Bar -->
       <div class="flex justify-between items-center w-full">
@@ -119,11 +120,12 @@ const decodeHtmlEntities = (text: string) => {
 
         <!-- Hero Section -->
         <div class="relative w-full h-[320px] md:h-[451px] bg-gradient-to-br from-[#7374b7] via-[#5a5c99] to-[#2e3094]">
-          <img
+          <SImage 
             v-if="artikel.gambar"
-            :src="artikel.gambar"
-            :alt="artikel.judul"
-            class="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay"
+            :src="artikel.gambar" 
+            :alt="artikel.judul" 
+            object-fit="cover"
+            class="absolute inset-0 w-full h-full opacity-80 mix-blend-overlay"
           />
           <!-- Subtle diagonal pattern overlay -->
           <div v-else class="absolute inset-0 opacity-10">
@@ -156,12 +158,12 @@ const decodeHtmlEntities = (text: string) => {
         </div>
 
         <!-- Body Section -->
-        <div class="p-6 md:p-10 flex flex-col items-center">
+        <div class="p-6 md:p-10 md:pt-4 flex flex-col">
 
           <!-- Content Wrapper -->
-          <div class="w-full max-w-[800px]">
+          <div class="w-full">
             <!-- Author Block -->
-            <div class="flex items-center gap-4 py-6 border-b border-[#d9d9d9] mb-8">
+            <div class="flex items-center gap-4 pb-5 border-b border-[#d9d9d9] mb-6">
               <div class="w-12 h-12 bg-[#eaeaf4] rounded-full flex items-center justify-center text-[#2e3094]">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="shrink-0 text-[#2e3094]">
                   <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

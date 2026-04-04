@@ -26,19 +26,17 @@ export const useArtikelStore = defineStore('artikel', () => {
     const isStale = Date.now() - lastFetched.value > CACHE_TIME
 
     if (!isLoaded.value || isStale) {
-      // loader.show('Memuat artikel...')
+      try {
+        const response = await apiAuthGet('artikel/')
+        daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
+        isLoaded.value = true
+        lastFetched.value = Date.now()
+        return response
+      } catch (error) {
+        throw error
+      }
     }
-    try {
-      const response = await apiAuthGet('artikel/')
-      daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
-      isLoaded.value = true
-      lastFetched.value = Date.now()
-      return response
-    } catch (error) {
-      throw error
-    } finally {
-      // loader.hide()
-    }
+    return daftarArtikel.value
   }
 
   async function fetchKelolaArtikel() {
@@ -46,19 +44,17 @@ export const useArtikelStore = defineStore('artikel', () => {
     const isStale = Date.now() - lastFetched.value > CACHE_TIME
 
     if (!isLoaded.value || isStale) {
-      // loader.show('Memuat manajemen artikel...')
+      try {
+        const response = await apiAuthGet('artikel/kelola/')
+        daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
+        isLoaded.value = true
+        lastFetched.value = Date.now()
+        return response
+      } catch (error) {
+        throw error
+      }
     }
-    try {
-      const response = await apiAuthGet('artikel/kelola/')
-      daftarArtikel.value = Array.isArray(response) ? response : (response.data || [])
-      isLoaded.value = true
-      lastFetched.value = Date.now()
-      return response
-    } catch (error) {
-      throw error
-    } finally {
-      // loader.hide()
-    }
+    return daftarArtikel.value
   }
 
 
@@ -69,15 +65,15 @@ export const useArtikelStore = defineStore('artikel', () => {
    * @returns {Promise<any>} API response
    */
   async function fetchDetailArtikel(id: string) {
-    // loader.show('Memuat isi artikel...')
+    if (detailArtikel.value && String(detailArtikel.value.id) === String(id)) {
+      return detailArtikel.value
+    }
     try {
       const response = await apiAuthGet(`artikel/${id}/`)
       detailArtikel.value = response
       return response
     } catch (error) {
       throw error
-    } finally {
-      // loader.hide()
     }
   }
 

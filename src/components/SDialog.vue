@@ -198,7 +198,7 @@ onBeforeUnmount(() => {
   display: flex;
   padding: 32px;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 24px;
   overflow-y: auto;
   flex: 1;
