@@ -110,20 +110,34 @@ async function handleEditProfil() {
   editLoading.value = true
   try {
     const payload: any = {}
-    if (isSiswa.value) payload.kelas = editKelas.value
-    if (isGuru.value) {
-      const validMapels = mapels.value.filter(m => m.nama_mata_pelajaran.trim().length > 0)
-      if (validMapels.length === 0) {
-        alertStore.error("Setidaknya isi 1 mata pelajaran.")
+    if (isSiswa.value) {
+      if (!editKelas.value) {
+        alertStore.error("Silakan pilih kelas terlebih dahulu.")
         editLoading.value = false
         return
       }
-      if (validMapels.some(m => m.kelas_diajar.length === 0)) {
+      payload.kelas = editKelas.value
+    }
+    if (isGuru.value) {
+      // Robust check for blank names or missing classes
+      const hasInvalid = mapels.value.some(m => !m.nama_mata_pelajaran || m.nama_mata_pelajaran.trim().length === 0)
+      if (hasInvalid) {
+        alertStore.error("Nama mata pelajaran tidak boleh kosong atau hanya berisi spasi.")
+        editLoading.value = false
+        return
+      }
+      
+      const hasNoClass = mapels.value.some(m => !m.kelas_diajar || m.kelas_diajar.length === 0)
+      if (hasNoClass) {
         alertStore.error("Tiap mata pelajaran harus memiliki setidaknya 1 kelas diajar.")
         editLoading.value = false
         return
       }
-      payload.riwayat_mengajar = validMapels
+
+      payload.riwayat_mengajar = mapels.value.map(m => ({
+        nama_mata_pelajaran: m.nama_mata_pelajaran.trim(),
+        kelas_diajar: m.kelas_diajar
+      }))
     }
     await auth.editProfil(payload)
     // Re-fetch to update user data
