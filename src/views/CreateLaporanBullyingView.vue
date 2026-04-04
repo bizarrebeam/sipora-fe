@@ -32,6 +32,7 @@ function handleAlertPrimary() {
 
 const judul = ref('')
 const tanggalKejadian = ref('')
+const waktuKejadian = ref('')
 const tanggalKejadianObj = ref<Date | null>(null)
 const showDatePicker = ref(false)
 const lokasi = ref('')
@@ -62,6 +63,30 @@ const jenisBullyingOptions = [
     { value: 'lainnya', label: 'Lainnya' },
 ]
 
+const lokasiOptions = [
+    { value: 'Kelas 7A', label: 'Kelas 7A' },
+    { value: 'Kelas 7B', label: 'Kelas 7B' },
+    { value: 'Kelas 8A', label: 'Kelas 8A' },
+    { value: 'Kelas 8B', label: 'Kelas 8B' },
+    { value: 'Ruang Musik', label: 'Ruang Musik' },
+    { value: 'Ruang OSIS', label: 'Ruang OSIS' },
+    { value: 'Toilet', label: 'Toilet' },
+    { value: 'Lapangan', label: 'Lapangan' },
+    { value: 'Kantin', label: 'Kantin' },
+    { value: 'Perpustakaan', label: 'Perpustakaan' },
+    { value: 'Dapur', label: 'Dapur' },
+    { value: 'Ruang Guru', label: 'Ruang Guru' },
+    { value: 'Tenda Biru', label: 'Tenda Biru' },
+    { value: 'Kapel Desa Putera', label: 'Kapel Desa Putera' },
+    { value: 'Panti Asuhan Desa Putera', label: 'Panti Asuhan Desa Putera' },
+    { value: 'Graha Desa Putera', label: 'Graha Desa Putera' },
+    { value: 'Gua Maria', label: 'Gua Maria' },
+    { value: 'Kelas 9A', label: 'Kelas 9A' },
+    { value: 'Kelas 9B', label: 'Kelas 9B' },
+    { value: 'Lab Komputer', label: 'Lab Komputer' },
+    { value: 'Lainnya', label: 'Lainnya' },
+]
+
 const errors = ref({
     judul: '',
     tanggalKejadian: '',
@@ -76,7 +101,7 @@ const isFormValid = computed(() => {
         tanggalKejadian.value &&
         lokasi.value.trim() &&
         jenisBullying.value &&
-        deskripsi.value.trim() &&
+        deskripsi.value.trim().length >= 50 &&
         !buktiError.value
     )
 })
@@ -86,7 +111,14 @@ function validate() {
     errors.value.tanggalKejadian = !tanggalKejadian.value ? 'Tanggal wajib diisi' : ''
     errors.value.lokasi = !lokasi.value.trim() ? 'Lokasi wajib diisi' : ''
     errors.value.jenisBullying = !jenisBullying.value ? 'Jenis bullying wajib dipilih' : ''
-    errors.value.deskripsi = !deskripsi.value.trim() ? 'Deskripsi wajib diisi' : ''
+    
+    if (!deskripsi.value.trim()) {
+        errors.value.deskripsi = 'Deskripsi wajib diisi'
+    } else if (deskripsi.value.trim().length < 50) {
+        errors.value.deskripsi = 'Deskripsi minimal 50 karakter'
+    } else {
+        errors.value.deskripsi = ''
+    }
 }
 
 function triggerFileInput() {
@@ -146,6 +178,7 @@ async function handleSubmit() {
             deskripsi: deskripsi.value.trim(),
             lokasi: lokasi.value.trim(),
             tanggal_kejadian: tanggalKejadian.value,
+            waktu_kejadian: waktuKejadian.value || undefined,
             jenis_bullying: jenisBullying.value,
             anonimitas: anonimitas.value,
             foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
@@ -155,6 +188,7 @@ async function handleSubmit() {
         deskripsi.value = ''
         lokasi.value = ''
         tanggalKejadian.value = ''
+        waktuKejadian.value = ''
         jenisBullying.value = ''
         anonimitas.value = false
         buktiPendukung.value = []
@@ -259,17 +293,40 @@ async function handleSubmit() {
                     <span v-if="errors.tanggalKejadian" class="error-msg">{{ errors.tanggalKejadian }}</span>
                 </div>
 
+                <!-- Waktu Kejadian -->
+                <div class="form-group">
+                    <div class="custom-label-row">
+                        <label class="custom-label">Waktu Kejadian</label>
+                        <span class="optional-tag ml-1">(opsional)</span>
+                    </div>
+                    <div class="relative w-full">
+                        <input 
+                            type="time"
+                            v-model="waktuKejadian"
+                            class="time-input"
+                        />
+                    </div>
+                </div>
+
                 <!-- Lokasi -->
                 <div class="form-group">
-                    <STextField
-                        v-model="lokasi"
-                        label="Lokasi Kejadian"
-                        :required="true"
-                        :placeholder="'Ketik di sini...'"
-                        :variant="'text'"
-                        :disabled="false"
-                        @blur="validate"
-                    />
+                    <div class="custom-label-row">
+                        <label class="custom-label">Lokasi Kejadian</label>
+                        <span class="custom-asterisk">*</span>
+                    </div>
+                    <div class="relative w-full">
+                        <select 
+                            v-model="lokasi" 
+                            @change="validate"
+                            class="bullying-select"
+                            :class="{ 'placeholder-active': !lokasi }"
+                        >
+                            <option value="" disabled selected>Pilih lokasi kejadian...</option>
+                            <option v-for="option in lokasiOptions" :key="option.value" :value="option.value" class="text-general-black">
+                                {{ option.label }}
+                            </option>
+                        </select>
+                    </div>
                     <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                 </div>
 
@@ -302,7 +359,10 @@ async function handleSubmit() {
                             <label class="custom-label">Deskripsi Kejadian</label>
                             <span class="custom-asterisk">*</span>
                         </div>
-                        <span class="file-count">{{ deskripsi.length }} karakter</span>
+                        <span class="file-count" :style="deskripsi.length > 0 && deskripsi.length < 50 ? 'color: var(--color-general-red);' : ''">
+                            <span v-if="deskripsi.length < 50">Minimal 50 karakter ({{ deskripsi.length }} karakter)</span>
+                            <span v-else>{{ deskripsi.length }} karakter</span>
+                        </span>
                     </div>
                     <STextField
                         v-model="deskripsi"
@@ -503,6 +563,28 @@ async function handleSubmit() {
     color: #d1d5db;
 }
 
+/* ─── Time input ─── */
+.time-input {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    border-radius: 8px;
+    border: 1px solid var(--color-general-border);
+    background: white;
+    padding: 10px 16px;
+    color: var(--color-general-black);
+    font-size: 15px;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 500;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+.time-input:hover,
+.time-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
 /* ─── Select ─── */
 .bullying-select {
     display: flex;
@@ -700,7 +782,8 @@ async function handleSubmit() {
         font-size: 15px;
     }
     .date-picker-btn,
-    .bullying-select {
+    .bullying-select,
+    .time-input {
         font-size: 14px;
         padding: 10px 14px;
     }
@@ -758,7 +841,8 @@ async function handleSubmit() {
 
     /* Inputs */
     .date-picker-btn,
-    .bullying-select {
+    .bullying-select,
+    .time-input {
         font-size: 13px;
         padding: 10px 12px;
         border-radius: 8px;
@@ -833,7 +917,8 @@ async function handleSubmit() {
         font-size: 12px;
     }
     .date-picker-btn,
-    .bullying-select {
+    .bullying-select,
+    .time-input {
         font-size: 12px;
         padding: 9px 10px;
     }
