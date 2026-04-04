@@ -1,6 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
 import { useAuthStore } from '@/stores/auth'
 import { useNotFoundStore } from '@/stores/notFound'
+import { useServerErrorStore } from '@/stores/serverError'
 
 /**
  * Core API Service
@@ -11,6 +12,33 @@ import { useNotFoundStore } from '@/stores/notFound'
  * Note: All successful Django REST Framework responses are expected to be wrapped natively
  * by CoreJSONRenderer: { status: "success", message: string, data: any }
  */
+const SERVER_ERROR_STATUSES = [500, 502, 503, 504]
+
+function checkServerError(status: number) {
+  if (SERVER_ERROR_STATUSES.includes(status)) {
+    const errorStore = useServerErrorStore()
+    errorStore.show()
+    // Throw to bypass further processing (like response.json())
+    throw new Error(`Server Error: ${status}`)
+  }
+  return false
+}
+
+function handleNetworkError(error: any) {
+  const errorStore = useServerErrorStore()
+  
+  // 1. Connection failures (fetch failures)
+  const isFetchError = error instanceof TypeError || (error instanceof Error && error.message?.toLowerCase().includes('fetch'))
+  
+  // 2. Parsing failures (often means server returned HTML error page instead of JSON)
+  const isParsingError = error instanceof SyntaxError || (error instanceof Error && error.message?.toLowerCase().includes('json'))
+
+  if (isFetchError || isParsingError) {
+    errorStore.show()
+  }
+  
+  throw error
+}
 
 /**
  * Performs a lightweight health check to verify backend connectivity.
@@ -19,15 +47,22 @@ import { useNotFoundStore } from '@/stores/notFound'
  * @returns {Promise<any>} The parsed health check JSON response.
  */
 export async function getApiStatus() {
-  const response = await fetch(API_BASE_URL, { 
-    credentials: 'include',
-    cache: 'no-store' 
-  })
-  const json = await response.json()
-  if (!response.ok || json.status === 'error') {
-    throw new Error(json.message || 'Failed to connect to backend')
+  try {
+    const response = await fetch(API_BASE_URL, { 
+      credentials: 'include',
+      cache: 'no-store' 
+    })
+    
+    checkServerError(response.status)
+    
+    const json = await response.json()
+    if (!response.ok || json.status === 'error') {
+      throw new Error(json.message || 'Failed to connect to backend')
+    }
+    return json
+  } catch (err) {
+    handleNetworkError(err)
   }
-  return json
 }
 
 /**
@@ -66,15 +101,22 @@ function parseError(json: any, status: number): string {
  * @returns {Promise<any>} The unwrapped `data` payload.
  */
 export async function apiGet(endpoint: string) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, { 
-    credentials: 'include',
-    cache: 'no-store'
-  })
-  const json = await response.json()
-  if (!response.ok || json.status === 'error') {
-    throw new Error(parseError(json, response.status))
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, { 
+      credentials: 'include',
+      cache: 'no-store'
+    })
+
+    checkServerError(response.status)
+
+    const json = await response.json()
+    if (!response.ok || json.status === 'error') {
+      throw new Error(parseError(json, response.status))
+    }
+    return json.data
+  } catch (err) {
+    handleNetworkError(err)
   }
-  return json.data
 }
 
 /**
@@ -86,18 +128,25 @@ export async function apiGet(endpoint: string) {
  * @returns {Promise<any>} The unwrapped `data` payload.
  */
 export async function apiPost(endpoint: string, payload: object) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
-  const json = await response.json()
-  if (!response.ok || json.status === 'error') {
-    throw new Error(parseError(json, response.status))
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    checkServerError(response.status)
+
+    const json = await response.json()
+    if (!response.ok || json.status === 'error') {
+      throw new Error(parseError(json, response.status))
+    }
+    // CoreJSONRenderer wraps in { status, message, data }
+    return json.data
+  } catch (err) {
+    handleNetworkError(err)
   }
-  // CoreJSONRenderer wraps in { status, message, data }
-  return json.data
 }
 
 /**
@@ -110,26 +159,33 @@ export async function apiPost(endpoint: string, payload: object) {
  * @returns {Promise<any>} The unwrapped `data` payload.
  */
 export async function apiAuthGet(endpoint: string) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    credentials: 'include',
-    cache: 'no-store'
-  })
-  const json = await response.json()
-  if (!response.ok || json.status === 'error') {
-    if (response.status === 401) {
-      const authStore = useAuthStore()
-      authStore.setSessionExpired(true)
-      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      credentials: 'include',
+      cache: 'no-store'
+    })
+
+    checkServerError(response.status)
+
+    const json = await response.json()
+    if (!response.ok || json.status === 'error') {
+      if (response.status === 401) {
+        const authStore = useAuthStore()
+        authStore.setSessionExpired(true)
+        throw new Error('Sesi telah berakhir. Silakan login kembali.')
+      }
+      if (response.status === 403 || response.status === 404) {
+        const notFoundStore = useNotFoundStore()
+        notFoundStore.show()
+        
+        throw new Error('Halaman tidak ditemukan.')
+      }
+      throw new Error(parseError(json, response.status))
     }
-    if (response.status === 403 || response.status === 404) {
-      const notFoundStore = useNotFoundStore()
-      notFoundStore.show()
-      
-      throw new Error('Halaman tidak ditemukan.')
-    }
-    throw new Error(parseError(json, response.status))
+    return json.data
+  } catch (err) {
+    handleNetworkError(err)
   }
-  return json.data
 }
 
 /**
@@ -143,30 +199,37 @@ export async function apiAuthGet(endpoint: string) {
  * @returns {Promise<any>} The unwrapped `data` payload.
  */
 export async function apiAuthPost(endpoint: string, payload: object) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload)
-  })
-  const json = await response.json()
-  if (!response.ok || json.status === 'error') {
-    if (response.status === 401) {
-      const authStore = useAuthStore()
-      authStore.setSessionExpired(true)
-      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+
+    checkServerError(response.status)
+
+    const json = await response.json()
+    if (!response.ok || json.status === 'error') {
+      if (response.status === 401) {
+        const authStore = useAuthStore()
+        authStore.setSessionExpired(true)
+        throw new Error('Sesi telah berakhir. Silakan login kembali.')
+      }
+      if (response.status === 403) {
+        const notFoundStore = useNotFoundStore()
+        notFoundStore.show()
+        
+        throw new Error('Anda tidak memiliki akses.')
+      }
+      throw new Error(parseError(json, response.status))
     }
-    if (response.status === 403) {
-      const notFoundStore = useNotFoundStore()
-      notFoundStore.show()
-      
-      throw new Error('Anda tidak memiliki akses.')
-    }
-    throw new Error(parseError(json, response.status))
+    return json.data
+  } catch (err) {
+    handleNetworkError(err)
   }
-  return json.data
 }
 
 /**
@@ -180,28 +243,35 @@ export async function apiAuthPost(endpoint: string, payload: object) {
  * @returns {Promise<any>} The unwrapped `data` payload.
  */
 export async function apiAuthPut(endpoint: string, payload: object) {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'PUT',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload)
-  })
-  const json = await response.json()
-  if (!response.ok || json.status === 'error') {
-    if (response.status === 401) {
-      const authStore = useAuthStore()
-      authStore.setSessionExpired(true)
-      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    })
+
+    checkServerError(response.status)
+
+    const json = await response.json()
+    if (!response.ok || json.status === 'error') {
+      if (response.status === 401) {
+        const authStore = useAuthStore()
+        authStore.setSessionExpired(true)
+        throw new Error('Sesi telah berakhir. Silakan login kembali.')
+      }
+      if (response.status === 403) {
+        const notFoundStore = useNotFoundStore()
+        notFoundStore.show()
+        
+        throw new Error('Anda tidak memiliki akses.')
+      }
+      throw new Error(parseError(json, response.status))
     }
-    if (response.status === 403) {
-      const notFoundStore = useNotFoundStore()
-      notFoundStore.show()
-      
-      throw new Error('Anda tidak memiliki akses.')
-    }
-    throw new Error(parseError(json, response.status))
+    return json.data
+  } catch (err) {
+    handleNetworkError(err)
   }
-  return json.data
 }
