@@ -4,7 +4,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import STextField from '@/components/STextField.vue'
 import SButton from '@/components/SButton.vue'
-import SChip from '@/components/SChip.vue'
+
 import SiporaLogo from '@/assets/sipora-logo.svg'
 
 const auth = useAuthStore()
@@ -69,8 +69,12 @@ async function handleReset() {
       </div>
 
       <!-- Success -->
-      <div v-if="successMsg" class="mb-6 flex justify-center">
-        <SChip :label="successMsg" tone="success" size="medium" />
+      <div v-if="successMsg" class="reset-success-outline">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <div>
+          <p class="success-title">Password berhasil diubah!</p>
+          <p class="success-hint">Kamu akan diarahkan ke halaman login...</p>
+        </div>
       </div>
 
       <!-- Error -->
@@ -80,7 +84,7 @@ async function handleReset() {
       </div>
 
       <!-- Form -->
-      <form v-if="!successMsg" @submit.prevent="handleReset" class="reset-form">
+      <form v-if="!successMsg" @submit.prevent="handleReset" class="reset-form" autocomplete="off">
         <STextField
           label="Password Baru"
           placeholder="Minimal 8 karakter"
@@ -88,6 +92,7 @@ async function handleReset() {
           v-model="password"
           :required="true"
           input-type="password"
+          autocomplete="new-password"
         />
         <div class="password-rules" v-if="password.length > 0">
           <div :class="['rule-item', isPasswordLengthValid ? 'valid' : 'invalid']">
@@ -108,6 +113,7 @@ async function handleReset() {
           v-model="konfirmasiPassword"
           :required="true"
           input-type="password"
+          autocomplete="new-password"
         />
         <SButton
           :label="loading ? 'Memproses...' : 'Ubah Password'"
@@ -181,28 +187,37 @@ async function handleReset() {
   color: var(--color-neutral-500);
 }
 
-/* Success */
-.reset-success {
+/* Success Outline */
+.reset-success-outline {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 16px;
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
-  border-radius: 10px;
   color: #059669;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
 }
 
-.reset-success svg {
+.reset-success-outline svg {
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.success-text {
+.success-title {
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
+  margin-bottom: 2px;
+  line-height: 1.4;
+}
+
+.success-hint {
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 /* Error */
