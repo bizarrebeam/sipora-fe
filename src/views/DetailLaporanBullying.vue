@@ -257,6 +257,9 @@ const onImageLoad = (id: string) => {
                       <span class="timeline-date">{{ formatDate(riwayat.created_at, true) }}</span>
                     </div>
                     <p v-if="riwayat.catatan" class="timeline-catatan">{{ riwayat.catatan }} oleh {{ riwayat.user?.nama }}</p>
+                    <p v-if="riwayat.status === 'dibatalkan' && riwayat.alasan_pembatalan" class="timeline-catatan">
+                      <strong>Alasan Pembatalan:</strong> {{ riwayat.alasan_pembatalan }}
+                    </p>
                   </div>
                 </div>
               </div>
