@@ -8,6 +8,8 @@ import SButton from '@/components/SButton.vue'
 import SAlert from '@/components/SAlert.vue'
 import { useAspirasiStore } from '@/stores/aspirasi'
 
+// test trigger
+// test trigger from local adel
 const router = useRouter()
 const aspirasiStore = useAspirasiStore()
 

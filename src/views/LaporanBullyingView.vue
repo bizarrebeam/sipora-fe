@@ -115,6 +115,7 @@ function statusLabel(status: string) {
     const map: Record<string, string> = {
         menunggu: 'Menunggu Konfirmasi',
         diproses: 'Diproses',
+        menunggu_konfirmasi_selesai: 'Menunggu Konfirmasi Selesai',
         selesai: 'Selesai',
         dibatalkan: 'Dibatalkan',
     }
@@ -123,6 +124,7 @@ function statusLabel(status: string) {
 
 function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
     if (status === 'menunggu') return 'warning'
+    if (status === 'menunggu_konfirmasi_selesai') return 'warning'
     if (status === 'diproses') return 'info'
     if (status === 'selesai') return 'success'
     return 'danger'
@@ -405,7 +407,7 @@ onActivated(() => {
                             <template #body-cell-status="{ row }">
                                 <SChip 
                                     :label="statusLabel(row.status)" 
-                                    :tone="row.status === 'selesai' ? 'success' : (row.status === 'diproses' ? 'info' : (row.status === 'menunggu' ? 'warning' : 'danger'))" 
+                                    :tone="statusTone(row.status)" 
                                     size="small" 
                                 />
                             </template>

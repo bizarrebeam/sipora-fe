@@ -138,7 +138,7 @@ const isFormValid = computed(() => {
         tanggalKejadian.value &&
         lokasi.value.trim() &&
         jenisBullying.value &&
-        deskripsi.value.trim() &&
+        deskripsi.value.trim().length >= 50 &&
         !buktiError.value
     )
 })
@@ -148,7 +148,14 @@ function validate() {
     errors.value.tanggalKejadian = !tanggalKejadian.value ? 'Tanggal wajib diisi' : ''
     errors.value.lokasi = !lokasi.value.trim() ? 'Lokasi wajib diisi' : ''
     errors.value.jenisBullying = !jenisBullying.value ? 'Jenis bullying wajib dipilih' : ''
-    errors.value.deskripsi = !deskripsi.value.trim() ? 'Deskripsi wajib diisi' : ''
+    
+    if (!deskripsi.value.trim()) {
+        errors.value.deskripsi = 'Deskripsi wajib diisi'
+    } else if (deskripsi.value.trim().length < 50) {
+        errors.value.deskripsi = 'Deskripsi minimal 50 karakter'
+    } else {
+        errors.value.deskripsi = ''
+    }
 }
 
 function triggerFileInput() {
@@ -363,9 +370,19 @@ async function handleSubmit() {
 
                 <!-- Deskripsi -->
                 <div class="form-group">
+                    <div class="custom-label-row flex justify-between w-full">
+                        <div>
+                            <label class="custom-label">Deskripsi Kejadian</label>
+                            <span class="custom-asterisk">*</span>
+                        </div>
+                        <span class="file-count" :style="deskripsi.length > 0 && deskripsi.length < 50 ? 'color: var(--color-general-red);' : ''">
+                            <span v-if="deskripsi.length < 50">Minimal 50 karakter ({{ deskripsi.length }} karakter)</span>
+                            <span v-else>{{ deskripsi.length }} karakter</span>
+                        </span>
+                    </div>
                     <STextField
                         v-model="deskripsi"
-                        label="Deskripsi Kejadian"
+                        label=""
                         :required="true"
                         :placeholder="'Ketik detail kejadian di sini...'"
                         :variant="'textarea'"
