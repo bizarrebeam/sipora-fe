@@ -395,7 +395,7 @@ async function handleSubmit() {
                                 <label class="custom-label">Deskripsi Kerusakan</label>
                                 <span class="custom-asterisk">*</span>
                             </div>
-                            <span class="file-count">{{ deskripsi.length }} karakter</span>
+                            <span class="file-count">{{ deskripsi.length }}/50 karakter</span>
                         </div>
                         <STextField v-model="deskripsi" label=""
                             :placeholder="'Ketik detail kerusakan di sini...'" :variant="'textarea'" :disabled="false"

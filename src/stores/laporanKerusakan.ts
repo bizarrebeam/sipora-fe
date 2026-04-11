@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { apiAuthGet } from '@/services/api'
 import { useLoadingStore } from '@/stores/loading'
 
+/**
+ * Interface representing one status history entry for a damage report.
+ */
 interface RiwayatStatus {
     id: string
     status: string
@@ -11,12 +14,18 @@ interface RiwayatStatus {
     waktu: string
 }
 
+/**
+ * Interface representing one uploaded evidence photo.
+ */
 interface FotoBukti {
     id: string
     foto: string
     uploaded_at: string
 }
 
+/**
+ * Interface representing a full Laporan Kerusakan object returned by the backend.
+ */
 interface LaporanKerusakan {
     id: string
     no_laporan: string
@@ -25,7 +34,7 @@ interface LaporanKerusakan {
     deskripsi: string
     tanggal_kejadian: string
     tanggal_laporan: string
-    status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
+    status: 'menunggu' | 'diproses' | 'menunggu_konfirmasi_selesai' | 'selesai' | 'ditolak' | 'dibatalkan'
     anonimitas: boolean
     pengirim_username?: string
     nama_lengkap?: string
@@ -45,6 +54,9 @@ interface LaporanKerusakan {
     akun_terverifikasi?: boolean
 }
 
+/**
+ * Payload contract for creating a new damage report.
+ */
 interface CreateLaporanPayload {
     judul: string
     deskripsi: string
@@ -54,6 +66,9 @@ interface CreateLaporanPayload {
     foto_bukti?: File[]
 }
 
+/**
+ * Payload contract for editing an existing damage report.
+ */
 interface EditLaporanPayload {
     judul?: string
     deskripsi?: string
@@ -63,16 +78,47 @@ interface EditLaporanPayload {
     foto_bukti?: File[]
 }
 
+/**
+ * Pinia store for managing Facility Damage Reports (Laporan Kerusakan).
+ * This store contains global state and actions for listing, creating,
+ * editing, canceling, and retrieving report details.
+ */
 export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
+    /** Array containing fetched report items (per current page/query). */
     const laporanList = ref<LaporanKerusakan[]>([])
+
+    /** Total report count from server response (for pagination metadata). */
     const totalLaporan = ref(0)
+
+    /** Stores currently opened report detail data. */
     const currentLaporan = ref<LaporanKerusakan | null>(null)
+
+    /** Whether current user has access denied for list endpoint context. */
     const accessDenied = ref(false)
+
+    /** Message associated with access denial state from backend. */
     const accessMessage = ref('')
+
+    /** Flag indicating whether list data has been loaded at least once. */
     const isLoaded = ref(false)
+
+    /** Timestamp of the last successful list fetch (for cache invalidation). */
     const lastFetched = ref(0)
+
     const loadingStore = useLoadingStore()
 
+    /**
+     * Fetches list of damage reports with optional filtering, sorting, and pagination.
+     * Applies a lightweight 2-minute staleness check for reducing redundant calls.
+     *
+     * @param params - Optional query parameters.
+     * @param params.status - Filter by status value.
+     * @param params.search - Search by title, location, or report number.
+     * @param params.date - Filter by specific incident date.
+     * @param params.sort - Sort order ('asc' | 'desc').
+     * @param params.page - Requested page number.
+     * @param params.pageSize - Number of items per page.
+     */
     async function fetchLaporanKerusakan(params: {
         status?: string
         search?: string
@@ -124,6 +170,12 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
+    /**
+     * Fetches detail information for a single damage report by ID.
+     *
+     * @param id - UUID of the report to retrieve.
+     * @returns Detailed report object.
+     */
     async function fetchLaporanDetail(id: string) {
         // loadingStore.show('Memuat detail laporan...')
         try {
@@ -137,6 +189,13 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
+    /**
+     * Creates a new damage report using multipart form data.
+     * Supports optional evidence photo uploads.
+     *
+     * @param payload - Creation payload for report data.
+     * @returns Newly created report object from server response.
+     */
     async function createLaporanKerusakan(payload: CreateLaporanPayload) {
         loadingStore.show('Menyimpan laporan kerusakan...')
         try {
@@ -179,6 +238,13 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
+    /**
+     * Edits the currently opened damage report data.
+     * Uses multipart form data to allow optional additional photos.
+     *
+     * @param payload - Partial editable fields to update the report.
+     * @returns Updated report object from server response.
+     */
     async function editLaporanKerusakan(payload: EditLaporanPayload){
         loadingStore.show('Menyimpan laporan kerusakan...')
         try {
@@ -219,6 +285,13 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
+    /**
+     * Cancels an existing report with a mandatory cancellation reason.
+     *
+     * @param id - UUID of the report to cancel.
+     * @param alasan - User-provided cancellation reason.
+     * @returns Updated report object after cancellation.
+     */
     async function cancelLaporanKerusakan(id: string, alasan: string) {
         loadingStore.show('Membatalkan laporan...')
         try {
@@ -250,6 +323,60 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         }
     }
 
+    /**
+     * Updates the status of a damage report.
+     * Only authorized admin users (kemahasiswaan) can update status.
+     *
+     * @param id - Report UUID
+     * @param status - New status value
+     * @param reason - Optional reason for rejection
+     * @param note - Optional note for completion
+     */
+    async function updateLaporanStatus(
+        id: string,
+        status: string,
+        reason?: string,
+        note?: string
+    ) {
+        loadingStore.show('Mengubah status laporan...')
+        try {
+            const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api/').replace(/\/$/, '')
+            const endpoint = `${API_BASE}/laporan-kerusakan/${id}/status/`
+
+            const body: any = { status }
+            if (reason) body.reason = reason
+            if (note) body.note = note
+
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            })
+
+            const json = await response.json()
+            if (!response.ok || json.status === 'error') {
+                const errorMsg = json.message || (json.errors ? JSON.stringify(json.errors) : 'Gagal mengubah status laporan')
+                throw new Error(errorMsg)
+            }
+
+            // update local currentLaporan with returned data
+            currentLaporan.value = json.data
+
+            return json.data
+        } catch (error: any) {
+            throw error
+        } finally {
+            loadingStore.hide()
+        }
+    }
+
+    /**
+     * Resets all store states to initial defaults.
+     * Useful when leaving page context or on logout.
+     */
     function reset() {
         laporanList.value = []
         totalLaporan.value = 0
@@ -271,6 +398,7 @@ export const useLaporanKerusakanStore = defineStore('laporanKerusakan', () => {
         createLaporanKerusakan,
         editLaporanKerusakan,
         cancelLaporanKerusakan,
+        updateLaporanStatus,
         reset
     }
 })

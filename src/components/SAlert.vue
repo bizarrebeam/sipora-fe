@@ -147,6 +147,8 @@ function handleSecondary() {
   line-height: 1.5;
   margin: 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .salert-actions {

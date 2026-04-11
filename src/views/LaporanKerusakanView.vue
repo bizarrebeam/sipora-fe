@@ -27,6 +27,7 @@ interface LaporanKerusakan {
 	nama_lengkap?: string
 	akun_terverifikasi?: boolean
 	status: 'menunggu' | 'diproses' | 'selesai' | 'ditolak' | 'dibatalkan'
+	| 'menunggu_konfirmasi_selesai'
 	foto_bukti?: Array<{ id: string; foto: string; uploaded_at: string }>
 	foto_pendukung?: string[]
 	catatan_admin?: string
@@ -130,6 +131,7 @@ function statusLabel(status: string) {
 	const map: Record<string, string> = {
 		menunggu: 'Menunggu Konfirmasi',
 		diproses: 'Diproses',
+		menunggu_konfirmasi_selesai: 'Menunggu Konfirmasi Selesai',
 		selesai: 'Selesai',
 		ditolak: 'Ditolak',
 		dibatalkan: 'Dibatalkan',
@@ -143,6 +145,7 @@ function anonimitasLabel(value: boolean) {
 
 function statusTone(status: string): 'warning' | 'info' | 'success' | 'danger' {
 	if (status === 'menunggu') return 'warning'
+	if (status === 'menunggu_konfirmasi_selesai') return 'warning'
 	if (status === 'diproses') return 'info'
 	if (status === 'selesai') return 'success'
 	return 'danger'
@@ -382,7 +385,7 @@ onActivated(() => {
 
 							<template #body-cell-status="{ row }">
 								<SChip :label="statusLabel(row.status)"
-									:tone="row.status === 'selesai' ? 'success' : (row.status === 'diproses' ? 'info' : (row.status === 'menunggu' ? 'warning' : 'danger'))"
+									:tone="statusTone(row.status)"
 									size="small" />
 							</template>
 

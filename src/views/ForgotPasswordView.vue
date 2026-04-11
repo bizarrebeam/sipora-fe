@@ -52,11 +52,11 @@ async function handleForgot() {
       </div>
 
       <!-- Success Message -->
-      <div v-if="successMsg" class="forgot-success-solid">
+      <div v-if="successMsg" class="forgot-success-outline">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         <div>
-          <p class="success-text-solid">{{ successMsg }}</p>
-          <p class="success-hint-solid">Periksa folder inbox atau spam email kamu.</p>
+          <p class="success-title">Email reset password sudah dikirimkan ke {{ maskedEmail }}</p>
+          <p class="success-hint">Periksa folder inbox atau spam email kamu.</p>
         </div>
       </div>
 
@@ -149,20 +149,25 @@ async function handleForgot() {
   color: var(--color-neutral-500);
 }
 
-/* Success Solid Style */
-.forgot-success-solid {
+/* Success Outline Style */
+.forgot-success-outline {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  background: #10B981;
-  color: white;
+  background: #E8F5E9;
+  border: 1px solid #2E7D32;
+  color: #2E7D32;
   border-radius: 12px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
-.success-text-solid {
+.forgot-success-outline svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.success-title {
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -170,11 +175,11 @@ async function handleForgot() {
   line-height: 1.4;
 }
 
-.success-hint-solid {
+.success-hint {
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   font-weight: 500;
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 /* Error */

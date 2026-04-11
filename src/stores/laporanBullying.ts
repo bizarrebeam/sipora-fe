@@ -255,6 +255,50 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
     }
 
     /**
+     * Updates the status of a bullying report with validation and note/reason fields.
+     */
+    async function updateLaporanStatus(
+        id: string,
+        status: string,
+        reason?: string,
+        note?: string
+    ) {
+        loader.show('Mengubah status laporan...')
+        try {
+            const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api/').replace(/\/$/, '')
+            const endpoint = `${API_BASE}/laporan-bullying/${id}/status/`
+
+            const body: any = { status }
+            if (reason) body.reason = reason
+            if (note) body.note = note
+
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            })
+
+            const json = await response.json()
+            if (!response.ok || json.status === 'error') {
+                const errorMsg = json.message || (json.errors ? JSON.stringify(json.errors) : 'Gagal mengubah status laporan')
+                throw new Error(errorMsg)
+            }
+
+            // update local detailLaporan with returned data
+            detailLaporan.value = json.data
+
+            return json.data
+        } catch (error: any) {
+            throw error
+        } finally {
+            loader.hide()
+        }
+    }
+
+    /**
      * Resets the store's state arrays, objects, and caching metrics back to their initial values.
      * Commonly used to wipe residual data on user logout or when leaving the component route entirely.
      */
@@ -275,6 +319,7 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
         buatLaporan,
         editLaporan,
         batalkanLaporan,
+        updateLaporanStatus,
         reset
     }
 })

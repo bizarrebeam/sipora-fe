@@ -23,14 +23,31 @@ function handleSessionExpired() {
   router.push('/login')
 }
 
-// Proactive health check to detect if backend is down on app initialization
+// Proactive health check and session verification on app initialization
 onMounted(async () => {
   try {
+    // 1. Basic connectivity check
     await getApiStatus()
+    
+    // 2. Session verification (Self-Healing)
+    // If we think we are logged in, try to fetch the profile.
+    // This will trigger the new Silent Refresh logic if the token is base-expired.
+    if (authStore.isAuthenticated) {
+      try {
+        await authStore.fetchProfile()
+      } catch (err: any) {
+        // If fetchProfile fails even after refresh attempt, 
+        // we might have inconsistent state (e.g. old versions).
+        if (err.message?.includes('401') || err.message?.includes('Sesi')) {
+          authStore.clearLocalSession()
+        }
+      }
+    }
   } catch {
-    // Error is already handled globally in api.ts (shows popup)
+    // Basic connectivity error is handled globally in api.ts
   }
 })
+
 </script>
 
 <template>
