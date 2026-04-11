@@ -28,7 +28,7 @@ const MAX_LENGTH = 2000
 
 const charCount = computed(() => pesan.value.length)
 const isValid = computed(() => pesan.value.trim().length >= MIN_LENGTH)
-const isClosed = computed(() => props.laporanStatus === 'selesai')
+const isClosed = computed(() => ['selesai', 'ditolak', 'dibatalkan'].includes(props.laporanStatus))
 
 /**
  * Submit the response message.

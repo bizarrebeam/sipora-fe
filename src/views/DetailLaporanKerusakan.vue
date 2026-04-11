@@ -119,7 +119,7 @@ function formatRiwayatCatatan(riwayat: { status: string; catatan?: string | null
         return `${catatan} oleh ${namaPengubah}`
     }
 
-    return `Laporan ${statusLabel(riwayat.status).toLowerCase()} oleh ${namaPengubah}`
+    return `Laporan ${statusLabel(riwayat.status)} oleh ${namaPengubah}`
 }
 
 async function handleBatalkan() {
@@ -1231,6 +1231,13 @@ const onImageLoad = (id: string) => {
 }
 .status-summary-note {
     text-align: center;
+    word-break: break-word;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    max-height: 56px;
 }
 
 /* ─── Bukti images ─── */
