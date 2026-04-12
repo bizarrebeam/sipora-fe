@@ -153,6 +153,10 @@ async function handleSubmit() {
         })
 
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[CreateAspirasiView] Request failed (handled globally):', error.message);
+      return;
+    }
         showAlert({
             type: 'warning',
             title: 'Gagal Membuat Aspirasi',

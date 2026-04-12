@@ -151,6 +151,9 @@ export const useAuthStore = defineStore('auth', () => {
 
       isSessionExpired.value = false
 
+      if (data.access) localStorage.setItem('access_token', data.access)
+      if (data.refresh) localStorage.setItem('refresh_token', data.refresh)
+
       setUser({
         username: data.username,
         role: data.role,
@@ -224,8 +227,9 @@ export const useAuthStore = defineStore('auth', () => {
     const loader = useLoadingStore()
     loader.show('Keluar dari akun...')
     try {
+      const refresh = localStorage.getItem('refresh_token')
       try {
-        await apiAuthPost('akun/logout/', {})
+        await apiAuthPost('akun/logout/', refresh ? { refresh } : {})
       } catch {
       }
       clearAuth()
@@ -291,7 +295,14 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function refreshSession() {
     try {
-      await apiPost('akun/token/refresh/', {})
+      const refresh = localStorage.getItem('refresh_token')
+      // Ensure backend refresh endpoint is called, pass refresh token via body for Safari fallback
+      const data = await apiPost('akun/token/refresh/', refresh ? { refresh } : {})
+      
+      if (data && data.access) {
+        localStorage.setItem('access_token', data.access)
+        if (data.refresh) localStorage.setItem('refresh_token', data.refresh)
+      }
       return true
     } catch (err) {
       return false

@@ -262,6 +262,10 @@ async function fetchData() {
             pageSize: pageSize.value,
         })
     } catch (error) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[AspirasiView] Request failed (handled globally):', error.message);
+      return;
+    }
         console.error('Error fetching Aspirasi:', error)
     } finally {
         loading.value = false

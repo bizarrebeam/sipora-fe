@@ -300,6 +300,10 @@ async function handleSubmit() {
         })
 
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[CreateLaporanKerusakanView] Request failed (handled globally):', error.message);
+      return;
+    }
         showAlert({
             type: 'warning',
             title: 'Gagal Membuat Laporan',

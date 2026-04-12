@@ -212,6 +212,10 @@ async function handleUpdateGuru() {
     isEditMode.value = false
     await fetchDaftar()
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ManajemenAkunView] Request failed (handled globally):', err.message);
+      return;
+    }
     alertStore.error(err.message || 'Gagal memperbarui profil guru.')
   } finally {
     updateGuruLoading.value = false
@@ -384,6 +388,10 @@ async function fetchDaftar() {
     
     isLoaded.value = true
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ManajemenAkunView] Request failed (handled globally):', err.message);
+      return;
+    }
     alertStore.error(err.message || 'Gagal memuat daftar akun.')
   } finally {
     loading.value = false
@@ -395,6 +403,10 @@ async function handleVerify(id: string) {
     await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
     await fetchDaftar()
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ManajemenAkunView] Request failed (handled globally):', err.message);
+      return;
+    }
     alertStore.error(err.message || 'Gagal memverifikasi akun.')
   }
 }
@@ -519,6 +531,10 @@ async function handleCreate() {
     await fetchDaftar()
     await fetchCounts()
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ManajemenAkunView] Request failed (handled globally):', err.message);
+      return;
+    }
     alertStore.error(err.message || 'Gagal membuat akun.')
   } finally {
     createLoading.value = false
@@ -544,6 +560,8 @@ async function fetchCounts() {
     if (data.guru !== undefined) guruTotal.value = data.guru
     if (data.guru_bk !== undefined) guruBkTotal.value = data.guru_bk
   } catch {
+    // Note: error object omitted, assuming could be ServerHandledError
+
     // silently fail — counts will update when tabs are clicked
   }
 }

@@ -189,6 +189,10 @@ async function fetchData() {
       await artikelStore.fetchArtikelPublik()
     }
   } catch (error) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[KelolaArtikelView] Request failed (handled globally):', error.message);
+      return;
+    }
     console.error('Gagal mengambil data artikel:', error)
   } finally {
     loading.value = false

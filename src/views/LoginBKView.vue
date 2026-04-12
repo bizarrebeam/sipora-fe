@@ -27,6 +27,10 @@ async function handleLogin() {
     await auth.login(identifier.value, password.value, ['guru_bk'])
     router.push('/')
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[LoginBKView] Request failed (handled globally):', err.message);
+      return;
+    }
     errorMsg.value = err.message || 'Login gagal. Periksa kredensial Anda.'
   } finally {
     loading.value = false

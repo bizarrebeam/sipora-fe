@@ -34,6 +34,10 @@ async function handleForgot() {
     maskedEmail.value = data.masked_email
     successMsg.value = `Email reset password sudah dikirimkan ke ${data.masked_email}`
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ForgotPasswordView] Request failed (handled globally):', err.message);
+      return;
+    }
     errorMsg.value = err.message || 'Gagal mengirim email reset. Silakan coba lagi.'
   } finally {
     loading.value = false

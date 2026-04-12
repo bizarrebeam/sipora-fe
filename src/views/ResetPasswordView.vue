@@ -51,6 +51,10 @@ async function handleReset() {
       router.push('/login')
     }, 3000)
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ResetPasswordView] Request failed (handled globally):', err.message);
+      return;
+    }
     errorMsg.value = err.message || 'Link reset password tidak valid atau sudah kadaluarsa.'
   } finally {
     loading.value = false

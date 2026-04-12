@@ -31,6 +31,10 @@ onMounted(async () => {
     const data = await apiAuthGet(`artikel/${id}/`)
     artikel.value = data
   } catch (error) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[DetailArtikelView] Request failed (handled globally):', error.message);
+      return;
+    }
     console.error("Gagal memuat detail artikel:", error)
     router.push('/artikel')
   } finally {

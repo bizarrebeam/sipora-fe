@@ -12,6 +12,13 @@ import { useServerErrorStore } from '@/stores/serverError'
  * Note: All successful Django REST Framework responses are expected to be wrapped natively
  * by CoreJSONRenderer: { status: "success", message: string, data: any }
  */
+export class ServerHandledError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ServerHandledError';
+  }
+}
+
 const SERVER_ERROR_STATUSES = [500, 502, 503, 504]
 
 function checkServerError(status: number) {
@@ -19,12 +26,16 @@ function checkServerError(status: number) {
     const errorStore = useServerErrorStore()
     errorStore.show()
     // Throw to bypass further processing (like response.json())
-    throw new Error(`Server Error: ${status}`)
+    throw new ServerHandledError(`Server Error: ${status}`)
   }
   return false
 }
 
 function handleNetworkError(error: any) {
+  if (error instanceof ServerHandledError) {
+    throw error
+  }
+  
   const errorStore = useServerErrorStore()
   
   // 1. Connection failures (fetch failures)
@@ -35,6 +46,7 @@ function handleNetworkError(error: any) {
 
   if (isFetchError || isParsingError) {
     errorStore.show()
+    throw new ServerHandledError(error.message || 'Network or Parsing Error')
   }
   
   throw error
@@ -178,8 +190,13 @@ async function handleRefresh() {
  */
 export async function apiAuthGet(endpoint: string) {
   try {
+    const token = localStorage.getItem('access_token')
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       credentials: 'include',
+      headers,
       cache: 'no-store'
     })
 
@@ -223,12 +240,16 @@ export async function apiAuthGet(endpoint: string) {
  */
 export async function apiAuthPost(endpoint: string, payload: object) {
   try {
+    const token = localStorage.getItem('access_token')
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload)
     })
 
@@ -271,12 +292,16 @@ export async function apiAuthPost(endpoint: string, payload: object) {
  */
 export async function apiAuthPut(endpoint: string, payload: object) {
   try {
+    const token = localStorage.getItem('access_token')
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload)
     })
 

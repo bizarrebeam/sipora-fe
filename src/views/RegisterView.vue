@@ -74,6 +74,10 @@ async function handleRegister() {
     await auth.login(nis.value, password.value, ['siswa'])
     router.push('/')
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[RegisterView] Request failed (handled globally):', err.message);
+      return;
+    }
     errorMsg.value = err.message || 'Pendaftaran gagal. Silakan coba lagi.'
   } finally {
     loading.value = false

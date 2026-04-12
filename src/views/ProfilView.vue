@@ -80,6 +80,8 @@ onMounted(async () => {
       }
     }
   } catch {
+    // Note: error object omitted, assuming could be ServerHandledError
+
     // Profile could fail if token expired
   }
 })
@@ -144,6 +146,10 @@ async function handleEditProfil() {
     await auth.fetchProfile()
     showSuccessUpdateDialog.value = true
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ProfilView] Request failed (handled globally):', err.message);
+      return;
+    }
     alertStore.error(err.message || 'Gagal menyimpan perubahan.')
   } finally {
     editLoading.value = false
@@ -166,6 +172,10 @@ async function handleUbahPassword() {
     passwordBaru.value = ''
     showSuccessPasswordDialog.value = true
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ProfilView] Request failed (handled globally):', err.message);
+      return;
+    }
     alertStore.error(err.message || 'Gagal mengubah password.')
   } finally {
     passwordLoading.value = false

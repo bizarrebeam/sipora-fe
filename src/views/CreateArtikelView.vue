@@ -266,6 +266,10 @@ const submitArticle = async (status: 'draft' | 'published') => {
       router.push('/artikel')
     }, 2000)
   } catch (error: unknown) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[CreateArtikelView] Request failed (handled globally):', error.message);
+      return;
+    }
     const errorMessage = error instanceof Error ? error.message : 'Gagal menyimpan artikel'
     alertStore.error(errorMessage)
   } finally {
@@ -299,6 +303,10 @@ onMounted(async () => {
         previewImage.value = data.gambar
       }
     } catch (error) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[CreateArtikelView] Request failed (handled globally):', error.message);
+      return;
+    }
       console.error(error)
       alertStore.error('Gagal mengambil data artikel')
       router.push('/artikel')

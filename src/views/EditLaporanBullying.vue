@@ -117,6 +117,10 @@ onMounted(async () => {
             anonimitas.value = laporan.anonimitas || false
         }
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[EditLaporanBullying] Request failed (handled globally):', error.message);
+      return;
+    }
         const errorMsg = String(error?.message || error)
         if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
             router.replace('/laporan-bullying')
@@ -226,6 +230,10 @@ async function handleSubmit() {
         
         router.replace(`/laporan-bullying/${id}`)
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[EditLaporanBullying] Request failed (handled globally):', error.message);
+      return;
+    }
         showAlert({
             type: 'warning',
             title: 'Gagal Mengedit Laporan',

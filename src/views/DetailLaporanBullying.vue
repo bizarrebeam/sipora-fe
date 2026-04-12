@@ -57,6 +57,10 @@ async function fetchDetail() {
         // Fetch responses for this report
         await tanggapanStore.ambilTanggapan(id, 'bullying')
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[DetailLaporanBullying] Request failed (handled globally):', error.message);
+      return;
+    }
         const errorMsg = String(error?.message || error)
         
         if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || error?.response?.status === 403) {
@@ -145,7 +149,11 @@ async function handleBatalkan() {
         alertStore.success('Laporan berhasil dibatalkan')
         showBatalkanDialog.value = false
         fetchDetail()
-    } catch (error) {}
+    } catch (error) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[DetailLaporanBullying] Request failed (handled globally):', error.message);
+      return;
+    }}
 }
 
 // Status update handlers
@@ -250,6 +258,10 @@ async function handleStatusConfirm() {
         statusNote.value = ''
         fetchDetail()
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[DetailLaporanBullying] Request failed (handled globally):', error.message);
+      return;
+    }
         const errorMsg = String(error?.message || error)
         if (errorMsg.includes('403')) {
             alertStore.error('Anda tidak memiliki akses mengubah status')
@@ -276,6 +288,10 @@ async function handlePelaporKonfirmasiSelesai(reason = '') {
         )
         fetchDetail()
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[DetailLaporanBullying] Request failed (handled globally):', error.message);
+      return;
+    }
         const errorMsg = String(error?.message || error)
         if (errorMsg.includes('403')) {
             alertStore.error('Hanya pelapor yang dapat mengonfirmasi status ini')
@@ -296,6 +312,10 @@ async function handlePelaporBelumSelesai() {
         alertStore.success('Laporan dikembalikan ke status diproses')
         fetchDetail()
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[DetailLaporanBullying] Request failed (handled globally):', error.message);
+      return;
+    }
         const errorMsg = String(error?.message || error)
         if (errorMsg.includes('403')) {
             alertStore.error('Hanya pelapor yang dapat mengonfirmasi status ini')

@@ -237,6 +237,10 @@ async function fetchData() {
 			pageSize: pageSize.value,
 		})
 	} catch (error) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[LaporanKerusakanView] Request failed (handled globally):', error.message);
+      return;
+    }
 		console.error('Error fetching laporan:', error)
 	} finally {
 		loading.value = false

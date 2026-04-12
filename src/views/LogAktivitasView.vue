@@ -113,6 +113,10 @@ async function fetchLogs(page = 1) {
     totalPages.value = Math.ceil(totalData.value / pageSize.value) || 1
     currentPage.value = page
   } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[LogAktivitasView] Request failed (handled globally):', err.message);
+      return;
+    }
     logError.value = err.message || 'Gagal memuat log aktivitas.'
   } finally {
     loadingLogs.value = false

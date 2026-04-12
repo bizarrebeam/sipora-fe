@@ -36,6 +36,10 @@ onMounted(async () => {
       try {
         await authStore.fetchProfile()
       } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[App] Request failed (handled globally):', err.message);
+      return;
+    }
         // If fetchProfile fails even after refresh attempt, 
         // we might have inconsistent state (e.g. old versions).
         if (err.message?.includes('401') || err.message?.includes('Sesi')) {
@@ -44,6 +48,8 @@ onMounted(async () => {
       }
     }
   } catch {
+    // Note: error object omitted, assuming could be ServerHandledError
+
     // Basic connectivity error is handled globally in api.ts
   }
 })

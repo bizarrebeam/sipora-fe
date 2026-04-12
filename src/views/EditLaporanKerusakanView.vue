@@ -200,6 +200,10 @@ async function handleSubmit() {
         })
 
     } catch (error: any) {
+    if (error?.name === 'ServerHandledError') {
+      console.error('[EditLaporanKerusakanView] Request failed (handled globally):', error.message);
+      return;
+    }
         showAlert({
             type: 'warning',
             title: 'Gagal Mengubah Laporan',
@@ -243,6 +247,10 @@ onMounted(async () => {
         }
 
     } catch (e: any) {
+    if (e?.name === 'ServerHandledError') {
+      console.error('[EditLaporanKerusakanView] Request failed (handled globally):', e.message);
+      return;
+    }
         const errorMsg = String(e?.message || e)
         if (useNotFoundStore().visible || errorMsg.includes('403') || errorMsg.includes('Akses ditolak') || errorMsg.includes('Forbidden') || e?.response?.status === 403) {
             router.replace({ name: 'laporanKerusakan' })
