@@ -31,7 +31,7 @@ const isAdmin = computed(() => isGuruBk.value || isKemahasiswaan.value)
 const isPelapor = computed(() => {
   const role = authStore.user?.role || ''
   const isPelaporRole = role === 'siswa' || role === 'guru'
-  return isPelaporRole && laporan.value?.pelapor?.id === authStore.user?.id
+  return isPelaporRole && laporan.value?.pelapor === authStore.user?.id
 })
 
 const showBatalkanDialog = ref(false)
