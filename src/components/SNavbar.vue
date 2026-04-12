@@ -18,6 +18,19 @@ const roleBadge = computed(() => auth.roleBadge)
 const isVerified = computed(() => auth.isVerified)
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 const canManageAkun = computed(() => isAdmin.value || auth.user?.role === 'guru_bk')
+const isSiswa = computed(() => auth.user?.role === 'siswa')
+const isGuruBK = computed(() => auth.user?.role === 'guru_bk')
+const showKonsultasiBK = computed(() => isSiswa.value || isGuruBK.value)
+
+const konsultasiBKLabel = computed(() => {
+  if (isSiswa.value) return 'Konsultasi BK'
+  return 'Jadwal Konsultasi BK'
+})
+
+const konsultasiBKPath = computed(() => {
+  if (isSiswa.value) return '/booking-konsultasi'
+  return '/jadwal-konsultasi'
+})
 
 const artikelLabel = computed(() => {
   if (!isLoggedIn.value) return 'Baca Artikel'
@@ -67,7 +80,7 @@ async function confirmLogout() {
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
           <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
           <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
-          <RouterLink v-if="auth.user?.role === 'siswa'" to="/kirim-evaluasi" class="nav-link">Evaluasi Guru</RouterLink>
+          <RouterLink v-if="showKonsultasiBK" :to="konsultasiBKPath" class="nav-link">{{ konsultasiBKLabel }}</RouterLink>
           <RouterLink to="/aspirasi" class="nav-link">Aspirasi</RouterLink>
         </template>
         <RouterLink to="/artikel" class="nav-link">{{ artikelLabel }}</RouterLink>
@@ -87,8 +100,8 @@ async function confirmLogout() {
                 <span class="auth-name">{{ namaDepan }}</span>
                 <div class="flex items-center gap-2">
                   <span class="auth-badge">{{ roleBadge }}</span>
-                  <div 
-                    v-if="auth.user?.role === 'siswa' && !isVerified" 
+                  <div
+                    v-if="auth.user?.role === 'siswa' && !isVerified"
                     class="group relative flex items-center justify-center shrink-0 cursor-help"
                   >
                     <!-- Warning Icon -->
@@ -97,7 +110,7 @@ async function confirmLogout() {
                       <line x1="12" y1="16" x2="12" y2="12"></line>
                       <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    
+
                     <!-- Tooltip -->
                     <div class="absolute bottom-full mb-2 left-[50%] -translate-x-[50%] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap bg-general-black text-white text-[11px] font-semibold font-['Be_Vietnam_Pro'] px-3 py-1.5 rounded shadow-lg z-50 pointer-events-none">
                       Belum Terverifikasi
@@ -144,7 +157,7 @@ async function confirmLogout() {
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
           <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
-          <RouterLink v-if="auth.user?.role === 'siswa'" to="/kirim-evaluasi" class="mobile-link" @click="closeMobile">Evaluasi Guru</RouterLink>
+          <RouterLink v-if="showKonsultasiBK" :to="konsultasiBKPath" class="mobile-link" @click="closeMobile">{{ konsultasiBKLabel }}</RouterLink>
           <RouterLink to="/aspirasi" class="mobile-link" @click="closeMobile">Aspirasi</RouterLink>
         </template>
         <RouterLink to="/artikel" class="mobile-link" @click="closeMobile">{{ artikelLabel }}</RouterLink>
@@ -155,8 +168,8 @@ async function confirmLogout() {
               <span class="mobile-user-name">{{ namaDepan }}</span>
               <div class="flex items-center gap-2">
                 <span class="mobile-badge">{{ roleBadge }}</span>
-                <div 
-                  v-if="auth.user?.role === 'siswa' && !isVerified" 
+                <div
+                  v-if="auth.user?.role === 'siswa' && !isVerified"
                   class="flex items-center gap-1.5 bg-yellow-400/20 px-2.5 py-1 rounded-full border border-yellow-400/30"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" class="text-yellow-400" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanBullyingStore } from '@/stores/laporanBullying'
@@ -20,7 +20,6 @@ const laporanStore = useLaporanBullyingStore()
 const tanggapanStore = useTanggapanStore()
 const alertStore = useAlertStore()
 
-const id = route.params.id as string
 const loading = ref(true)
 
 const laporan = computed(() => laporanStore.detailLaporan)
@@ -50,7 +49,7 @@ const showPelaporDecisionDialog = ref(false)
 const pelaporDecision = ref<'setuju' | 'belum_selesai' | null>(null)
 const pelaporApprovalReason = ref('')
 
-async function fetchDetail() {
+async function fetchDetail(detailId: string) {
     loading.value = true
     try {
         await laporanStore.ambilDetail(id)
@@ -79,7 +78,24 @@ async function fetchDetail() {
     }
 }
 
-onMounted(() => { fetchDetail() })
+async function checkAndFetchDetail() {
+    const id = route.params.id as string
+    if (id) {
+        await fetchDetail(id)
+    }
+}
+
+onMounted(() => { 
+    checkAndFetchDetail()
+})
+
+// Watch route params to refetch - only if still on this route
+watch(() => route.params.id, async (newId) => {
+    // Only fetch if we're still on the detailLaporanBullying route
+    if (newId && route.name === 'detailLaporanBullying') {
+        await fetchDetail(newId as string)
+    }
+})
 
 function formatDate(dateStr: string, includeTime = false) {
     if (!dateStr) return '-'
@@ -145,7 +161,7 @@ async function handleBatalkan() {
         return
     }
     try {
-        await laporanStore.batalkanLaporan(id, alasanPembatalan.value)
+        await laporanStore.batalkanLaporan(route.params.id as string, alasanPembatalan.value)
         alertStore.success('Laporan berhasil dibatalkan')
         showBatalkanDialog.value = false
         fetchDetail()

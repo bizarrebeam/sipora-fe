@@ -21,7 +21,10 @@ import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
 import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
 import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
 import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit artikel
-import KirimEvaluasiView from '@/views/KirimEvaluasiView.vue'
+import JadwalKonsultasiView from '@/views/JadwalKonsultasiView.vue'
+import BookingKonsultasiView from '@/views/BookingKonsultasiView.vue'
+import DaftarBookingView from '@/views/DaftarBookingView.vue'
+
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
 import { useNotFoundStore } from '@/stores/notFound'
@@ -148,6 +151,24 @@ const router = createRouter({
       name: 'aspirasi',
       component: AspirasiView,
       meta: { requiresAuth: true, keepAlive: true },
+    },
+    {
+      path: '/jadwal-konsultasi',
+      name: 'jadwalKonsultasi',
+      component: JadwalKonsultasiView,
+      meta: { requiresAuth: true, allowedRoles: ['guru_bk'], keepAlive: true },
+    },
+    {
+      path: '/booking-konsultasi',
+      name: 'bookingKonsultasi',
+      component: BookingKonsultasiView,
+      meta: { requiresAuth: true, allowedRoles: ['siswa'], keepAlive: true },
+    },
+    {
+      path: '/daftar-booking-konsultasi',
+      name: 'daftarBookingKonsultasi',
+      component: DaftarBookingView,
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru_bk'], keepAlive: true },
     },
     {
       path: '/create-aspirasi',
