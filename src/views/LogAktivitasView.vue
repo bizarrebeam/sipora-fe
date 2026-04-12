@@ -82,10 +82,11 @@ const columns = [
 
 const moduleTabs = [
   { label: 'Semua Sistem', value: 'semua' },
-  { label: 'Lap. Kerusakan', value: 'kerusakan' },
-  { label: 'Konsultasi BK', value: 'konsultasi_bk' },
-  { label: 'Aspirasi', value: 'aspirasi' },
   { label: 'Lap. Bullying', value: 'laporan_bullying' },
+  { label: 'Lap. Kerusakan', value: 'kerusakan' },
+  { label: 'Aspirasi', value: 'aspirasi' },
+  { label: 'Evaluasi Guru', value: 'evaluasi_guru' },
+  { label: 'Konsultasi BK', value: 'konsultasi_bk' },
   { label: 'Artikel', value: 'artikel' },
 ]
 
@@ -385,8 +386,7 @@ onMounted(() => {
 
 /* ── Small Mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  /* Keep 2 columns if possible, but allow stacking if very narrow */
-  /* User wants rows, so grid is better than column flex here */
+  /* Grid layout for mobile row consistency */
 }
 
 /* ── iPhone SE (≤ 375px) ── */

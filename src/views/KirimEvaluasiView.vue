@@ -144,12 +144,18 @@ onMounted(() => {
             @primary-click="handleAlertPrimary"
         />
 
-        <div class="form-container">
-            <!-- Header Section -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-                <h1 class="text-[#2A2C87] text-[28px] font-bold font-['Be_Vietnam_Pro'] tracking-tight">Form Evaluasi Guru</h1>
+        <div class="stf-container">
+            <!-- Standard Header -->
+            <div class="stf-header items-center">
+                <div class="stf-header-text">
+                    <h1 class="stf-page-title">Form Evaluasi Guru</h1>
+                    <p class="stf-page-subtitle">
+                        Berikan penilaian objektif untuk membantu meningkatkan kualitas pengajaran di SIPORA.
+                    </p>
+                </div>
                 
-                <div class="w-full md:w-[320px] flex flex-col gap-1.5">
+                <!-- Nama Guru Selection (Top Right) -->
+                <div class="w-full md:w-[320px] flex flex-col gap-1.5 action-area">
                     <label class="text-[#4B5563] text-sm font-semibold font-['Be_Vietnam_Pro']">Nama Guru</label>
                     <select 
                         v-model="form.staff_id" 
@@ -161,12 +167,12 @@ onMounted(() => {
                             {{ guru.nama_lengkap || guru.nama || 'Guru Tidak Diketahui' }}
                         </option>
                     </select>
-                    <span v-if="errors.staff_id" class="text-red-500 text-xs font-semibold">{{ errors.staff_id }}</span>
+                    <span v-if="errors.staff_id" class="text-red-500 text-xs font-semibold px-1">{{ errors.staff_id }}</span>
                 </div>
             </div>
 
             <!-- Form Body -->
-            <form @submit.prevent="handleSubmit" novalidate>
+            <form @submit.prevent="handleSubmit" novalidate class="mt-6">
 
                 <!-- Menampilkan Error Global Form -->
                 <div v-if="errors.ratings" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -177,7 +183,7 @@ onMounted(() => {
                 <div v-for="(indicators, category) in groupedIndikators" :key="category" class="mb-10">
                     <h2 class="text-[#1F2937] text-xl font-bold font-['Be_Vietnam_Pro'] mb-4 tracking-tight">{{ category }}</h2>
                     
-                    <div class="rounded-xl overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                    <div class="rounded-xl overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.02)] border border-[#E5E7EB]">
                         <!-- Table Header -->
                         <div class="flex justify-between items-center py-3 bg-[#FCFCFD] border-b border-[#F3F4F6] px-4 md:px-6">
                             <span class="text-[#6B7280] text-sm font-bold font-['Be_Vietnam_Pro'] flex-1">Aspek Penilaian</span>
@@ -249,21 +255,21 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* Layout and positioning styles */
 .stf-page {
-    min-height: 100vh;
-    background: #F4F5F7; /* Match image off-white background */
-    padding: 48px 24px;
-    font-family: "Be Vietnam Pro", sans-serif;
+    /* Standard background if preferred or keep it clean */
 }
 
-.form-container {
-    max-width: 1080px;
-    margin: 0 auto;
+.action-area {
+    animation: fadeInRight 0.5s ease-out;
 }
 
-@media (max-width: 768px) {
-    .stf-page {
-        padding: 32px 16px;
-    }
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.form-select {
+    cursor: pointer;
 }
 </style>
