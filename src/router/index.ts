@@ -21,7 +21,7 @@ import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
 import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
 import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
 import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit artikel
-
+import KirimEvaluasiView from '@/views/KirimEvaluasiView.vue'
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
 import { useNotFoundStore } from '@/stores/notFound'
@@ -179,6 +179,12 @@ const router = createRouter({
       name: 'editArtikel',
       component: CreateArtikelView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'] },
+    },
+    {
+      path: '/kirim-evaluasi',
+      name: 'kirimEvaluasi',
+      component: KirimEvaluasiView,
+      meta: { requiresAuth: true, allowedRoles: ['siswa'] },
     },
     // Catch-all 404
     {
