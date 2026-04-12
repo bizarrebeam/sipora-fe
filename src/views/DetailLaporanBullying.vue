@@ -20,6 +20,8 @@ const laporanStore = useLaporanBullyingStore()
 const tanggapanStore = useTanggapanStore()
 const alertStore = useAlertStore()
 
+const reportId = computed(() => route.params.id as string)
+
 const loading = ref(true)
 
 const laporan = computed(() => laporanStore.detailLaporan)
@@ -49,12 +51,13 @@ const showPelaporDecisionDialog = ref(false)
 const pelaporDecision = ref<'setuju' | 'belum_selesai' | null>(null)
 const pelaporApprovalReason = ref('')
 
-async function fetchDetail(detailId: string) {
+async function fetchDetail(detailId?: string) {
+    const fetchId = detailId || reportId.value
     loading.value = true
     try {
-        await laporanStore.ambilDetail(id)
+        await laporanStore.ambilDetail(fetchId)
         // Fetch responses for this report
-        await tanggapanStore.ambilTanggapan(id, 'bullying')
+        await tanggapanStore.ambilTanggapan(fetchId, 'bullying')
     } catch (error: any) {
     if (error?.name === 'ServerHandledError') {
       console.error('[DetailLaporanBullying] Request failed (handled globally):', error.message);
@@ -259,7 +262,7 @@ async function handleStatusConfirm() {
     isUpdatingStatus.value = true
     try {
         await laporanStore.updateLaporanStatus(
-            id,
+            reportId.value,
             selectedNewStatus.value,
             statusReason.value,
             statusNote.value
@@ -499,8 +502,8 @@ const onImageLoad = (id: string) => {
                     Pesan Tanggapan
                 </h3>
 
-                <STanggapanThread :laporan-id="id" />
-                <STanggapanForm :laporan-id="id" :laporan-status="laporan.status" laporan-type="bullying" />
+                <STanggapanThread :laporan-id="reportId" />
+                <STanggapanForm :laporan-id="reportId" :laporan-status="laporan.status" laporan-type="bullying" />
             </SCard>
           </div>
 

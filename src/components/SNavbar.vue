@@ -80,6 +80,7 @@ async function confirmLogout() {
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
           <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
           <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
+          <RouterLink v-if="isSiswa" to="/kirim-evaluasi" class="nav-link">Evaluasi Guru</RouterLink>
           <RouterLink v-if="showKonsultasiBK" :to="konsultasiBKPath" class="nav-link">{{ konsultasiBKLabel }}</RouterLink>
           <RouterLink to="/aspirasi" class="nav-link">Aspirasi</RouterLink>
         </template>
@@ -157,6 +158,7 @@ async function confirmLogout() {
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
           <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
+          <RouterLink v-if="isSiswa" to="/kirim-evaluasi" class="mobile-link" @click="closeMobile">Evaluasi Guru</RouterLink>
           <RouterLink v-if="showKonsultasiBK" :to="konsultasiBKPath" class="mobile-link" @click="closeMobile">{{ konsultasiBKLabel }}</RouterLink>
           <RouterLink to="/aspirasi" class="mobile-link" @click="closeMobile">Aspirasi</RouterLink>
         </template>
