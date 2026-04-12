@@ -18,12 +18,13 @@ import EditLaporanBullyingView from '@/views/EditLaporanBullying.vue'
 import EditLaporanKerusakanView from '@/views/EditLaporanKerusakanView.vue'
 import AspirasiView from '@/views/AspirasiView.vue'
 import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
-import DetailArtikelView from '@/views/DetailArtikelView.vue' //untuk baca
-import KelolaArtikelView from '@/views/KelolaArtikelView.vue' //halaman pertama admin
-import CreateArtikelView from '@/views/CreateArtikelView.vue' //create & edit artikel
+import DetailArtikelView from '@/views/DetailArtikelView.vue' 
+import KelolaArtikelView from '@/views/KelolaArtikelView.vue' 
+import CreateArtikelView from '@/views/CreateArtikelView.vue' 
 import JadwalKonsultasiView from '@/views/JadwalKonsultasiView.vue'
 import BookingKonsultasiView from '@/views/BookingKonsultasiView.vue'
 import DaftarBookingView from '@/views/DaftarBookingView.vue'
+import KirimEvaluasiView from '@/views/KirimEvaluasiView.vue'
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
