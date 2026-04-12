@@ -17,6 +17,7 @@
   "dependencies": {
     "date-fns": "^4.1.0",
     "flowbite": "^4.0.1",
+    "nodemailer": "^8.0.5",
     "pinia": "^3.0.4",
     "simple-datatables": "^10.2.0",
     "uuid": "^13.0.0",
