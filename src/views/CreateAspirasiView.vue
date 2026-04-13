@@ -40,6 +40,9 @@ const anonimitas = ref(false)
 const buktiPendukung = ref<File[]>([])
 const buktiError = ref('')
 
+const isConfirmed = ref(false)
+const confirmError = ref('')
+
 const errors = ref({
     judul: '',
     kategori: '',
@@ -51,7 +54,8 @@ const isFormValid = computed(() => {
         judul.value.trim() &&
         kategori.value.trim() &&
         deskripsi.value.trim() &&
-        !buktiError.value
+        !buktiError.value &&
+        isConfirmed.value
     )
 })
 
@@ -65,13 +69,67 @@ const kategoriOptions = [
 ]
 
 function validate() {
-    errors.value.judul = !judul.value.trim() ? 'Judul wajib diisi' : ''
-    errors.value.kategori = !kategori.value.trim() ? 'Kategori wajib diisi' : ''
-    errors.value.deskripsi = !deskripsi.value.trim() ? 'Deskripsi wajib diisi' : ''
+    errors.value.judul = validateTextField({
+        label: 'Judul',
+        value: judul.value,
+        minLength: 5,
+        maxLength: 50,
+    })
+
+    errors.value.deskripsi = validateTextField({
+        label: 'Deskripsi',
+        value: deskripsi.value,
+        minLength: 50,
+        maxLength: 2000,
+    })
+}
+
+function validateField(field: 'judul' | 'deskripsi') {
+    if (field === 'judul') {
+        errors.value.judul = validateTextField({
+            label: 'Judul',
+            value: judul.value,
+            minLength: 5,
+            maxLength: 50,
+        })
+        return
+    }
+
+    errors.value.deskripsi = validateTextField({
+        label: 'Deskripsi',
+        value: deskripsi.value,
+        minLength: 50,
+        maxLength: 2000,
+    })
 }
 
 function triggerFileInput() {
     buktiInputRef.value!.click();
+}
+
+function normalizeText(value: string) {
+    return value
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .trim()
+}
+
+function validateTextField(opts: {
+    label: string
+    value: string
+    minLength?: number
+    maxLength?: number
+}) {
+    const normalized = normalizeText(opts.value)
+
+    if (!normalized) return `${opts.label} wajib diisi`
+    if (opts.minLength && normalized.length < opts.minLength) {
+        return `${opts.label} minimal ${opts.minLength} karakter`
+    }
+    if (opts.maxLength && normalized.length > opts.maxLength) {
+        return `${opts.label} maksimal ${opts.maxLength} karakter`
+    }
+
+    return ''
 }
 
 function handleFileChange(e: Event) {
@@ -120,7 +178,12 @@ function removeFile(index: number) {
 async function handleSubmit() {
     validate()
     if (!isFormValid.value) return
-
+    if (!isConfirmed.value) {
+        confirmError.value = 'Anda harus menyetujui pernyataan ini'
+        return
+    } else {
+        confirmError.value = ''
+}
     try {
         const result = await aspirasiStore.createAspirasi({
             judul: judul.value.trim(),
@@ -145,7 +208,7 @@ async function handleSubmit() {
             description: 'Aspirasi berhasil dibuat',
             onPrimary: () => {
                 if (result && result.id) {
-                    router.replace(`/aspirasi`) // ga detail dulu /aspirasi/${result.id}
+                    router.replace(`/detail-aspirasi/${result.id}`)
                 } else {
                     router.replace('/aspirasi')
                 }
@@ -209,7 +272,7 @@ async function handleSubmit() {
                         :placeholder="'Ketik di sini...'"
                         :variant="'text'"
                         :disabled="false"
-                        @blur="validate"
+                        @blur="validateField('judul')"
                     />
                     <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
                 </div>
@@ -227,14 +290,20 @@ async function handleSubmit() {
                 </div>
 
                 <div class="form-group">
+                    <div class="custom-label-row flex justify-between w-full">
+                        <div>
+                            <label class="custom-label">Deskripsi Aspirasi</label>
+                            <span class="custom-asterisk">*</span>
+                        </div>
+                        <span class="file-count">{{ deskripsi.length }} karakter</span>
+                    </div>
                     <STextField
                         v-model="deskripsi"
-                        label="Deskripsi Aspirasi"
                         :required="true"
                         :placeholder="'Ketik di sini...'"
                         :variant="'textarea'"
                         :disabled="false"
-                        @blur="validate"
+                        @blur="validateField('deskripsi')"
                     />
                     <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
                 </div>
@@ -286,6 +355,19 @@ async function handleSubmit() {
                         <span class="switch-label">{{ anonimitas ? 'Ya (Anonim)' : 'Tidak (Nama Asli)' }}</span>
                     </div>
                 </div>
+
+                <div class="bg-[#D9D9D9] border border-solid rounded-[6px] border-[#d8d8d8a3] mb-3 mt-2"">
+                    <div class="flex items mb-4 gap-[17px]">
+                        <div class="ml-4 mt-3 w-4 h-8 rounded-[3px]  ">
+                            <input type="checkbox" v-model="isConfirmed">
+                        </div>
+                        <span class="text-black mt-3 text-[15px]" >
+                            Saya memastikan bahwa aspirasi yang saya masukkan sudah sesuai dan benar. Saya memahami bahwa aspirasi masih dapat diubah dalam waktu <b>7 hari</b> setelah dibuat, dan setelah itu tidak dapat diubah kembali.
+                        </span>
+                        <span v-if="confirmError" class="error-msg">{{ confirmError }}</span>
+                    </div>
+                </div>
+
 
                 <div class="form-group">
                     <div style="display: flex; gap: 12px;">
@@ -449,7 +531,7 @@ async function handleSubmit() {
 }
 
 .error-msg {
-    color: var(--color-blue-200);
+    color: var(--color-general-red);
     font-size: 12px;
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 600;

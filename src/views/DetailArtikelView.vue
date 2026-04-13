@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiAuthGet } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
@@ -25,9 +25,9 @@ const artikel = ref<Artikel | null>(null)
 const isLoading = ref(true)
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 
-onMounted(async () => {
+async function fetchArtikelDetail(id: string | string[]) {
+  isLoading.value = true
   try {
-    const id = route.params.id
     const data = await apiAuthGet(`artikel/${id}/`)
     artikel.value = data
   } catch (error) {
@@ -39,6 +39,27 @@ onMounted(async () => {
     router.push('/artikel')
   } finally {
     isLoading.value = false
+  }
+}
+
+async function checkAndFetchArtikel() {
+  const id = route.params.id
+  if (id) {
+    artikel.value = null
+    await fetchArtikelDetail(id)
+  }
+}
+
+onMounted(async () => {
+  checkAndFetchArtikel()
+})
+
+// Watch route params to refetch
+watch(() => route.params.id, async (newId) => {
+  // Only fetch if we're still on the detailArtikel route
+  if (newId && route.name === 'detailArtikel') {
+    artikel.value = null
+    await fetchArtikelDetail(newId)
   }
 })
 
