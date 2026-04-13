@@ -197,9 +197,9 @@ async function handleReset() {
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #059669;
+  background: #E8F5E9;
+  border: 1px solid #2E7D32;
+  color: #2E7D32;
   border-radius: 12px;
   margin-bottom: 20px;
 }

@@ -14,6 +14,31 @@ const successMsg = ref('')
 const maskedEmail = ref('')
 const loading = ref(false)
 
+const isRateLimited = ref(false)
+const remainingSeconds = ref(0)
+let countdownTimer: number | null = null
+
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
+function startCountdown(seconds: number) {
+  isRateLimited.value = true
+  remainingSeconds.value = seconds
+  
+  if (countdownTimer) clearInterval(countdownTimer)
+  
+  countdownTimer = window.setInterval(() => {
+    remainingSeconds.value--
+    if (remainingSeconds.value <= 0) {
+      clearInterval(countdownTimer!)
+      isRateLimited.value = false
+    }
+  }, 1000)
+}
+
 async function handleForgot() {
   errorMsg.value = ''
   successMsg.value = ''
@@ -37,6 +62,13 @@ async function handleForgot() {
     if (err?.name === 'ServerHandledError') {
       console.error('[ForgotPasswordView] Request failed (handled globally):', err.message);
       return;
+    }
+    if (err?.name === 'RateLimitError') {
+       errorMsg.value = err.message || 'Terlalu banyak percobaan.'
+       if (err.retryAfter) {
+         startCountdown(err.retryAfter)
+       }
+       return;
     }
     errorMsg.value = err.message || 'Gagal mengirim email reset. Silakan coba lagi.'
   } finally {
@@ -82,10 +114,10 @@ async function handleForgot() {
           digitGuide="4"
         />
         <SButton
-          :label="loading ? 'Mengirim...' : 'Kirim Link Reset'"
+          :label="isRateLimited ? `Tunggu ${formatTime(remainingSeconds)}` : (loading ? 'Mengirim...' : 'Kirim Link Reset')"
           variant="primary"
           type="submit"
-          :disabled="loading"
+          :disabled="loading || isRateLimited"
         />
       </form>
 

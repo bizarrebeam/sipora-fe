@@ -19,6 +19,15 @@ export class ServerHandledError extends Error {
   }
 }
 
+export class RateLimitError extends Error {
+  retryAfter: number | null;
+  constructor(message: string, retryAfter?: number) {
+    super(message);
+    this.name = 'RateLimitError';
+    this.retryAfter = retryAfter || null;
+  }
+}
+
 const SERVER_ERROR_STATUSES = [500, 502, 503, 504]
 
 function checkServerError(status: number) {
@@ -152,6 +161,9 @@ export async function apiPost(endpoint: string, payload: object) {
 
     const json = await response.json()
     if (!response.ok || json.status === 'error') {
+      if (response.status === 429) {
+        throw new RateLimitError(parseError(json, response.status), json.retry_after)
+      }
       throw new Error(parseError(json, response.status))
     }
     // CoreJSONRenderer wraps in { status, message, data }
