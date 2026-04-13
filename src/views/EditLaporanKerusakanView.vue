@@ -21,6 +21,8 @@ const alertTitle = ref('')
 const alertDescription = ref('')
 let alertOnPrimary: (() => void) | null = null
 
+const MIN_REPORT_DATE = new Date('2000-01-01')
+
 function showAlert(opts: { type?: 'default' | 'warning' | 'no-header'; title?: string; description: string; onPrimary?: () => void }) {
     alertType.value = opts.type ?? 'default'
     alertTitle.value = opts.title ?? ''
@@ -94,24 +96,96 @@ const hasChanges = computed(() => {
 })
 
 function validate() {
-    errors.value.judul = !judul.value.trim() ? 'Judul wajib diisi' : ''
+    errors.value.judul = validateTextField({
+        label: 'Judul',
+        value: judul.value,
+        minLength: 5,
+        maxLength: 50,
+    })
 
     if (!tanggalKejadian.value) {
         errors.value.tanggalKejadian = 'Tanggal wajib diisi'
     } else {
         const picked = new Date(tanggalKejadian.value)
         const today = new Date()
-        today.setHours(0,0,0,0)
-        picked.setHours(0,0,0,0)
-        if (picked > today) {
+        today.setHours(0, 0, 0, 0)
+        picked.setHours(0, 0, 0, 0)
+        if (picked < MIN_REPORT_DATE) {
+            errors.value.tanggalKejadian = 'Tanggal kejadian tidak valid'
+        } else if (picked > today) {
             errors.value.tanggalKejadian = 'Tanggal tidak boleh lebih dari hari ini'
         } else {
             errors.value.tanggalKejadian = ''
         }
     }
 
-    errors.value.lokasi = !lokasi.value.trim() ? 'Lokasi wajib diisi' : ''
-    errors.value.deskripsi = !deskripsi.value.trim() ? 'Deskripsi wajib diisi' : ''
+    errors.value.lokasi = validateTextField({
+        label: 'Lokasi',
+        value: lokasi.value,
+        minLength: 3,
+        maxLength: 255,
+    })
+
+    errors.value.deskripsi = validateTextField({
+        label: 'Deskripsi',
+        value: deskripsi.value,
+        minLength: 50,
+        maxLength: 2000,
+    })
+}
+
+function normalizeText(value: string) {
+    return value
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .trim()
+}
+
+function validateTextField(opts: {
+    label: string
+    value: string
+    minLength?: number
+    maxLength?: number
+}) {
+    const normalized = normalizeText(opts.value)
+
+    if (!normalized) return `${opts.label} wajib diisi`
+    if (opts.minLength && normalized.length < opts.minLength) {
+        return `${opts.label} minimal ${opts.minLength} karakter`
+    }
+    if (opts.maxLength && normalized.length > opts.maxLength) {
+        return `${opts.label} maksimal ${opts.maxLength} karakter`
+    }
+
+    return ''
+}
+
+function validateField(field: 'judul' | 'lokasi' | 'deskripsi') {
+    if (field === 'judul') {
+        errors.value.judul = validateTextField({
+            label: 'Judul',
+            value: judul.value,
+            minLength: 5,
+            maxLength: 50,
+        })
+        return
+    }
+
+    if (field === 'lokasi') {
+        errors.value.lokasi = validateTextField({
+            label: 'Lokasi',
+            value: lokasi.value,
+            minLength: 3,
+            maxLength: 255,
+        })
+        return
+    }
+
+    errors.value.deskripsi = validateTextField({
+        label: 'Deskripsi',
+        value: deskripsi.value,
+        minLength: 50,
+        maxLength: 2000,
+    })
 }
 
 function triggerFileInput() {
@@ -306,7 +380,7 @@ onMounted(async () => {
                         :placeholder="'Ketik di sini...'"
                         :variant="'text'"
                         :disabled="false"
-                        @blur="validate"
+                        @blur="validateField('judul')"
                     />
                     <span v-if="errors.judul" class="error-msg">{{ errors.judul }}</span>
                 </div>
@@ -341,21 +415,22 @@ onMounted(async () => {
                         :placeholder="'Ketik di sini...'"
                         :variant="'text'"
                         :disabled="false"
-                        @blur="validate"
+                        @blur="validateField('lokasi')"
                     />
                     <span v-if="errors.lokasi" class="error-msg">{{ errors.lokasi }}</span>
                 </div>
 
                 <div class="form-group">
-                    <STextField
-                        v-model="deskripsi"
-                        label="Deskripsi Kerusakan"
-                        :required="true"
-                        :placeholder="'Ketik di sini...'"
-                        :variant="'textarea'"
-                        :disabled="false"
-                        @blur="validate"
-                    />
+                    <div class="custom-label-row flex justify-between w-full">
+                        <div>
+                            <label class="custom-label">Deskripsi Kerusakan</label>
+                            <span class="custom-asterisk">*</span>
+                        </div>
+                        <span class="file-count">{{ deskripsi.length }}/50 karakter</span>
+                    </div>
+                    <STextField v-model="deskripsi" label=""
+                        :placeholder="'Ketik detail kerusakan di sini...'" :variant="'textarea'" :disabled="false"
+                        @blur="validateField('deskripsi')" />
                     <span v-if="errors.deskripsi" class="error-msg">{{ errors.deskripsi }}</span>
                 </div>
 
@@ -576,7 +651,7 @@ onMounted(async () => {
 }
 
 .error-msg {
-    color: var(--color-blue-200);
+    color: var(--color-general-red);
     font-size: 12px;
     font-family: "Be Vietnam Pro", sans-serif;
     font-weight: 600;

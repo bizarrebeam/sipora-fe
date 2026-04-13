@@ -17,6 +17,7 @@ import CreateLaporanBullyingView from '@/views/CreateLaporanBullyingView.vue'
 import EditLaporanBullyingView from '@/views/EditLaporanBullying.vue'
 import EditLaporanKerusakanView from '@/views/EditLaporanKerusakanView.vue'
 import AspirasiView from '@/views/AspirasiView.vue'
+import EditAspirasiView from '@/views/EditAspirasiView.vue'
 import CreateAspirasiView from '@/views/CreateAspirasiView.vue'
 import DetailArtikelView from '@/views/DetailArtikelView.vue' 
 import KelolaArtikelView from '@/views/KelolaArtikelView.vue' 
@@ -25,6 +26,7 @@ import JadwalKonsultasiView from '@/views/JadwalKonsultasiView.vue'
 import BookingKonsultasiView from '@/views/BookingKonsultasiView.vue'
 import DaftarBookingView from '@/views/DaftarBookingView.vue'
 import KirimEvaluasiView from '@/views/KirimEvaluasiView.vue'
+import DetailAspirasiView from '@/views/DetailAspirasiView.vue'
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
@@ -176,6 +178,18 @@ const router = createRouter({
       name: 'createAspirasi',
       component: CreateAspirasiView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/detail-aspirasi/:id',
+      name: 'detailAspirasi',
+      component: DetailAspirasiView,
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru', 'kemahasiswaan'] },
+    },
+    {
+      path: '/aspirasi/:id/edit',
+      name: 'editAspirasi',
+      component: EditAspirasiView,
+      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
     },
     {
       path: '/artikel/:id',

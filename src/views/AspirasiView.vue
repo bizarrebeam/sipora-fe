@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onActivated, watch, unref } from 'vue'
 import SCard from '@/components/SCard.vue'
+import { useRouter } from 'vue-router'
 import SButton from '@/components/SButton.vue'
 import STextField from '@/components/STextField.vue'
 import STable from '@/components/STable.vue'
@@ -36,6 +37,7 @@ interface Aspirasi {
 }
 
 const auth = useAuthStore()
+const router = useRouter()
 const aspirasiStore = useAspirasiStore()
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isAdmin = computed(() => isKemahasiswaan.value)
@@ -261,9 +263,9 @@ async function fetchData() {
             page: currentPage.value,
             pageSize: pageSize.value,
         })
-    } catch (error) {
+    } catch (error: any) {
     if (error?.name === 'ServerHandledError') {
-      console.error('[AspirasiView] Request failed (handled globally):', error.message);
+      console.error('[CreateAspirasiView] Request failed (handled globally):', error.message);
       return;
     }
         console.error('Error fetching Aspirasi:', error)
@@ -418,7 +420,7 @@ onActivated(() => {
                                     label="Detail" 
                                     variant="action" 
                                     size="small" 
-                                    @click="openDetail(row)" 
+                                    @click="router.push({ name: 'detailAspirasi', params: { id: row.id } })"
                                 >
                                     <template #left-icon>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -677,15 +679,24 @@ onActivated(() => {
 	width: 100%;
 }
 
-.date-input:focus {
-	outline: none;
-	border-color: var(--color-blue-500);
-	box-shadow: 0 0 0 3px rgba(46, 48, 148, 0.08);
-}
-
 .section-card {
 	margin-bottom: 16px;
 }
+
+/* ─── Pelapor ─── */
+.pelapor-body { display: flex; flex-direction: column; gap: 14px; }
+.info-field { display: flex; flex-direction: column; gap: 3px; }
+.info-label { font-size: 11px; color: #6b7280; }
+.info-value { font-size: 13px; font-weight: 600; color: #1f2937; }
+.info-verified {
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 3px;
+}
+.verified--yes { color: #16a34a; }
+.verified--no  { color: #dc2626; }
 
 .section-header {
 	display: flex;

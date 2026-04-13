@@ -136,7 +136,7 @@ async function handleBatalkan() {
         alertStore.success('Laporan berhasil dibatalkan')
         showBatalkanDialog.value = false
         fetchDetail()
-    } catch (error) {
+    } catch (error: any) {
     if (error?.name === 'ServerHandledError') {
       console.error('[DetailLaporanKerusakan] Request failed (handled globally):', error.message);
       return;
