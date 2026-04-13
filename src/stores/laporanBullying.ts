@@ -198,7 +198,13 @@ export const useLaporanBullyingStore = defineStore('laporanBullying', () => {
             if (payload.jenis_bullying) formData.append('jenis_bullying', payload.jenis_bullying)
             if (payload.anonimitas !== undefined) formData.append('anonimitas', String(payload.anonimitas))
 
-            if (payload.foto_bukti && payload.foto_bukti.length > 0) {
+            // Kirim ID foto yang dihapus user (jika ada)
+            if (payload.deleted_foto_ids && Array.isArray(payload.deleted_foto_ids) && payload.deleted_foto_ids.length > 0) {
+                formData.append('deleted_foto_ids', payload.deleted_foto_ids.join(','))
+            }
+
+            // Kirim file foto baru yang ditambahkan (jika ada)
+            if (payload.foto_bukti && Array.isArray(payload.foto_bukti) && payload.foto_bukti.length > 0) {
                 payload.foto_bukti.forEach((file: File) => {
                     formData.append('foto_bukti', file)
                 })
