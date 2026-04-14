@@ -78,6 +78,7 @@ const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.val
 const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
 
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
+const canVerify = computed(() => ['kemahasiswaan', 'guru_bk'].includes(auth.user?.role || ''))
 
 const showCreateDialog = ref(false)
 const showSuccessCreateDialog = ref(false)
@@ -696,7 +697,7 @@ onMounted(async () => {
               </template>
               <template #body-cell-action="{ row }">
                 <SButton
-                  v-if="!row.is_verified && isKemahasiswaan"
+                  v-if="!row.is_verified && canVerify"
                   label="Verifikasi"
                   variant="action"
                   size="small"
