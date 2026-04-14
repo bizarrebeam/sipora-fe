@@ -1380,21 +1380,39 @@ const onImageLoad = (id: string) => {
 
     /* Content grid: single column, no gap between page sections */
     .content-grid {
+        display: grid;
         grid-template-columns: 1fr;
+        grid-auto-rows: auto;
         gap: 8px;
         padding: 12px;
     }
-    .main-col { gap: 8px; }
+    .main-col {
+        display: contents;
+    }
 
     /* Sidebar: stack vertically on mobile */
     .side-col {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        display: contents;
+    }
+
+    /* Pesan Tanggapan card: move to bottom on mobile */
+    .pesan-col {
+        order: 999;
     }
 
     /* Cards */
-    .card-section { padding: 16px; }
+    .card-section { 
+        padding: 16px;
+        order: auto;
+    }
+    
+    .side-col .card-section {
+        order: 2;
+    }
+    
+    .pesan-col {
+        order: 3;
+    }
 
     /* Title row: stack badge under title */
     .card-title-row {
