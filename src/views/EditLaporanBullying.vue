@@ -41,6 +41,8 @@ const lokasi = ref('')
 const jenisBullying = ref('')
 const deskripsi = ref('')
 const anonimitas = ref(false)
+const existingFotos = ref<{ id: number; foto: string }[]>([])  // foto dari server
+const removedExistingIds = ref<number[]>([])  // id foto existing yang dihapus user
 const buktiPendukung = ref<File[]>([])
 const buktiError = ref('')
 const buktiInputRef = ref<HTMLInputElement | null>(null)
@@ -115,6 +117,10 @@ onMounted(async () => {
             }
             jenisBullying.value = laporan.jenis_bullying || ''
             anonimitas.value = laporan.anonimitas || false
+            // Load foto existing
+            if (laporan.foto_bukti && Array.isArray(laporan.foto_bukti)) {
+                existingFotos.value = laporan.foto_bukti.map((f: any) => ({ id: f.id, foto: f.foto }))
+            }
         }
     } catch (error: any) {
     if (error?.name === 'ServerHandledError') {
@@ -166,6 +172,9 @@ function triggerFileInput() {
     if (buktiInputRef.value) buktiInputRef.value.click();
 }
 
+// Preview URL untuk foto baru (supaya bisa ditampilkan sebagai thumbnail)
+const buktiPendukungPreviews = ref<string[]>([])
+
 function handleFileChange(e: Event) {
     const files = (e.target as HTMLInputElement).files
     buktiError.value = ''
@@ -175,8 +184,9 @@ function handleFileChange(e: Event) {
     const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     const newFiles: File[] = []
     
-    if (buktiPendukung.value.length + files.length > 5) {
-        buktiError.value = 'Maksimal 5 foto'
+    const totalCount = existingFotos.value.length + buktiPendukung.value.length + files.length
+    if (totalCount > 5) {
+        buktiError.value = `Maksimal 5 foto (saat ini ${existingFotos.value.length + buktiPendukung.value.length} foto)`
         if (buktiInputRef.value) buktiInputRef.value.value = ''
         return
     }
@@ -200,13 +210,25 @@ function handleFileChange(e: Event) {
         newFiles.push(file)
     }
     
+    // Generate preview URL untuk setiap file baru
+    const newPreviews = newFiles.map(f => URL.createObjectURL(f))
     buktiPendukung.value = [...buktiPendukung.value, ...newFiles]
+    buktiPendukungPreviews.value = [...buktiPendukungPreviews.value, ...newPreviews]
     if (buktiInputRef.value) buktiInputRef.value.value = ''
 }
 
 function removeFile(index: number) {
+    // Revoke object URL untuk menghindari memory leak
+    const url = buktiPendukungPreviews.value[index]
+    if (url) URL.revokeObjectURL(url)
     buktiPendukung.value.splice(index, 1)
+    buktiPendukungPreviews.value.splice(index, 1)
     buktiError.value = ''
+}
+
+function removeExistingFoto(index: number) {
+    const removed = existingFotos.value.splice(index, 1)
+    if (removed[0]) removedExistingIds.value.push(removed[0].id)
 }
 
 async function handleSubmit() {
@@ -225,7 +247,10 @@ async function handleSubmit() {
             waktu_kejadian: waktuKejadian.value || undefined,
             jenis_bullying: jenisBullying.value,
             anonimitas: anonimitas.value,
+            // File baru yang ditambahkan (jika ada)
             foto_bukti: buktiPendukung.value.length > 0 ? buktiPendukung.value : undefined,
+            // ID foto existing yang dihapus user (jika ada)
+            deleted_foto_ids: removedExistingIds.value.length > 0 ? removedExistingIds.value : undefined,
         })
         
         router.replace(`/laporan-bullying/${id}`)
@@ -404,10 +429,47 @@ async function handleSubmit() {
                 <div class="form-group">
                     <div class="custom-label-row">
                         <label class="custom-label">Bukti Pendukung <span class="optional-tag">(opsional)</span></label>
-                        <span v-if="buktiPendukung.length > 0" class="file-count">{{ buktiPendukung.length }}/5 foto</span>
+                        <span class="file-count">{{ existingFotos.length + buktiPendukung.length }}/5 foto</span>
                     </div>
                     <div class="file-upload-section">
-                        <p class="anon-hint mb-1">Upload foto baru akan mengganti foto yang sebelumnya</p>
+                        <p class="anon-hint mb-1">Kamu bisa hapus foto lama satu per satu atau tambah foto baru (maks. 5 total)</p>
+
+                        <!-- Grid foto: existing + baru -->
+                        <div v-if="existingFotos.length > 0 || buktiPendukung.length > 0" class="existing-photos-section">
+                            <div class="existing-photos-grid">
+                                <!-- Foto existing dari server -->
+                                <div
+                                    v-for="(foto, index) in existingFotos"
+                                    :key="'existing-' + foto.id"
+                                    class="existing-photo-item"
+                                >
+                                    <img :src="foto.foto" :alt="'Foto ' + (index + 1)" class="existing-photo-img" />
+                                    <div class="photo-badge photo-badge-existing">Tersimpan</div>
+                                    <button type="button" class="remove-existing-btn" @click="removeExistingFoto(index)" title="Hapus foto ini">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Preview foto baru -->
+                                <div
+                                    v-for="(file, index) in buktiPendukung"
+                                    :key="'new-' + index"
+                                    class="existing-photo-item"
+                                >
+                                    <img :src="buktiPendukungPreviews[index]" :alt="file.name" class="existing-photo-img" />
+                                    <div class="photo-badge photo-badge-new">Baru</div>
+                                    <button type="button" class="remove-existing-btn" @click="removeFile(index)" title="Hapus foto baru ini">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <input
                             ref="buktiInputRef"
                             type="file"
@@ -420,21 +482,14 @@ async function handleSubmit() {
                             type="button" 
                             class="choose-file-btn" 
                             @click="triggerFileInput"
-                            :disabled="buktiPendukung.length >= 5"
+                            :disabled="existingFotos.length + buktiPendukung.length >= 5"
                         >
-                            {{ buktiPendukung.length >= 5 ? 'Maksimal 5 Foto' : 'Pilih Foto Baru' }}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:4px">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            {{ existingFotos.length + buktiPendukung.length >= 5 ? 'Maksimal 5 Foto' : 'Tambah Foto' }}
                         </button>
-                        <div v-if="buktiPendukung.length > 0" class="file-list">
-                            <div v-for="(file, index) in buktiPendukung" :key="index" class="file-chosen-wrapper">
-                                <span class="file-chosen">{{ file.name }}</span>
-                                <button type="button" class="remove-file-btn" @click="removeFile(index)" title="Hapus file">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
                     </div>
                     <span v-if="buktiError" class="error-msg">{{ buktiError }}</span>
                 </div>
@@ -719,6 +774,81 @@ async function handleSubmit() {
 .remove-file-btn:hover {
     background: var(--color-blue-100);
     color: var(--color-blue-600);
+}
+
+/* ─── Existing Photos ─── */
+.existing-photos-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.existing-photos-label {
+    font-size: 12px;
+    color: var(--color-neutral-500, #6b7280);
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 600;
+}
+.existing-photos-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.existing-photo-item {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: visible;
+    border: 1px solid var(--color-blue-200);
+    flex-shrink: 0;
+}
+.existing-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+.remove-existing-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-general-red, #ef4444);
+    border: 2px solid white;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: transform 0.15s, background 0.15s;
+    z-index: 1;
+}
+.remove-existing-btn:hover {
+    transform: scale(1.15);
+    background: #dc2626;
+}
+.photo-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    font-size: 9px;
+    font-family: "Be Vietnam Pro", sans-serif;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: white;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+}
+.photo-badge-existing {
+    background: rgba(46, 48, 148, 0.75);
+}
+.photo-badge-new {
+    background: rgba(16, 185, 129, 0.85);
 }
 
 /* ─── Anonimitas ─── */
