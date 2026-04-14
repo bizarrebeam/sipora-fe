@@ -24,6 +24,41 @@ const reportId = computed(() => route.params.id as string)
 
 const loading = ref(true)
 
+// ─── Security & Validation ───
+/**
+ * Sanitize input by trimming whitespace and escaping HTML entities
+ */
+function sanitizeInput(input: string): string {
+  if (!input) return ''
+  return String(input).trim()
+}
+
+/**
+ * Validate that input meets minimum length requirement
+ */
+function validateMinLength(input: string, minLen: number): { valid: boolean; message: string } {
+  const trimmed = sanitizeInput(input)
+  if (!trimmed) return { valid: false, message: 'Field tidak boleh kosong' }
+  if (trimmed.length < minLen) return { valid: false, message: `Minimal ${minLen} karakter (${trimmed.length}/${minLen})` }
+  return { valid: true, message: '' }
+}
+
+/**
+ * Prevent double submission using debounce flag
+ */
+function createSubmissionLock(): { isLocked: () => boolean; lock: () => void; unlock: () => void } {
+  let locked = false
+  return {
+    isLocked() { return locked },
+    lock() { locked = true },
+    unlock() { locked = false }
+  }
+}
+
+const batalkanLock = createSubmissionLock()
+const statusUpdateLock = createSubmissionLock()
+const pelaporDecisionLock = createSubmissionLock()
+
 const laporan = computed(() => laporanStore.detailLaporan)
 const isGuruBk = computed(() => authStore.user?.role === 'guru_bk')
 const isKemahasiswaan = computed(() => authStore.user?.role === 'kemahasiswaan')
@@ -50,6 +85,16 @@ const isConfirmingCompletion = ref(false)
 const showPelaporDecisionDialog = ref(false)
 const pelaporDecision = ref<'setuju' | 'belum_selesai' | null>(null)
 const pelaporApprovalReason = ref('')
+const pelaporNotFinishedReason = ref('')
+
+// Unverified account dialog state
+const showUnverifiedDialog = ref(false)
+const unverifiedData = ref<{
+    nama: string
+    nis: string
+    kelas: string
+    pelapor_id: string
+} | null>(null)
 
 async function fetchDetail(detailId?: string) {
     const fetchId = detailId || reportId.value
@@ -159,20 +204,43 @@ function formatRiwayatCatatan(riwayat: { status: string; catatan?: string | null
 }
 
 async function handleBatalkan() {
-    if (!alasanPembatalan.value || alasanPembatalan.value.length < 50) {
-        alertStore.error('Alasan pembatalan wajib diisi minimal 50 karakter')
+    // ─── Security: Prevent double-submit ───
+    if (batalkanLock.isLocked()) {
+        alertStore.error('Permintaan sedang diproses. Silahkan tunggu...')
         return
     }
+
+    // ─── Input Validation ───
+    const validation = validateMinLength(alasanPembatalan.value, 50)
+    if (!validation.valid) {
+        alertStore.error(`Alasan pembatalan wajib diisi. ${validation.message}`)
+        return
+    }
+
+    // ─── Sanitize input ───
+    const sanitizedReason = sanitizeInput(alasanPembatalan.value)
+
+    batalkanLock.lock()
     try {
-        await laporanStore.batalkanLaporan(route.params.id as string, alasanPembatalan.value)
+        await laporanStore.batalkanLaporan(route.params.id as string, sanitizedReason)
         alertStore.success('Laporan berhasil dibatalkan')
         showBatalkanDialog.value = false
+        alasanPembatalan.value = '' // Clear for next use
         fetchDetail()
-    } catch (error) {
+    } catch (error: any) {
     if (error?.name === 'ServerHandledError') {
       console.error('[DetailLaporanBullying] Request failed (handled globally):', error.message);
       return;
-    }}
+    }
+        const errorMsg = String(error?.message || error)
+        if (errorMsg.includes('Tidak dapat')) {
+            alertStore.error(errorMsg)
+        } else {
+            alertStore.error('Gagal membatalkan laporan. Silahkan coba lagi.')
+        }
+    } finally {
+        batalkanLock.unlock()
+    }
 }
 
 // Status update handlers
@@ -224,19 +292,26 @@ function selectStatusOption(value: string) {
 }
 
 function proceedToStatusConfirm() {
+    // ─── Input Validation ───
     if (!selectedNewStatus.value) {
         alertStore.error('Pilih status baru')
         return
     }
 
-    if (selectedNewStatus.value === 'ditolak' && statusReason.value.length < 50) {
-        alertStore.error('Alasan penolakan wajib diisi minimal 50 karakter')
-        return
+    if (selectedNewStatus.value === 'ditolak') {
+        const validation = validateMinLength(statusReason.value, 50)
+        if (!validation.valid) {
+            alertStore.error(`Alasan penolakan wajib diisi. ${validation.message}`)
+            return
+        }
     }
 
-    if (selectedNewStatus.value === 'menunggu_konfirmasi_selesai' && statusNote.value.trim().length < 50) {
-        alertStore.error('Alasan penyelesaian wajib diisi minimal 50 karakter')
-        return
+    if (selectedNewStatus.value === 'menunggu_konfirmasi_selesai') {
+        const validation = validateMinLength(statusNote.value, 50)
+        if (!validation.valid) {
+            alertStore.error(`Alasan penyelesaian wajib diisi. ${validation.message}`)
+            return
+        }
     }
 
     showStatusDialog.value = false
@@ -259,16 +334,49 @@ async function handleStatusChange() {
 }
 
 async function handleStatusConfirm() {
+    // ─── Security: Prevent double-submit ───
+    if (statusUpdateLock.isLocked()) {
+        alertStore.error('Permintaan sedang diproses. Silahkan tunggu...')
+        return
+    }
+
+    // ─── Input Validation ───
+    if (!selectedNewStatus.value) {
+        alertStore.error('Status baru tidak dipilih')
+        return
+    }
+
+    if (selectedNewStatus.value === 'ditolak') {
+        const validation = validateMinLength(statusReason.value, 50)
+        if (!validation.valid) {
+            alertStore.error(`Alasan penolakan wajib diisi. ${validation.message}`)
+            return
+        }
+    }
+
+    if (selectedNewStatus.value === 'menunggu_konfirmasi_selesai') {
+        const validation = validateMinLength(statusNote.value, 50)
+        if (!validation.valid) {
+            alertStore.error(`Alasan penyelesaian wajib diisi. ${validation.message}`)
+            return
+        }
+    }
+
+    statusUpdateLock.lock()
     isUpdatingStatus.value = true
     try {
+        // ─── Sanitize inputs ───
+        const sanitizedReason = sanitizeInput(statusReason.value)
+        const sanitizedNote = sanitizeInput(statusNote.value)
+
         await laporanStore.updateLaporanStatus(
             reportId.value,
             selectedNewStatus.value,
-            statusReason.value,
-            statusNote.value
+            sanitizedReason,
+            sanitizedNote
         )
         const successMessage = selectedNewStatus.value === 'menunggu_konfirmasi_selesai'
-            ? `Status laporan berhasil diperbarui. Alasan penyelesaian: ${statusNote.value}`
+            ? `Status laporan berhasil diperbarui. Alasan penyelesaian: ${sanitizedNote}`
             : 'Status laporan berhasil diperbarui'
         alertStore.success(successMessage)
         showStatusConfirmDialog.value = false
@@ -282,15 +390,32 @@ async function handleStatusConfirm() {
       return;
     }
         const errorMsg = String(error?.message || error)
+        const errorData = error?.response?.data
+
+        // Handle unverified account error
+        if (errorMsg.includes('AKUN_BELUM_TERVERIFIKASI') || errorData?.message === 'AKUN_BELUM_TERVERIFIKASI') {
+            showStatusConfirmDialog.value = false
+            showStatusDialog.value = false
+            unverifiedData.value = errorData?.data || {
+                nama: 'Siswa',
+                nis: '-',
+                kelas: '-',
+                pelapor_id: ''
+            }
+            showUnverifiedDialog.value = true
+            return
+        }
+
         if (errorMsg.includes('403')) {
             alertStore.error('Anda tidak memiliki akses mengubah status')
         } else if (errorMsg.includes('Tidak dapat mengubah status')) {
             alertStore.error(errorMsg)
         } else {
-            alertStore.error('Gagal mengubah status laporan')
+            alertStore.error('Gagal mengubah status laporan. Silahkan coba lagi.')
         }
     } finally {
         isUpdatingStatus.value = false
+        statusUpdateLock.unlock()
     }
 }
 
@@ -322,13 +447,13 @@ async function handlePelaporKonfirmasiSelesai(reason = '') {
     }
 }
 
-async function handlePelaporBelumSelesai() {
+async function handlePelaporBelumSelesai(reason = '') {
     if (!laporan.value) return
 
     isConfirmingCompletion.value = true
     try {
-        await laporanStore.updateLaporanStatus(laporan.value.id, 'diproses')
-        alertStore.success('Laporan dikembalikan ke status diproses')
+        await laporanStore.updateLaporanStatus(laporan.value.id, 'diproses', undefined, reason)
+        alertStore.success(reason ? `Laporan dikembalikan ke status diproses. Alasan: ${reason}` : 'Laporan dikembalikan ke status diproses')
         fetchDetail()
     } catch (error: any) {
     if (error?.name === 'ServerHandledError') {
@@ -349,23 +474,52 @@ async function handlePelaporBelumSelesai() {
 function openPelaporDecisionDialog(decision: 'setuju' | 'belum_selesai') {
     pelaporDecision.value = decision
     pelaporApprovalReason.value = ''
+    pelaporNotFinishedReason.value = ''
     showPelaporDecisionDialog.value = true
 }
 
 async function confirmPelaporDecision() {
-    if (pelaporDecision.value === 'setuju' && pelaporApprovalReason.value.trim().length < 50) {
-        alertStore.error('Alasan persetujuan wajib minimal 50 karakter')
+    // ─── Security: Prevent double-submit ───
+    if (pelaporDecisionLock.isLocked()) {
+        alertStore.error('Permintaan sedang diproses. Silahkan tunggu...')
+        return
+    }
+
+    // ─── Input Validation ───
+    if (!pelaporDecision.value) {
+        alertStore.error('Pilihan belum dipilih')
         return
     }
 
     if (pelaporDecision.value === 'setuju') {
-        await handlePelaporKonfirmasiSelesai(pelaporApprovalReason.value.trim())
+        const validation = validateMinLength(pelaporApprovalReason.value, 50)
+        if (!validation.valid) {
+            alertStore.error(`Alasan persetujuan wajib diisi. ${validation.message}`)
+            return
+        }
+    }
+
+    if (pelaporDecision.value === 'belum_selesai') {
+        const validation = validateMinLength(pelaporNotFinishedReason.value, 50)
+        if (!validation.valid) {
+            alertStore.error(`Alasan belum selesai wajib diisi. ${validation.message}`)
+            return
+        }
+    }
+
+    pelaporDecisionLock.lock()
+
+    if (pelaporDecision.value === 'setuju') {
+        const sanitizedReason = sanitizeInput(pelaporApprovalReason.value)
+        await handlePelaporKonfirmasiSelesai(sanitizedReason)
     } else if (pelaporDecision.value === 'belum_selesai') {
-        await handlePelaporBelumSelesai()
+        const sanitizedReason = sanitizeInput(pelaporNotFinishedReason.value)
+        await handlePelaporBelumSelesai(sanitizedReason)
     }
 
     showPelaporDecisionDialog.value = false
     pelaporDecision.value = null
+    pelaporDecisionLock.unlock()
 }
 
 const loadedImages = ref<Record<string, boolean>>({})
@@ -622,7 +776,7 @@ const onImageLoad = (id: string) => {
       <template #actions>
         <div class="dialog-actions">
           <SButton label="Batal" variant="secondary" @click="showBatalkanDialog = false" />
-          <SButton label="Ya, Batalkan" variant="danger" @click="handleBatalkan" :disabled="alasanPembatalan.length < 50" />
+          <SButton label="Ya, Batalkan" variant="danger" @click="handleBatalkan" :disabled="alasanPembatalan.length < 50 || batalkanLock.isLocked()" />
         </div>
       </template>
     </SDialog>
@@ -729,8 +883,8 @@ const onImageLoad = (id: string) => {
       </div>
       <template #actions>
         <div class="dialog-actions dialog-actions--full">
-          <SButton label="Batal" variant="secondary" class="w-full justify-center" @click="showStatusConfirmDialog = false" :disabled="isUpdatingStatus" />
-          <SButton label="Ya, Ubah Status" variant="primary" class="w-full justify-center" @click="handleStatusConfirm" :disabled="isUpdatingStatus" />
+          <SButton label="Batal" variant="secondary" class="w-full justify-center" @click="showStatusConfirmDialog = false" :disabled="isUpdatingStatus || statusUpdateLock.isLocked()" />
+          <SButton label="Ya, Ubah Status" variant="primary" class="w-full justify-center" @click="handleStatusConfirm" :disabled="isUpdatingStatus || statusUpdateLock.isLocked()" />
         </div>
       </template>
     </SDialog>
@@ -752,13 +906,58 @@ const onImageLoad = (id: string) => {
           <textarea v-model="pelaporApprovalReason" class="dialog-textarea" placeholder="Tulis alasan Anda menyetujui bahwa laporan ini sudah selesai..."></textarea>
           <p class="dialog-char-count">{{ pelaporApprovalReason.length }} karakter</p>
         </div>
+        <div v-if="pelaporDecision === 'belum_selesai'">
+          <label class="dialog-label">
+            Alasan Belum Selesai (Min. 50 Karakter)
+            <span class="required-asterisk">*</span>
+          </label>
+          <textarea v-model="pelaporNotFinishedReason" class="dialog-textarea" placeholder="Jelaskan mengapa laporan ini masih belum selesai..."></textarea>
+          <p class="dialog-char-count">{{ pelaporNotFinishedReason.length }} karakter</p>
+        </div>
       </div>
       <template #actions>
         <div class="dialog-actions dialog-actions--full">
           <SButton label="Batal" variant="secondary" class="w-full justify-center" :disabled="isConfirmingCompletion" @click="showPelaporDecisionDialog = false" />
-          <SButton :label="pelaporDecision === 'setuju' ? 'Ya, Setuju' : 'Ya, Kembalikan ke Diproses'" :variant="pelaporDecision === 'belum_selesai' ? 'danger' : 'primary'" class="w-full justify-center" :disabled="isConfirmingCompletion || (pelaporDecision === 'setuju' && pelaporApprovalReason.trim().length < 50)" @click="confirmPelaporDecision" />
+          <SButton :label="pelaporDecision === 'setuju' ? 'Ya, Setuju' : 'Ya, Belum Selesai'" :variant="pelaporDecision === 'belum_selesai' ? 'danger' : 'primary'" class="w-full justify-center" :disabled="isConfirmingCompletion || pelaporDecisionLock.isLocked() || (pelaporDecision === 'setuju' && pelaporApprovalReason.trim().length < 50) || (pelaporDecision === 'belum_selesai' && pelaporNotFinishedReason.trim().length < 50)" @click="confirmPelaporDecision" />
         </div>
       </template>
+    </SDialog>
+
+    <!-- Unverified Account Dialog -->
+    <SDialog
+        :visible="showUnverifiedDialog"
+        variant="danger"
+        title="Akun Belum Terverifikasi"
+        @update:visible="showUnverifiedDialog = $event"
+        @close="showUnverifiedDialog = false"
+    >
+        <div class="dialog-body">
+            <p class="dialog-text verification-text">
+                Siswa <strong>{{ unverifiedData?.nama }}</strong> 
+                <span v-if="unverifiedData?.nis">({{ unverifiedData.nis }})</span>
+                dari kelas <strong>{{ unverifiedData?.kelas }}</strong> 
+                belum terverifikasi akunya.
+            </p>
+            <p class="dialog-text verification-note">
+                Akun pelapor harus terverifikasi sebelum melanjutkan pemrosesan laporan ini. Apakah Anda ingin memverifikasi akun terlebih dahulu?
+            </p>
+        </div>
+        <template #actions>
+            <div class="dialog-actions dialog-actions--full">
+                <SButton
+                    label="Batal"
+                    variant="secondary"
+                    class="w-full justify-center"
+                    @click="showUnverifiedDialog = false"
+                />
+                <SButton
+                    label="Verifikasi Sekarang"
+                    variant="primary"
+                    class="w-full justify-center"
+                    @click="router.push({ name: 'manajemenAkun', query: { tab: 'unverified', search: unverifiedData?.nis } })"
+                />
+            </div>
+        </template>
     </SDialog>
 
     <SDialog :visible="showBuktiDialog" variant="primary" title="Bukti Pendukung" @update:visible="showBuktiDialog = $event" @close="showBuktiDialog = false">
@@ -1478,4 +1677,17 @@ const onImageLoad = (id: string) => {
 .flex-col { flex-direction: column; }
 .gap-3 { gap: 0.75rem; }
 .justify-center { justify-content: center; }
+
+/* ─── Verification Dialog ─── */
+.verification-text {
+    text-align: center;
+    line-height: 1.6;
+}
+
+.verification-note {
+    text-align: center;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.6;
+}
 </style>
