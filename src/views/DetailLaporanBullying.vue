@@ -775,8 +775,8 @@ const onImageLoad = (id: string) => {
       </div>
       <template #actions>
         <div class="dialog-actions">
-          <SButton label="Batal" variant="secondary" @click="showBatalkanDialog = false" />
-          <SButton label="Ya, Batalkan" variant="danger" @click="handleBatalkan" :disabled="alasanPembatalan.length < 50 || batalkanLock.isLocked()" />
+          <SButton label="Kembali" variant="secondary" @click="showBatalkanDialog = false" />
+          <SButton label="Ya, Batalkan" variant="danger" @click="handleBatalkan" :disabled="alasanPembatalan.length < 50" />
         </div>
       </template>
     </SDialog>
