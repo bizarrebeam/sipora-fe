@@ -28,6 +28,17 @@ export class RateLimitError extends Error {
   }
 }
 
+/**
+ * Thrown when an update is rejected because the record was modified by another
+ * user since the client last fetched it (HTTP 409 Conflict).
+ */
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ConflictError';
+  }
+}
+
 const SERVER_ERROR_STATUSES = [500, 502, 503, 504]
 
 function checkServerError(status: number) {
@@ -325,12 +336,20 @@ export async function apiAuthPut(endpoint: string, payload: object) {
       
       const authStore = useAuthStore()
       authStore.setSessionExpired(true)
-      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+      throw new Error('Sesi kamu telah berakhir karena sudah login di perangkat lain. Silakan login kembali.')
     }
 
     checkServerError(response.status)
 
     const json = await response.json()
+    
+    // OCC Conflict: record was modified by another user
+    if (response.status === 409) {
+      const msg = json.detail ||
+        'Data ini sudah diubah oleh pengguna lain. Silakan muat ulang untuk melihat data terbaru.'
+      throw new ConflictError(msg)
+    }
+    
     if (!response.ok || json.status === 'error') {
       if (response.status === 403) {
         const notFoundStore = useNotFoundStore()

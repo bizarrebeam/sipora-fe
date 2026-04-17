@@ -27,6 +27,8 @@ import BookingKonsultasiView from '@/views/BookingKonsultasiView.vue'
 import DaftarBookingView from '@/views/DaftarBookingView.vue'
 import KirimEvaluasiView from '@/views/KirimEvaluasiView.vue'
 import DetailAspirasiView from '@/views/DetailAspirasiView.vue'
+import DashboardBullyingView from '@/views/DashboardBullyingView.vue'
+import DashboardKerusakanAspirasi from '@/views/DashboardKerusakanAspirasi.vue'
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
@@ -222,6 +224,19 @@ const router = createRouter({
       component: KirimEvaluasiView,
       meta: { requiresAuth: true, allowedRoles: ['siswa'] },
     },
+    {
+      path: '/dashboard-bullying',
+      name: 'dashboardBullying',
+      component: DashboardBullyingView,
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'], keepAlive: true },
+    },
+        {
+      path: '/dashboard-kerusakan-aspirasi',
+      name: 'dashboardKerusakanAspirasi',
+      component: DashboardKerusakanAspirasi,
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'], keepAlive: true },
+    },
+
     // Catch-all 404
     {
       path: '/:pathMatch(.*)*',

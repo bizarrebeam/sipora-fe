@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
-import { apiAuthGet, apiAuthPost, apiAuthPut } from '@/services/api'
+import { apiAuthGet, apiAuthPost, apiAuthPut, ConflictError } from '@/services/api'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SChip from '@/components/SChip.vue'
@@ -34,6 +34,7 @@ interface AkunItem {
   role: string
   is_verified?: boolean
   date_joined: string
+  updated_at?: string  // OCC version token
   riwayat_mengajar?: RiwayatMengajar[]
 }
 
@@ -78,6 +79,7 @@ const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(createPassword.val
 const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
 
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
+const canVerify = computed(() => ['kemahasiswaan', 'guru_bk'].includes(auth.user?.role || ''))
 
 const showCreateDialog = ref(false)
 const showSuccessCreateDialog = ref(false)
@@ -101,6 +103,21 @@ const selectedSiswa = ref<AkunItem | null>(null)
 
 const showDetailDialog = ref(false)
 const selectedGuru = ref<AkunItem | null>(null)
+
+// OCC Conflict Dialog state
+const showConflictDialog = ref(false)
+const conflictMessage = ref('')
+
+function showConflictAndReload() {
+  showConflictDialog.value = true
+}
+
+async function handleReloadAfterConflict() {
+  showConflictDialog.value = false
+  showDetailDialog.value = false
+  isEditMode.value = false
+  await fetchDaftar()
+}
 
 function openDetailDialog(guru: AkunItem) {
   selectedGuru.value = guru
@@ -198,7 +215,7 @@ async function handleUpdateGuru() {
 
   updateGuruLoading.value = true
   try {
-    const payload = {
+    const payload: Record<string, any> = {
       nama_lengkap: editGuruNama.value.trim(),
       email: editGuruEmail.value.trim(),
       riwayat_mengajar: editGuruMapels.value.map(m => ({
@@ -206,12 +223,22 @@ async function handleUpdateGuru() {
         kelas_diajar: m.kelas_diajar
       }))
     }
+    // OCC: attach the version token so backend can detect concurrent edits
+    if (selectedGuru.value.updated_at) {
+      payload.updated_at = selectedGuru.value.updated_at
+    }
     await apiAuthPut(`akun/admin/update-guru/${selectedGuru.value.id}/`, payload)
     alertStore.success('Profil guru berhasil diperbarui.')
     showDetailDialog.value = false
     isEditMode.value = false
     await fetchDaftar()
   } catch (err: any) {
+    if (err?.name === 'ConflictError') {
+      conflictMessage.value = err.message ||
+        'Data ini sudah diubah oleh pengguna lain. Silakan muat ulang untuk melihat data terbaru.'
+      showConflictAndReload()
+      return
+    }
     if (err?.name === 'ServerHandledError') {
       console.error('[ManajemenAkunView] Request failed (handled globally):', err.message);
       return;
@@ -399,16 +426,9 @@ async function fetchDaftar() {
 }
 
 async function handleVerify(id: string) {
-  try {
-    await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
-    await fetchDaftar()
-  } catch (err: any) {
-    if (err?.name === 'ServerHandledError') {
-      console.error('[ManajemenAkunView] Request failed (handled globally):', err.message);
-      return;
-    }
-    alertStore.error(err.message || 'Gagal memverifikasi akun.')
-  }
+  // Let errors propagate to the caller for contextual handling
+  await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
+  await fetchDaftar()
 }
 
 function openVerifyDialog(siswa: AkunItem) {
@@ -435,6 +455,19 @@ async function confirmVerify() {
     verifiedSiswaName.value = studentName
     closeVerifyDialog()
     showSuccessVerifyDialog.value = true
+  } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ManajemenAkunView] Verify failed (handled globally):', err.message)
+      return
+    }
+    // If already verified by another admin, show a contextual (non-generic) message
+    if (err?.message?.includes('sudah diverifikasi')) {
+      closeVerifyDialog()
+      alertStore.error(`Siswa ${studentName} sudah diverifikasi oleh admin lain. Data siswa sudah ter-update.`)
+      await fetchDaftar()
+      return
+    }
+    alertStore.error(err.message || 'Gagal memverifikasi akun.')
   } finally {
     verifyLoading.value = false
   }
@@ -696,7 +729,7 @@ onMounted(async () => {
               </template>
               <template #body-cell-action="{ row }">
                 <SButton
-                  v-if="!row.is_verified && isKemahasiswaan"
+                  v-if="!row.is_verified && canVerify"
                   label="Verifikasi"
                   variant="action"
                   size="small"
@@ -1054,6 +1087,17 @@ onMounted(async () => {
         </div>
       </div>
     </SDialog>
+    <!-- OCC Conflict Dialog: data was modified by another user -->
+    <SDialog
+      :visible="showConflictDialog"
+      variant="primary"
+      title="Data Telah Berubah"
+      :message="conflictMessage || 'Data ini sudah diubah oleh pengguna lain sejak kamu membuka form.'"
+      confirmLabel="Muat Ulang Data"
+      cancelLabel=""
+      @confirm="handleReloadAfterConflict"
+      @update:visible="showConflictDialog = $event"
+    />
   </div>
 </template>
 

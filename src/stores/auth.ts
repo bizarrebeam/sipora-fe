@@ -13,7 +13,7 @@ import { useAlertStore } from '@/stores/alert'
  * Represents the authenticated entity's aggregated profile data.
  */
 interface User {
-  id?: number
+  id?: string
   role: string
   nama_lengkap: string
   nis?: string | null
@@ -155,6 +155,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (data.refresh) localStorage.setItem('refresh_token', data.refresh)
 
       setUser({
+        id: data.id,
         username: data.username,
         role: data.role,
         nama_lengkap: data.nama_lengkap,

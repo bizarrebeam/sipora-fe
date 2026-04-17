@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import SDialog from '@/components/SDialog.vue'
 import SChip from '@/components/SChip.vue'
@@ -8,6 +8,7 @@ import SiporaLogo from '@/assets/sipora-logo-light.svg'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const mobileMenuOpen = ref(false)
 const showLogoutModal = ref(false)
 const profileMenuOpen = ref(false)
@@ -37,6 +38,15 @@ const artikelLabel = computed(() => {
   return isAdmin.value ? 'Kelola Artikel' : 'Baca Artikel'
 })
 
+const selectedDashboard = ref<string | null>(null)
+
+const mobileDashboardOpen = ref(false)
+const dashboardOpen = ref(false)
+
+const isDashboardRoute = computed(() => {
+  return route.path.startsWith('/dashboard-')
+})
+
 function toggleMobile() {
   mobileMenuOpen.value = !mobileMenuOpen.value
 }
@@ -49,6 +59,16 @@ function openLogoutModal() {
   showLogoutModal.value = true
   closeMobile()
   profileMenuOpen.value = false
+}
+
+function handleDashboardNavigate(val: string | number) {
+  if (val) {
+    router.push(String(val))
+    closeMobile()
+    setTimeout(() => {
+      selectedDashboard.value = null
+    }, 200)
+  }
 }
 
 async function confirmLogout() {
@@ -78,6 +98,19 @@ async function confirmLogout() {
         <template v-if="isLoggedIn">
           <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
+
+          <div v-if="isAdmin" class="py-2 dashboard-dropdown" @mouseleave="dashboardOpen = false">
+            <button class="nav-link flex items-center gap-1" :class="{ active: dashboardOpen || isDashboardRoute }" @click="dashboardOpen = !dashboardOpen" >Dashboard
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron transition-transform duration-200" :class="{'chevron-up': dashboardOpen}">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div v-show="dashboardOpen" class="dashboard-dropdown-menu">
+              <RouterLink to="/dashboard-bullying" class="dropdown-item" @click="dashboardOpen = false">Dashboard Bullying</RouterLink>
+              <RouterLink to="/dashboard-kerusakan-aspirasi" class="dropdown-item" @click="dashboardOpen = false">Dashboard Kerusakan & Aspirasi</RouterLink>
+              <RouterLink to="/dashboard-konsultasi" class="dropdown-item" @click="dashboardOpen = false">Dashboard Konsultasi</RouterLink>
+            </div>
+          </div>
           <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
           <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
           <RouterLink v-if="isSiswa" to="/kirim-evaluasi" class="nav-link">Evaluasi Guru</RouterLink>
@@ -156,6 +189,16 @@ async function confirmLogout() {
         <template v-if="isLoggedIn">
           <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
           <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
+          <div v-if="isAdmin" class="mobile-dashboard">
+            <button class="mobile-link" @click="mobileDashboardOpen = !mobileDashboardOpen"> Dashboard
+              <span class="mobile-chevron  ml-3" :class="{ 'open': mobileDashboardOpen }"></span>
+            </button>
+            <div v-show="mobileDashboardOpen" class="mobile-sublinks">
+              <RouterLink to="/dashboard-bullying" class="mobile-link" @click="closeMobile">Dashboard Bullying</RouterLink>
+              <RouterLink to="/dashboard-kerusakan-aspirasi" class="mobile-link" @click="closeMobile">Dashboard Kerusakan & Aspirasi</RouterLink>
+              <RouterLink to="/dashboard-konsultasi" class="mobile-link" @click="closeMobile">Dashboard Konsultasi</RouterLink>
+            </div>
+          </div>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
           <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
           <RouterLink v-if="isSiswa" to="/kirim-evaluasi" class="mobile-link" @click="closeMobile">Evaluasi Guru</RouterLink>
@@ -549,6 +592,61 @@ async function confirmLogout() {
 
 .mobile-link--logout {
   color: var(--color-blue-200);
+}
+
+.mobile-sublinks {
+  display: flex;
+  flex-direction: column;
+  padding-left: 12px;
+  gap: 6px;
+}
+
+.mobile-chevron {
+  float: right;
+  transition: transform 0.2s ease;
+  width: 10px;
+  height: 10px;
+  border-left: 2px solid var(--color-blue-50);
+  border-bottom: 2px solid var(--color-blue-50);
+  transform: rotate(-45deg) translateY(2px);
+  margin-top: 6px;
+}
+
+.mobile-chevron.open {
+  transform: rotate(135deg) translateY(-2px);
+}
+
+/* Dashboard dropdown (desktop) */
+.dashboard-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-link.active::after {
+  width: 100%;
+}
+
+.nav-link.active {
+  color: white;
+}
+
+.dashboard-dropdown-menu {
+  position: absolute;
+  top: 100%; 
+  left: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 6px 0;
+  border: 1px solid var(--color-general-border, #E5E7EB);
+  z-index: 100;
+  width: max-content;
+  min-width: 0;
+}
+
+.dashboard-dropdown-menu .dropdown-item {
+  white-space: nowrap;
+  padding: 8px 16px;
 }
 
 .mobile-user-row {
