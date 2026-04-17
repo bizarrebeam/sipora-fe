@@ -99,6 +99,16 @@ const errors = ref({
     deskripsi: '',
 })
 
+const initialData = ref({
+    judul: '',
+    tanggalKejadian: '',
+    waktuKejadian: '',
+    lokasi: '',
+    jenisBullying: '',
+    deskripsi: '',
+    anonimitas: false,
+})
+
 onMounted(async () => {
     const id = route.params.id as string
     if (!id) return
@@ -120,6 +130,16 @@ onMounted(async () => {
             // Load foto existing
             if (laporan.foto_bukti && Array.isArray(laporan.foto_bukti)) {
                 existingFotos.value = laporan.foto_bukti.map((f: any) => ({ id: f.id, foto: f.foto }))
+            }
+            
+            initialData.value = {
+                judul: judul.value,
+                deskripsi: deskripsi.value,
+                lokasi: lokasi.value,
+                tanggalKejadian: tanggalKejadian.value,
+                waktuKejadian: waktuKejadian.value,
+                jenisBullying: jenisBullying.value,
+                anonimitas: anonimitas.value,
             }
         }
     } catch (error: any) {
@@ -150,6 +170,20 @@ const isFormValid = computed(() => {
         jenisBullying.value &&
         deskripsi.value.trim().length >= 50 &&
         !buktiError.value
+    )
+})
+
+const isFormDirty = computed(() => {
+    return (
+        judul.value !== initialData.value.judul ||
+        deskripsi.value !== initialData.value.deskripsi ||
+        lokasi.value !== initialData.value.lokasi ||
+        tanggalKejadian.value !== initialData.value.tanggalKejadian ||
+        waktuKejadian.value !== initialData.value.waktuKejadian ||
+        jenisBullying.value !== initialData.value.jenisBullying ||
+        anonimitas.value !== initialData.value.anonimitas ||
+        buktiPendukung.value.length > 0 ||
+        removedExistingIds.value.length > 0
     )
 })
 
@@ -522,7 +556,7 @@ async function handleSubmit() {
                         <button
                             type="submit"
                             class="submit-btn"
-                            :disabled="!isFormValid"
+                            :disabled="!isFormValid || !isFormDirty"
                         >
                             Simpan Perubahan
                         </button>
