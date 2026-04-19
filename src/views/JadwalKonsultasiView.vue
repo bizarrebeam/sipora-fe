@@ -70,6 +70,13 @@ function isPast(d: number) {
   return fmtDate(viewYear.value, viewMonth.value, d) < todayStr
 }
 
+function isFutureLimit(d: number) {
+  const limit = new Date(today)
+  limit.setDate(limit.getDate() + 30)
+  const limitStr = fmtDate(limit.getFullYear(), limit.getMonth(), limit.getDate())
+  return fmtDate(viewYear.value, viewMonth.value, d) > limitStr
+}
+
 function isToday(d: number) {
   return fmtDate(viewYear.value, viewMonth.value, d) === todayStr
 }
@@ -99,9 +106,9 @@ function nextMonth() {
 }
 
 async function selectDate(d: number) {
-  if (isPast(d)) return
+  if (isPast(d) || isFutureLimit(d)) return
   selectedDate.value = fmtDate(viewYear.value, viewMonth.value, d)
-  await store.ambilJadwal(selectedDate.value)
+  await store.ambilJadwal()
 }
 
 const selectedDateLabel = computed(() => {
@@ -263,10 +270,10 @@ onBeforeUnmount(() => {
 			</div>
 
     <!-- Layout: Kalender + Panel -->
-    <div class="flex gap-6 items-start">
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
 
       <!-- Kalender -->
-      <SCard padding="20px" class="w-[300px] shrink-0">
+      <SCard padding="20px" class="w-full lg:w-[300px] shrink-0">
         <!-- Navigasi bulan -->
         <div class="flex items-center justify-between mb-4">
           <button
@@ -289,14 +296,15 @@ onBeforeUnmount(() => {
           <template v-for="(d, i) in calendarDays" :key="i">
             <div
               class="relative flex items-center justify-center h-9 rounded-lg text-sm cursor-pointer transition-colors select-none"
+              :title="d && isFutureLimit(d) ? 'Maksimal pembuatan jadwal 1 bulan ke depan' : ''"
               :class="{
                 'opacity-0 pointer-events-none': d === null,
-                'text-neutral-300 cursor-default': d && isPast(d),
+                'text-neutral-300 cursor-default': d && (isPast(d) || isFutureLimit(d)),
                 'bg-blue-500 text-white font-semibold': d && isSelected(d),
-                'text-general-black hover:bg-general-frame': d && !isPast(d) && !isSelected(d),
+                'text-general-black hover:bg-general-frame': d && !isPast(d) && !isFutureLimit(d) && !isSelected(d),
                 'font-semibold': d && isToday(d),
               }"
-              @click="d && !isPast(d) && selectDate(d)"
+              @click="d && !isPast(d) && !isFutureLimit(d) && selectDate(d)"
             >
               {{ d }}
               <!-- Dot hari ini -->
@@ -329,7 +337,7 @@ onBeforeUnmount(() => {
       </SCard>
 
       <!-- Panel Kanan -->
-      <div class="flex-1 flex flex-col gap-4">
+      <div class="w-full lg:flex-1 flex flex-col gap-4">
 
         <!-- Pilih tanggal dulu -->
         <SCard v-if="!selectedDate" padding="32px">
@@ -360,7 +368,7 @@ onBeforeUnmount(() => {
               <div
                 v-for="slot in slotsForSelectedDate"
                 :key="slot.id"
-                class="flex items-center gap-4 px-5 py-4"
+                class="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4"
               >
                 <!-- Waktu -->
                 <div class="min-w-[120px]">
@@ -392,7 +400,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- ── Dialog: Tambah/Edit Slot ───────────────────────────────────────── -->
-    <SDialog :visible="showFormDialog" :title="editingSlot ? 'Edit Slot Jadwal' : 'Tambah Slot Jadwal'" @update:visible="showFormDialog = $event">
+     <SDialog :visible="showFormDialog" :title="editingSlot ? 'Edit Slot Jadwal' : 'Tambah Slot Jadwal'" @update:visible="showFormDialog = $event">
       <div class="flex flex-col gap-4">
         <div v-if="formError" class="p-3 rounded-lg bg-red-50 border border-red-200 body-b8 text-red-700">
           {{ formError }}
@@ -411,17 +419,19 @@ onBeforeUnmount(() => {
       </div>
 
       <template #actions>
-        <div class="flex flex-col gap-3 w-full">
-          <SButton label="Batal" variant="tertiary" size="medium" @click="showFormDialog = false" class="w-full" />
-          <SButton
-            :label="editingSlot ? 'Simpan Perubahan' : 'Simpan Jadwal'"
-            variant="primary"
-            size="medium"
-            :disabled="!isFormValid"
-            @click="submitForm"
-            class="w-full"
-          />
-        </div>
+        <SButton
+          label="Batal"
+          variant="secondary"
+          size="medium"
+          @click="showFormDialog = false"
+        />
+        <SButton
+          :label="editingSlot ? 'Simpan Perubahan' : 'Simpan Jadwal'"
+          variant="primary"
+          size="medium"
+          :disabled="!isFormValid"
+          @click="submitForm"
+        />
       </template>
     </SDialog>
 
@@ -442,7 +452,7 @@ onBeforeUnmount(() => {
 
       <template #actions>
         <div class="flex justify-end gap-3 w-full">
-          <SButton label="Batal" variant="tertiary" size="medium" @click="showDeleteDialog = false" />
+          <SButton label="Batal" variant="secondary" size="medium" @click="showDeleteDialog = false" />
           <SButton label="Ya, Hapus" variant="danger" size="medium" @click="confirmDelete" />
         </div>
       </template>

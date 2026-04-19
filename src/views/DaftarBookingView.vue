@@ -62,6 +62,7 @@ const tableColumns = computed(() => {
     { key: 'tanggal_konsultasi', label: 'Tanggal' },
     { key: 'waktu', label: 'Waktu' },
     { key: 'deskripsi', label: 'Alasan Konsultasi' },
+    { key: 'dibuat_pada', label: 'Dibuat Pada' },
     { key: 'status', label: 'Status' },
     { key: 'aksi', label: '' },
   ]
@@ -222,7 +223,7 @@ onMounted(() => {
               </svg>
               {{ filterTanggal || 'Pilih Tanggal' }}
             </button>
-            <div v-if="showDatePicker" class="absolute right-0 top-[52px] z-50 shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-right">
+            <div v-if="showDatePicker" class="absolute left-0 md:left-auto md:right-0 top-[52px] z-[60] shadow-xl border rounded-2xl overflow-hidden scale-90 origin-top-left md:origin-top-right bg-white">
               <SDatePicker @close="showDatePicker = false" v-model="selectedDateObj" />
             </div>
           </div>
@@ -263,14 +264,14 @@ onMounted(() => {
               class="hover:bg-general-frame transition-colors"
             >
 
-              <!-- Nama Siswa (hanya Guru BK) -->
-              <td v-if="isGuruBK" class="px-5 py-4">
-                <span class="body-b7 text-general-black">{{ booking.nama_siswa }}</span>
-              </td>
-
               <!-- Tanggal -->
               <td class="px-5 py-4">
                 <span class="body-b7 text-general-black">{{ fmtTanggal(booking.tanggal_konsultasi) }}</span>
+              </td>
+
+              <!-- Nama Siswa (hanya Guru BK) -->
+              <td v-if="isGuruBK" class="px-5 py-4">
+                <span class="body-b7 text-general-black">{{ booking.nama_siswa }}</span>
               </td>
 
               <!-- Waktu -->
@@ -281,6 +282,11 @@ onMounted(() => {
               <!-- Alasan -->
               <td class="px-5 py-4 max-w-[200px]">
                 <p class="body-b8 text-neutral-600 truncate">{{ booking.deskripsi }}</p>
+              </td>
+
+              <!-- Dibuat Pada -->
+              <td class="px-5 py-4">
+                <span class="body-b7 text-general-black">{{ new Date(booking.dibuat_pada).toLocaleString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</span>
               </td>
 
               <!-- Status -->
@@ -303,11 +309,9 @@ onMounted(() => {
     </SCard>
 
     <!-- ── Dialog: Detail Booking ─────────────────────────────────────────── -->
-    <SDialog :visible="showDetailDialog" title="Detail Booking" @update:visible="showDetailDialog = $event">
+     <SDialog :visible="showDetailDialog" title="Detail Booking" @update:visible="showDetailDialog = $event">
       <div v-if="selectedBooking" class="flex flex-col gap-4">
-
         <div class="grid gap-2 body-b7">
-
           <div v-if="isGuruBK" class="flex gap-4 py-2 border-b border-general-border">
             <span class="text-neutral-500 w-32 shrink-0">Nama Siswa</span>
             <span class="text-general-black font-semibold">{{ selectedBooking.nama_siswa }}</span>
@@ -348,11 +352,11 @@ onMounted(() => {
             <span class="text-neutral-500 body-b8">{{ new Date(selectedBooking.dibuat_pada).toLocaleString('id-ID') }}</span>
           </div>
         </div>
-
-        <div class="flex justify-end pt-2">
-          <SButton label="Tutup" variant="tertiary" size="medium" @click="showDetailDialog = false" />
-        </div>
       </div>
+
+      <template #actions>
+        <SButton label="Tutup" variant="secondary" size="medium" @click="showDetailDialog = false" />
+      </template>
     </SDialog>
 
     </div>

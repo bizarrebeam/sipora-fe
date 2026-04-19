@@ -11,8 +11,6 @@ import { useKonsultasiStore, type JadwalKonsultasi } from '@/stores/konsultasi'
 import { apiAuthGet } from '@/services/api'
 import { useNotFoundStore } from '@/stores/notFound'
 
-// ─── State ────────────────────────────────────────────────────────────────────
-
 const store = useKonsultasiStore()
 const notFoundStore = useNotFoundStore()
 const DAILY_BOOKING_LIMIT = 2
@@ -73,6 +71,13 @@ const todayStr = fmtDate(today.getFullYear(), today.getMonth(), today.getDate())
 
 function isPast(d: number) {
   return fmtDate(viewYear.value, viewMonth.value, d) < todayStr
+}
+
+function isFutureLimit(d: number) {
+  const limitDate = new Date(today);
+  limitDate.setDate(limitDate.getDate() + 30);
+  const limitStr = fmtDate(limitDate.getFullYear(), limitDate.getMonth(), limitDate.getDate());
+  return fmtDate(viewYear.value, viewMonth.value, d) > limitStr;
 }
 
 function isToday(d: number) {
@@ -155,10 +160,10 @@ function nextMonth() {
 }
 
 async function selectDate(d: number) {
-  if (isPast(d)) return
+  if (isPast(d) || isFutureLimit(d)) return
   selectedDate.value = fmtDate(viewYear.value, viewMonth.value, d)
   await loadSlotsForDate(selectedDate.value)
-  await store.ambilBooking({ tanggal: selectedDate.value })
+  await store.ambilBooking()
 }
 
 async function loadSlotsForDate(date: string) {
@@ -207,7 +212,10 @@ function openBooking(slot: JadwalKonsultasi) {
   showBookingDialog.value = true
 }
 
-const isFormValid = computed(() => deskripsi.value.trim().length > 0)
+const isFormValid = computed(() => {
+  const len = deskripsi.value.trim().length
+  return len >= 20 && len <= 150
+})
 
 function proceedToConfirm() {
   if (!isFormValid.value) return
@@ -237,7 +245,7 @@ async function confirmBooking() {
     // Refresh slot list so newly booked slot no longer appears as available.
     if (selectedDate.value) await loadSlotsForDate(selectedDate.value)
     await fetchAvailableDates()
-    if (selectedDate.value) await store.ambilBooking({ tanggal: selectedDate.value })
+    await store.ambilBooking()
   } else {
     bookingError.value = store.errorMessage
     showConfirmDialog.value = false
@@ -276,10 +284,10 @@ onBeforeUnmount(() => {
 			</div>
 
     <!-- Layout -->
-    <div class="flex gap-6 items-start">
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
 
       <!-- Calendar -->
-      <SCard padding="20px" class="w-[300px] shrink-0">
+      <SCard padding="20px" class="w-full lg:w-[300px] shrink-0">
         <div class="flex items-center justify-between mb-4">
           <button
             class="w-8 h-8 flex items-center justify-center rounded-lg border border-general-border text-neutral-500 hover:bg-general-frame transition-colors"
@@ -300,12 +308,12 @@ onBeforeUnmount(() => {
               class="relative flex items-center justify-center h-9 rounded-lg text-sm cursor-pointer transition-colors select-none"
               :class="{
                 'opacity-0 pointer-events-none': d === null,
-                'text-neutral-300 cursor-default': d && isPast(d),
+                'text-neutral-300 cursor-default': d && (isPast(d) || isFutureLimit(d)),
                 'bg-blue-500 text-white font-semibold': d && isSelected(d),
-                'text-general-black hover:bg-general-frame': d && !isPast(d) && !isSelected(d),
+                'text-general-black hover:bg-general-frame': d && !isPast(d) && !isFutureLimit(d) && !isSelected(d),
                 'font-semibold': d && isToday(d),
               }"
-              @click="d && !isPast(d) && selectDate(d)"
+              @click="d && !isPast(d) && !isFutureLimit(d) && selectDate(d)"
             >
               {{ d }}
               <span v-if="d && isToday(d)" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" :class="isSelected(d) ? 'bg-white' : 'bg-blue-500'" />
@@ -328,7 +336,7 @@ onBeforeUnmount(() => {
       </SCard>
 
       <!-- Slot panel -->
-      <div class="flex-1">
+      <div class="w-full lg:flex-1">
         <SCard v-if="!selectedDate" padding="32px">
           <div class="flex flex-col items-center justify-center py-8 text-center gap-2">
             <p class="subheading-s7 text-general-black">Pilih tanggal konsultasi</p>
@@ -359,7 +367,7 @@ onBeforeUnmount(() => {
               <div
                 v-for="slot in availableSlots"
                 :key="slot.id"
-                class="flex items-center gap-4 px-5 py-4"
+                class="flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4"
               >
                 <div class="flex-1">
                   <p class="subheading-s8 text-general-black">{{ slot.waktu_mulai }} – {{ slot.waktu_selesai }}</p>
@@ -388,7 +396,6 @@ onBeforeUnmount(() => {
           {{ bookingError }}
         </div>
 
-        <!-- Selected slot info -->
         <div class="p-3 rounded-lg bg-general-frame border border-general-border body-b8">
           <p class="text-neutral-500">Slot dipilih</p>
           <p class="subheading-s8 text-general-black mt-0.5">
@@ -404,22 +411,35 @@ onBeforeUnmount(() => {
           placeholder="Ceritakan secara singkat alasan kamu ingin berkonsultasi..."
           required
         />
-
-        <div class="flex justify-end gap-3 pt-2">
-          <SButton label="Batal" variant="tertiary" size="medium" @click="showBookingDialog = false" />
-          <SButton
-            label="Lanjut"
-            variant="primary"
-            size="medium"
-            :disabled="!isFormValid"
-            @click="proceedToConfirm"
-          />
+        <div class="flex justify-between items-start -mt-2">
+          <p v-if="deskripsi.trim().length > 0 && !isFormValid" class="body-b8 text-red-500">
+            Alasan konsultasi max 20-150 char
+          </p>
+          <div v-else></div>
+          <p class="body-b8 text-neutral-500" :class="{ 'text-red-500': deskripsi.length > 150 }">
+            {{ deskripsi.length }}/150
+          </p>
         </div>
       </div>
+
+      <template #actions>
+        <SButton label="Batal" variant="secondary" size="medium" @click="showBookingDialog = false" />
+        <SButton
+          label="Lanjut"
+          variant="primary"
+          size="medium"
+          :disabled="!isFormValid"
+          @click="proceedToConfirm"
+        />
+      </template>
     </SDialog>
 
     <!-- ── Dialog: Konfirmasi Booking ────────────────────────────────────── -->
-    <SDialog :visible="showConfirmDialog" title="Konfirmasi Booking" @update:visible="showConfirmDialog = $event">
+     <SDialog
+      :visible="showConfirmDialog"
+      title="Konfirmasi Booking"
+      @update:visible="showConfirmDialog = $event"
+    >
       <div class="flex flex-col gap-4">
         <p class="body-b7 text-neutral-600">Apakah kamu yakin ingin memesan slot ini?</p>
 
@@ -437,12 +457,22 @@ onBeforeUnmount(() => {
             <span class="text-general-black">{{ deskripsi }}</span>
           </div>
         </div>
-
-        <div class="flex justify-end gap-3 pt-2">
-          <SButton label="Kembali" variant="tertiary" size="medium" @click="showConfirmDialog = false; showBookingDialog = true" />
-          <SButton label="Ya, Booking Sekarang" variant="primary" size="medium" @click="confirmBooking" />
-        </div>
       </div>
+
+      <template #actions>
+        <SButton
+          label="Kembali"
+          variant="secondary"
+          size="medium"
+          @click="showConfirmDialog = false; showBookingDialog = true"
+        />
+        <SButton
+          label="Ya, Booking Sekarang"
+          variant="primary"
+          size="medium"
+          @click="confirmBooking"
+        />
+      </template>
     </SDialog>
 
     </div>

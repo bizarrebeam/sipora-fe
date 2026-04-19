@@ -162,7 +162,7 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     try {
       await apiAuthPost('konsultasi/jadwal/', payload)
       successMessage.value = 'Jadwal berhasil dibuat.'
-      await ambilJadwal(payload.tanggal)
+      await ambilJadwal()
       return true
     } catch (err: unknown) {
       errorMessage.value = getErrorMessage(err, 'Gagal membuat jadwal.')
@@ -181,7 +181,7 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     try {
       await apiAuthPut(`konsultasi/jadwal/${id}/`, payload)
       successMessage.value = 'Jadwal berhasil diperbarui.'
-      await ambilJadwal(tanggal)
+      await ambilJadwal()
       return true
     } catch (err: unknown) {
       errorMessage.value = getErrorMessage(err, 'Gagal memperbarui jadwal.')
@@ -200,7 +200,7 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     try {
       await deleteAuth(`konsultasi/jadwal/${id}/`)
       successMessage.value = 'Jadwal berhasil dihapus.'
-      await ambilJadwal(tanggal)
+      await ambilJadwal()
       return true
     } catch (err: unknown) {
       errorMessage.value = getErrorMessage(err, 'Gagal menghapus jadwal.')
