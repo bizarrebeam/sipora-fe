@@ -151,7 +151,18 @@ function openEditForm(slot: JadwalKonsultasi) {
   showFormDialog.value = true
 }
 
-const isFormValid = computed(() => formStart.value && formEnd.value && formStart.value < formEnd.value)
+const formDurationMinutes = computed(() => {
+  if (!formStart.value || !formEnd.value || formStart.value >= formEnd.value) return 0
+  const [startH, startM] = formStart.value.split(':').map(Number)
+  const [endH, endM] = formEnd.value.split(':').map(Number)
+  return (endH * 60 + endM) - (startH * 60 + startM)
+})
+
+const isFormValid = computed(() => {
+  if (!formStart.value || !formEnd.value || formStart.value >= formEnd.value) return false
+  const diff = formDurationMinutes.value
+  return diff >= 10 && diff <= 60
+})
 
 async function submitForm() {
   if (!isFormValid.value || !selectedDate.value) return
@@ -413,6 +424,12 @@ onBeforeUnmount(() => {
 
         <p v-if="formStart && formEnd && formStart >= formEnd" class="body-b8 text-red-500 -mt-2">
           Waktu mulai harus lebih kecil dari waktu selesai.
+        </p>
+        <p v-else-if="formStart && formEnd && formDurationMinutes > 60" class="body-b8 text-red-500 -mt-2">
+          Maksimal durasi jadwal adalah 1 jam.
+        </p>
+        <p v-else-if="formStart && formEnd && formDurationMinutes < 10" class="body-b8 text-red-500 -mt-2">
+          Minimal durasi jadwal adalah 10 menit.
         </p>
 
         <STextField label="Catatan (opsional)" v-model="formCatatan" placeholder="Misal: sesi konsultasi akademik" />
