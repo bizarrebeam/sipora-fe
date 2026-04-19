@@ -6,6 +6,7 @@ import { useLaporanBullyingStore } from '@/stores/laporanBullying'
 import { useTanggapanStore } from '@/stores/tanggapan'
 import { useAlertStore } from '@/stores/alert'
 import { useNotFoundStore } from '@/stores/notFound'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SDialog from '@/components/SDialog.vue'
@@ -96,9 +97,11 @@ const unverifiedData = ref<{
     pelapor_id: string
 } | null>(null)
 
-async function fetchDetail(detailId?: string) {
+async function fetchDetail(detailId?: string, silent = false) {
     const fetchId = detailId || reportId.value
+  if (!silent) {
     loading.value = true
+  }
     try {
         await laporanStore.ambilDetail(fetchId)
         // Fetch responses for this report
@@ -122,7 +125,9 @@ async function fetchDetail(detailId?: string) {
             router.push('/laporan-bullying')
         }
     } finally {
+      if (!silent) {
         loading.value = false
+      }
     }
 }
 
@@ -136,6 +141,24 @@ async function checkAndFetchDetail() {
 onMounted(() => { 
     checkAndFetchDetail()
 })
+
+useAutoRefresh(
+  () => fetchDetail(undefined, true),
+  {
+    intervalMs: 30_000,
+    refetchOnVisible: true,
+    pauseWhen: [
+      showBatalkanDialog,
+      showBuktiDialog,
+      showStatusDialog,
+      showStatusConfirmDialog,
+      showPelaporDecisionDialog,
+      showUnverifiedDialog,
+      isUpdatingStatus,
+      isConfirmingCompletion,
+    ],
+  },
+)
 
 // Watch route params to refetch - only if still on this route
 watch(() => route.params.id, async (newId) => {

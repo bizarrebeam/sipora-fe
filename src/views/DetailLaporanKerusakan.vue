@@ -12,6 +12,7 @@ import SChip from '@/components/SChip.vue'
 import STanggapanThread from '@/components/STanggapanThread.vue'
 import STanggapanForm from '@/components/STanggapanForm.vue'
 import { useNotFoundStore } from '@/stores/notFound'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const route = useRoute()
 const router = useRouter()
@@ -89,8 +90,10 @@ const unverifiedData = ref<{
     pelapor_id: string
 } | null>(null)
 
-async function fetchDetail() {
-    loading.value = true
+async function fetchDetail(silent = false) {
+    if (!silent) {
+        loading.value = true
+    }
     try {
         await laporanStore.fetchLaporanDetail(id)
         // Fetch responses for this report
@@ -109,11 +112,31 @@ async function fetchDetail() {
         alertStore.error('Gagal memuat detail laporan')
         router.push('/laporan-kerusakan')
     } finally {
-        loading.value = false
+        if (!silent) {
+            loading.value = false
+        }
     }
 }
 
 onMounted(() => { fetchDetail() })
+
+useAutoRefresh(
+    () => fetchDetail(true),
+    {
+        intervalMs: 30_000,
+        refetchOnVisible: true,
+        pauseWhen: [
+            showBatalkanDialog,
+            showBuktiDialog,
+            showStatusDialog,
+            showStatusConfirmDialog,
+            showPelaporDecisionDialog,
+            showUnverifiedDialog,
+            isUpdatingStatus,
+            isConfirmingCompletion,
+        ],
+    },
+)
 
 onUnmounted(() => {
     // Reset tanggapan store when leaving detail page
