@@ -380,7 +380,7 @@ const onImageLoad = (id: string) => {
     </div>
     <template #actions>
         <div class="dialog-actions">
-        <SButton label="Batal" variant="secondary" @click="showUnmarkDialog = false" />
+        <SButton label="Kembali" variant="secondary" @click="showUnmarkDialog = false" />
         <SButton label="Ya, Hapus Tanda" variant="danger" @click="batalkanTandaiAspirasi()" />
         </div>
     </template>

@@ -5,6 +5,7 @@ import SBarChart from '@/components/SBarChart.vue'
 import SPieChart from '@/components/SPieChart.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useDashboarKerusakanAspirasidStore } from '@/stores/dashboard'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
@@ -13,8 +14,6 @@ const dashboardStore = useDashboarKerusakanAspirasidStore()
 
 const filterPeriod = ref('week') // default minggu ini
 const filterYear = ref(new Date().getFullYear())
-
-// Default semester: months Jan-Jun => semester 2 (Genap), Jul-Dec => semester 1 (Ganjil)
 const filterSemester = ref((new Date().getMonth() < 6) ? 2 : 1)
 const filterMonth = ref(new Date().toISOString().slice(0,7)) 
 const filterStartDate = ref('')
@@ -98,6 +97,12 @@ onMounted(() => {
 	applyFilters()
 })
 
+// Auto-refresh the dashboard using current filters every 10s
+useAutoRefresh(() => applyFilters(), {
+    intervalMs: 10_000,
+    refetchOnVisible: true,
+})
+
 watch([filterPeriod, filterYear, filterSemester, filterMonth, filterStartDate], () => {
 	applyFilters()
 })
@@ -108,7 +113,7 @@ watch([filterPeriod, filterYear, filterSemester, filterMonth, filterStartDate], 
 		<div class="stf-container">
 			<div class="stf-header">
 				<div class="stf-header-text">
-					<h1 class="stf-page-title">Dashboard Kersukasan dan Aspirasi</h1>
+					<h1 class="stf-page-title">Dashboard Kerusakan dan Aspirasi</h1>
 					<p class="stf-page-subtitle">Kelola dan pantau seluruh laporan kerusakan dan aspirasi terkini tahun ajaran Semester {{ auth.user?.semester }} {{ auth.user?.tahun_ajaran }}.</p>
 				</div>
 			</div>

@@ -7,6 +7,7 @@ import SBarChart from '@/components/SBarChart.vue'
 import SPieChart from '@/components/SPieChart.vue'
 import STopDashboard from '@/components/STopDashboard.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import { useDashboardBullyingStore } from '@/stores/dashboard'
 
 
@@ -20,7 +21,6 @@ const dashboardStore = useDashboardBullyingStore()
 // Filters
 const filterPeriod = ref('week') // default: minggu ini
 const filterYear = ref(new Date().getFullYear())
-// Default semester: months Jan-Jun => semester 2 (Genap), Jul-Dec => semester 1 (Ganjil)
 const filterSemester = ref((new Date().getMonth() < 6) ? 2 : 1)
 const filterMonth = ref(new Date().toISOString().slice(0,7)) 
 const filterStartDate = ref('')
@@ -75,6 +75,11 @@ function applyFilters() {
 
 onMounted(() => {
 	applyFilters()
+})
+
+useAutoRefresh(() => applyFilters(), {
+	intervalMs: 10_000,
+	refetchOnVisible: true,
 })
 
 watch([filterPeriod, filterYear, filterSemester, filterMonth, filterStartDate], () => {
