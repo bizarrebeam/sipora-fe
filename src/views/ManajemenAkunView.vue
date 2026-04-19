@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { apiAuthGet, apiAuthPost, apiAuthPut, ConflictError } from '@/services/api'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SChip from '@/components/SChip.vue'
@@ -605,6 +606,18 @@ onMounted(async () => {
     fetchDaftar()
   }
 })
+
+useAutoRefresh(
+  async () => {
+    await fetchDaftar()
+    await fetchCounts()
+  },
+  {
+    intervalMs: 30_000,
+    refetchOnVisible: true,
+    pauseWhen: [showCreateDialog, showVerifyDialog, showDetailDialog, showConflictDialog, showSuccessCreateDialog, showSuccessVerifyDialog],
+  },
+)
 </script>
 
 <template>

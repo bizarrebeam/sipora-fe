@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import SCard from '@/components/SCard.vue'
 import SButton from '@/components/SButton.vue'
 import SChip from '@/components/SChip.vue'
@@ -80,11 +81,19 @@ onMounted(async () => {
       }
     }
   } catch {
-    // Note: error object omitted, assuming could be ServerHandledError
 
-    // Profile could fail if token expired
   }
 })
+
+useAutoRefresh(
+  async () => {
+    await auth.fetchProfile()
+  },
+  {
+    intervalMs: 0,
+    refetchOnVisible: true,
+  },
+)
 
 const roleLabel = computed(() => {
   const map: Record<string, string> = {

@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { apiAuthGet } from '@/services/api'
 import { useLoadingStore } from '@/stores/loading'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const loadingStore = useLoadingStore()
 import SChip from '@/components/SChip.vue'
@@ -190,6 +191,11 @@ onMounted(() => {
   if (logs.value.length === 0) {
     fetchLogs(1)
   }
+})
+
+useAutoRefresh(() => fetchLogs(currentPage.value), {
+  intervalMs: 30_000,
+  refetchOnVisible: true,
 })
 </script>
 
