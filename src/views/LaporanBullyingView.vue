@@ -12,6 +12,7 @@ import SDatePicker from '@/components/SDatePicker.vue'
 import SReportCard from '@/components/SReportCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLaporanBullyingStore } from '@/stores/laporanBullying'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const auth = useAuthStore()
 const laporanStore = useLaporanBullyingStore()
@@ -242,6 +243,11 @@ function applyFiltersAndClose() {
     fetchData()
     showFilterDrawer.value = false
 }
+
+useAutoRefresh(() => fetchData(), {
+    intervalMs: 10_000,
+    refetchOnVisible: true,
+})
 
 onMounted(() => { 
     fetchData() 
