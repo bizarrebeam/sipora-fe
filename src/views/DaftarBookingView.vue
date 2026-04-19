@@ -6,6 +6,7 @@ import SChip from '@/components/SChip.vue'
 import SDialog from '@/components/SDialog.vue'
 import STextField from '@/components/STextField.vue'
 import SDatePicker from '@/components/SDatePicker.vue'
+import SPagination from '@/components/SPagination.vue'
 import { useKonsultasiStore, type BookingKonsultasi } from '@/stores/konsultasi'
 import { useAuthStore } from '@/stores/auth'
 
@@ -154,6 +155,25 @@ const filteredBookings = computed(() => {
   return list
 })
 
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredBookings.value.length / pageSize.value))
+)
+
+const paginatedBookings = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredBookings.value.slice(start, start + pageSize.value)
+})
+
+// Reset ke halaman 1 saat filter berubah
+watch([filterStatus, search, filterTanggal, sortOrder], () => {
+  currentPage.value = 1
+})
+
 onMounted(() => {
   fetchBooking()
 })
@@ -259,7 +279,7 @@ onMounted(() => {
           </thead>
           <tbody class="divide-y divide-general-border">
             <tr
-              v-for="booking in filteredBookings"
+              v-for="booking in paginatedBookings"
               :key="booking.id"
               class="hover:bg-general-frame transition-colors"
             >
@@ -305,6 +325,15 @@ onMounted(() => {
             </tr>
           </tbody>
         </table>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between px-5 py-4 border-t border-general-border">
+          <span class="body-b8 text-neutral-500">
+            Menampilkan {{ filteredBookings.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, filteredBookings.length) }}
+            dari {{ filteredBookings.length }} data
+          </span>
+          <SPagination v-model="currentPage" :total-pages="totalPages" />
+        </div>
       </div>
     </SCard>
 
