@@ -105,7 +105,10 @@ const selectedSiswa = ref<AkunItem | null>(null)
 const showDetailDialog = ref(false)
 const selectedGuru = ref<AkunItem | null>(null)
 
-// OCC Conflict Dialog state
+const showResetBKConfirmDialog = ref(false)
+const showResetBKSuccessDialog = ref(false)
+const resetBKLoading = ref(false)
+const selectedGuruBK = ref<AkunItem | null>(null)
 const showConflictDialog = ref(false)
 const conflictMessage = ref('')
 
@@ -137,29 +140,15 @@ const editGuruTitle = computed(() => isEditMode.value ? 'Edit Profil Guru' : `Pr
 function enterEditMode() {
   if (!selectedGuru.value) return
   editGuruNama.value = selectedGuru.value.nama_lengkap
-  // Need to fetch individual teacher detail if email/other fields missing, 
-  // but based on PenggunaListSerializer, email IS missing. 
-  // Wait, let's check PenggunaListSerializer fields.
-  // Actually, I just realized the list serializer might not have email.
-  // I should probably fetch the full detail first.
 }
 
-// Re-fetching full detail before editing to ensure we have the email
 async function startEditGuru() {
   if (!selectedGuru.value) return
   loadingStore.show()
   try {
-    // We reuse the same list endpoint but for a single user if needed, 
-    // or we just trust the list if we update the serializer.
-    // Let's assume we need to fetch full detail.
-    // Actually, let's just use the current data and I'll ensure email is in the list serializer.
-    
     editGuruNama.value = selectedGuru.value.nama_lengkap
-    // Fallback if email is undefined (which it is in list)
-    // I will update the backend list serializer to include email for Admin.
     editGuruEmail.value = (selectedGuru.value as any).email || ''
     
-    // Copy current assignments for editing
     const currentAssignments = selectedGuru.value.riwayat_mengajar?.filter(r => 
       r.semester === (selectedGuru.value as any).semester && 
       r.tahun_ajaran === (selectedGuru.value as any).tahun_ajaran
@@ -224,7 +213,6 @@ async function handleUpdateGuru() {
         kelas_diajar: m.kelas_diajar
       }))
     }
-    // OCC: attach the version token so backend can detect concurrent edits
     if (selectedGuru.value.updated_at) {
       payload.updated_at = selectedGuru.value.updated_at
     }
@@ -250,6 +238,37 @@ async function handleUpdateGuru() {
   }
 }
 
+function openResetBKConfirmDialog(guruBK: AkunItem) {
+  selectedGuruBK.value = guruBK
+  showResetBKConfirmDialog.value = true
+}
+
+async function handleResetPasswordBK() {
+  if (!selectedGuruBK.value) return
+  resetBKLoading.value = true
+  try {
+    await apiAuthPost(`akun/admin/reset-password-bk/${selectedGuruBK.value.id}/`, {})
+    showResetBKConfirmDialog.value = false
+    showResetBKSuccessDialog.value = true
+  } catch (err: any) {
+    if (err?.name === 'ServerHandledError') {
+      console.error('[ManajemenAkunView] Request failed (handled globally):', err.message);
+      return;
+    }
+    alertStore.error(err.message || 'Gagal mereset password.')
+  } finally {
+    resetBKLoading.value = false
+  }
+}
+
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text).then(() => {
+    alertStore.success('Password berhasil disalin ke clipboard!')
+  }).catch(() => {
+    alertStore.error('Gagal menyalin password.')
+  })
+}
+
 const groupedRiwayat = computed(() => {
   if (!selectedGuru.value?.riwayat_mengajar) return []
   const groups: Record<string, { semester: string, tahun_ajaran: string, items: RiwayatMengajar[] }> = {}
@@ -266,10 +285,8 @@ const groupedRiwayat = computed(() => {
     groups[key].items.push(item)
   })
   
-  // Sort by year and semester (deciding Ganjil/Genap order)
   return Object.values(groups).sort((a, b) => {
     if (a.tahun_ajaran !== b.tahun_ajaran) return b.tahun_ajaran.localeCompare(a.tahun_ajaran)
-    // Custom sort: Genap usually comes after Ganjil in the academic year
     return b.semester.localeCompare(a.semester)
   })
 })
@@ -291,7 +308,6 @@ const sortState = ref({
 })
 
 watch([sortOrder, search, selectedDate, isVerifiedFilter], () => {
-  // Reset page to 1 when filters change
   pagination.value.siswa.page = 1
   pagination.value.guru.page = 1
   pagination.value.guruBk.page = 1
@@ -306,7 +322,6 @@ watch([sortOrder, search, selectedDate, isVerifiedFilter], () => {
   debouncedFetch()
 })
 
-// Specifically watch pagination to trigger fetch
 watch(() => [
   pagination.value.siswa.page, pagination.value.siswa.pageSize,
   pagination.value.guru.page, pagination.value.guru.pageSize,
@@ -352,7 +367,8 @@ const guruBkColumns = [
   { key: 'nama_lengkap', label: 'Nama', sortable: true },
   { key: 'nuptk', label: 'NUPTK', sortable: true },
   { key: 'mata_pelajaran', label: 'Jabatan', sortable: false },
-  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true }
+  { key: 'date_joined', label: 'Terdaftar Pada', sortable: true },
+  { key: 'action', label: 'Aksi', sortable: false }
 ]
 
 function formatDate(dateString: string) {
@@ -384,7 +400,6 @@ async function fetchDaftar() {
   
   try {
     const query = new URLSearchParams()
-    // Convert camelCase to snake_case for API: guruBk -> guru_bk
     const apiRole = role === 'guruBk' ? 'guru_bk' : role
     query.set('role', apiRole)
     query.set('page', pg.page.toString())
@@ -427,7 +442,6 @@ async function fetchDaftar() {
 }
 
 async function handleVerify(id: string) {
-  // Let errors propagate to the caller for contextual handling
   await apiAuthPost(`akun/admin/verifikasi-siswa/${id}/`, {})
   await fetchDaftar()
 }
@@ -461,7 +475,6 @@ async function confirmVerify() {
       console.error('[ManajemenAkunView] Verify failed (handled globally):', err.message)
       return
     }
-    // If already verified by another admin, show a contextual (non-generic) message
     if (err?.message?.includes('sudah diverifikasi')) {
       closeVerifyDialog()
       alertStore.error(`Siswa ${studentName} sudah diverifikasi oleh admin lain. Data siswa sudah ter-update.`)
@@ -486,7 +499,6 @@ function openCreateDialog(type: 'guru' | 'guru_bk') {
 }
 
 async function handleCreate() {
-  // Trim all text fields
   createUsername.value = createUsername.value.trim()
   createNuptk.value = createNuptk.value.trim()
   createEmail.value = createEmail.value.trim()
@@ -518,7 +530,6 @@ async function handleCreate() {
     return
   }
   
-  // NUPTK is only mandatory for 'guru', optional for 'guru_bk'
   if (createType.value === 'guru') {
     if (createNuptk.value.length !== 16 || !/^\d+$/.test(createNuptk.value)) {
       alertStore.error('NUPTK harus terdiri dari 16 digit angka.')
@@ -529,7 +540,6 @@ async function handleCreate() {
     return
   }
   if (createType.value === 'guru') {
-    // Validate that ALL matpel fields have content and at least one class is selected
     const hasEmpty = createMapels.value.some(m => !m.nama_mata_pelajaran || m.nama_mata_pelajaran.trim().length === 0)
     if (hasEmpty) {
       alertStore.error('Semua kolom mata pelajaran harus diisi dengan teks valid.')
@@ -594,9 +604,6 @@ async function fetchCounts() {
     if (data.guru !== undefined) guruTotal.value = data.guru
     if (data.guru_bk !== undefined) guruBkTotal.value = data.guru_bk
   } catch {
-    // Note: error object omitted, assuming could be ServerHandledError
-
-    // silently fail — counts will update when tabs are clicked
   }
 }
 
@@ -615,7 +622,7 @@ useAutoRefresh(
   {
     intervalMs: 30_000,
     refetchOnVisible: true,
-    pauseWhen: [showCreateDialog, showVerifyDialog, showDetailDialog, showConflictDialog, showSuccessCreateDialog, showSuccessVerifyDialog],
+    pauseWhen: [showCreateDialog, showVerifyDialog, showDetailDialog, showConflictDialog, showSuccessCreateDialog, showSuccessVerifyDialog, showResetBKConfirmDialog, showResetBKSuccessDialog],
   },
 )
 </script>
@@ -827,6 +834,14 @@ useAutoRefresh(
               <template #body-cell-date_joined="{ row }">
                 {{ formatDate(row.date_joined) }}
               </template>
+              <template #body-cell-action="{ row }">
+                <button 
+                  class="font-['Be_Vietnam_Pro'] font-medium text-[13px] text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg px-3 py-1.5 transition-colors"
+                  @click.stop="openResetBKConfirmDialog(row)"
+                >
+                  Reset Password
+                </button>
+              </template>
             </STable>
           </div>
         </SCard>
@@ -975,6 +990,75 @@ useAutoRefresh(
       cancelLabel=""
       @confirm="showSuccessVerifyDialog = false"
     />
+
+    <!-- Reset Password BK Confirm Dialog -->
+    <SDialog
+      :visible="showResetBKConfirmDialog"
+      variant="primary"
+      title="Reset Password Guru BK"
+      @update:visible="showResetBKConfirmDialog = $event"
+    >
+      <div class="flex flex-col gap-4">
+        <p class="verify-dialog-message text-center">Apakah Anda yakin ingin mereset password Guru BK {{ selectedGuruBK?.nama_lengkap }}?</p>
+        
+        <div class="p-4 bg-orange-50 border border-orange-200 rounded-xl text-center">
+          <p class="text-[13px] text-orange-900 font-semibold mb-2 font-['Be_Vietnam_Pro'] uppercase tracking-wide">
+            Password Default
+          </p>
+          <div class="mb-3">
+             <span 
+               @click="copyToClipboard('[REDACTED]')"
+               title="Klik untuk copy"
+               class="inline-block font-mono text-[16px] font-bold text-orange-950 bg-white px-4 py-2 rounded-lg border border-orange-200 cursor-pointer shadow-sm hover:bg-orange-100 hover:scale-105 active:scale-95 transition-all duration-200"
+             >
+               [REDACTED]
+             </span>
+          </div>
+          <p class="text-[12px] text-orange-800 font-medium font-['Be_Vietnam_Pro'] leading-relaxed">
+            Catatan: Setelah reset, beritahu Guru BK mengenai password default ini agar mereka dapat mengubahnya demi keamanan.
+          </p>
+        </div>
+      </div>
+      
+      <template #actions>
+        <SButton label="Batal" variant="secondary" @click="showResetBKConfirmDialog = false" />
+        <SButton :label="resetBKLoading ? 'Mereset...' : 'Ya, Reset Password'" variant="primary" :disabled="resetBKLoading" @click="handleResetPasswordBK" />
+      </template>
+    </SDialog>
+
+    <!-- Reset Password BK Success Dialog -->
+    <SDialog
+      :visible="showResetBKSuccessDialog"
+      variant="primary"
+      title="Password Berhasil Direset"
+      confirmLabel="Selesai"
+      cancelLabel=""
+      @confirm="showResetBKSuccessDialog = false"
+    >
+      <div class="flex flex-col gap-4 text-center">
+        <p class="verify-dialog-message text-center">
+          Password untuk akun Guru BK <strong>{{ selectedGuruBK?.nama_lengkap }}</strong> telah berhasil direset ke password default.
+        </p>
+
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl text-center">
+          <p class="text-[13px] text-blue-900 font-semibold mb-2 font-['Be_Vietnam_Pro'] uppercase tracking-wide">
+            Password Default
+          </p>
+          <div class="mb-3">
+            <span 
+              @click="copyToClipboard('[REDACTED]')"
+              title="Klik untuk copy"
+              class="inline-block font-mono text-[16px] font-bold text-blue-950 bg-white px-4 py-2 rounded-lg border border-blue-200 cursor-pointer shadow-sm hover:bg-blue-100 hover:scale-105 active:scale-95 transition-all duration-200"
+            >
+              [REDACTED]
+            </span>
+          </div>
+          <p class="text-[12px] text-blue-800 font-medium font-['Be_Vietnam_Pro'] leading-relaxed">
+            Klik teks password di atas untuk langsung meng-copy, lalu kirimkan ke Guru BK yang bersangkutan.
+          </p>
+        </div>
+      </div>
+    </SDialog>
 
     <!-- Dialog Detail & Edit Guru -->
     <SDialog

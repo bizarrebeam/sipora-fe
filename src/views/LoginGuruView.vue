@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import STextField from '@/components/STextField.vue'
 import SButton from '@/components/SButton.vue'
@@ -75,6 +75,9 @@ async function handleLogin() {
           :required="true"
           input-type="password"
         />
+        <div class="forgot-password-row">
+          <RouterLink to="/forgot-password-guru" class="forgot-link">Lupa Password?</RouterLink>
+        </div>
         <SButton
           :label="loading ? 'Memproses...' : 'Masuk'"
           variant="primary"
@@ -86,7 +89,7 @@ async function handleLogin() {
       <!-- Footer -->
       <div class="login-footer">
         <p class="footer-text">
-          Belum punya akun? Hubungi Admin SIPORA sekolahmu.
+          Belum punya akun? Hubungi Kemahasiswaan sekolahmu.
         </p>
       </div>
     </div>
@@ -176,6 +179,26 @@ async function handleLogin() {
 .login-form :deep(.s-button) {
   width: 100%;
   margin-top: 4px;
+}
+
+.forgot-password-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+}
+
+.forgot-link {
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-blue-400);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: var(--color-blue-600);
+  text-decoration: underline;
 }
 
 /* ── NISN field wrapper ── */

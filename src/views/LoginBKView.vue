@@ -23,7 +23,7 @@ async function handleLogin() {
   }
   loading.value = true
   try {
-    // Specifically for Guru BK
+    // for Guru BK
     await auth.login(identifier.value, password.value, ['guru_bk'])
     router.push('/')
   } catch (err: any) {
@@ -70,6 +70,9 @@ async function handleLogin() {
           :required="true"
           input-type="password"
         />
+        <div class="forgot-password-row">
+          <span class="forgot-link-text">Lupa password? Hubungi Kemahasiswaan</span>
+        </div>
         <SButton
           :label="loading ? 'Memproses...' : 'Masuk'"
           variant="primary"
@@ -81,7 +84,7 @@ async function handleLogin() {
       <!-- Footer -->
       <div class="login-footer">
         <p class="footer-text">
-          Belum punya akun? Hubungi Admin SIPORA sekolahmu.
+          Belum punya akun? Hubungi Kemahasiswaan sekolahmu.
         </p>
       </div>
     </div>
@@ -154,17 +157,34 @@ async function handleLogin() {
   margin-bottom: 16px;
 }
 
+/* ── Form ── */
 .login-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.login-footer {
+.login-form :deep(.s-button) {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.forgot-password-row {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  margin-top: -8px;
+}
+
+.forgot-link-text {
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-blue-400);
+  cursor: default;
+}
+
+/* ── Footer ── */
+.login-footer {
   margin-top: 24px;
 }
 

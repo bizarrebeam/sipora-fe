@@ -31,6 +31,7 @@ import DashboardBullyingView from '@/views/DashboardBullyingView.vue'
 import DashboardKerusakanAspirasi from '@/views/DashboardKerusakanAspirasi.vue'
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
+import ForgotPasswordGuruView from '../views/ForgotPasswordGuruView.vue'
 import ResetPasswordView from '../views/ResetPasswordView.vue'
 import { useNotFoundStore } from '@/stores/notFound'
 
@@ -59,6 +60,12 @@ const router = createRouter({
       path: '/forgot-password',
       name: 'forgotPassword',
       component: ForgotPasswordView,
+      meta: { guest: true },
+    },
+    {
+      path: '/forgot-password-guru',
+      name: 'forgotPasswordGuru',
+      component: ForgotPasswordGuruView,
       meta: { guest: true },
     },
     {

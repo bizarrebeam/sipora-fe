@@ -208,6 +208,21 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Initiates the password recovery workflow for a teacher by dispatching a reset token to their email.
+   * 
+   * @param nuptk The teacher's NUPTK identifier.
+   */
+  async function forgotPasswordGuru(nuptk: string) {
+    const loader = useLoadingStore()
+    loader.show('Mengirim email reset...')
+    try {
+      return await apiPost('akun/forgot-password-guru/', { nuptk })
+    } finally {
+      loader.hide()
+    }
+  }
+
+  /**
    * Finalizes the password recovery workflow, consummating the emailed token.
    */
   async function resetPassword(uid: string, token: string, password: string, konfirmasi_password: string) {
@@ -331,6 +346,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     registerSiswa,
     forgotPassword,
+    forgotPasswordGuru,
     resetPassword,
     logout,
     fetchProfile,
