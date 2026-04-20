@@ -42,7 +42,7 @@ const tindakLanjutMessage = computed(() => {
   if (canEdit.value) {
     return 'Laporan dapat diubah sampai 7 hari setelah dibuat.'
   } else {
-    return laporan.value.pesan_tindak_lanjut || 'Laporan ini tidak dapat diubah lagi karena sudah lebih dari 2 menit.'
+    return laporan.value.pesan_tindak_lanjut || 'Laporan ini tidak dapat diubah lagi karena sudah lebih dari 7 hari.'
   }
 })
 
@@ -74,6 +74,21 @@ async function checkAndFetchDetail() {
     if (id) {
         await fetchDetail(id)
     }
+}
+
+const kategoriTabs = [
+    { label: 'Semua', value: 'semua' },
+    { label: 'Sarana & Prasarana', value: 'sarana' },
+    { label: 'Kurikulum & Pembelajaran', value: 'kurikulum' },
+    { label: 'Layanan Infrastruktur & Akademik', value: 'layanan' },
+    { label: 'Ekstrakulikuler & Bakat', value: 'ekstrakulikuler' },
+    { label: 'Kesehatan & Keamanan', value: 'kesehatan' },
+    { label: 'Lainnya', value: 'lainnya' },
+]
+
+function kategoriLabel(key: string) {
+	const found = kategoriTabs.find(k => k.value === key)
+	return found ? found.label : key
 }
 
 onMounted(() => { 
@@ -215,13 +230,7 @@ const onImageLoad = (id: string) => {
                     <div class="meta-grid">
                         <div class="meta-item">
                                 <h3 class="meta-label">Kategori</h3>
-                                <p class="meta-value">{{ laporan.kategori }}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <div class="meta-item">
-                                <h3 class="meta-label">Deskripsi</h3>
-                                <p class="meta-value">{{ laporan.deskripsi }}</p>
+                                <p class="meta-value">{{ kategoriLabel(laporan.kategori) }}</p>
                         </div>
                     </div>
                 </div>

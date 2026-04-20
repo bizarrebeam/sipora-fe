@@ -82,7 +82,7 @@ const canEdit = computed(() => {
     const created = aspirasiStore.detailAspirasi?.tanggal_aspirasi
     if (!created) return true
     const createdTime = new Date(created).getTime()
-    return Date.now() - createdTime <= 2 * 60 * 1000
+    return Date.now() - createdTime <= 7 * 24 * 60 * 60 * 1000
 })
 
 const kategoriOptions = [
@@ -212,7 +212,6 @@ function removeExistingPhoto(index: number) {
 async function handleSubmit() {
     validate()
     if (!isFormValid.value) return
-    // prevent submit if no changes or editing window expired
     if (!hasChanges.value) {
         showAlert({ type: 'warning', title: 'Tidak Ada Perubahan', description: 'Tidak ada perubahan untuk disimpan.' })
         return
@@ -221,12 +220,11 @@ async function handleSubmit() {
     const id = route.params.id as string
     if (!id) return
 
-    // check 2-minute window
     const created = (aspirasiStore.detailAspirasi?.tanggal_aspirasi)
     if (created) {
         const createdTime = new Date(created).getTime()
-        if (Date.now() - createdTime > 2 * 60 * 1000) {
-            showAlert({ type: 'warning', title: 'Waktu Edit Habis', description: 'Aspirasi sudah tidak dapat diubah karena lebih dari 2 menit sejak pembuatan.' })
+        if (Date.now() - createdTime > 7 * 24 * 60 * 60 * 1000) {
+            showAlert({ type: 'warning', title: 'Waktu Edit Habis', description: 'Aspirasi sudah tidak dapat diubah karena lebih dari 7 hari sejak pembuatan.' })
             return
         }
     }
@@ -297,12 +295,10 @@ onMounted(async() => {
         deskripsi.value = aspirasi.deskripsi || ''
         anonimitas.value = !!aspirasi.anonimitas
 
-        // populate existing photos if any
         existingPhotos.value = []
         if (aspirasi.foto_bukti && Array.isArray(aspirasi.foto_bukti)) {
             existingPhotos.value = aspirasi.foto_bukti.map((f: any) => ({ id: f.id, url: f.foto }))
         } else if (aspirasi.foto_pendukung && Array.isArray(aspirasi.foto_pendukung)) {
-            // older format: urls only
             existingPhotos.value = aspirasi.foto_pendukung.map((u: string, idx: number) => ({ id: String(idx), url: u }))
         }
 
