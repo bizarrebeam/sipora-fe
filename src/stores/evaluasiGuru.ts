@@ -13,6 +13,9 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
     const daftarGuru = ref<any[]>([])
     const daftarIndikator = ref<any[]>([])
     const riwayatEvaluasi = ref<any[]>([])
+    
+    const rekapEvaluasi = ref<any[]>([])
+    const totalRekap = ref(0)
 
     const isLoaded = ref({
         guru: false,
@@ -78,6 +81,40 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
         }
     }
 
+    async function fetchRekapEvaluasi(params: {
+        guru?: string
+        tahun_ajaran?: string
+        semester?: string
+        page?: number
+        page_size?: number
+    } = {}) {
+        try {
+            const queryParams = new URLSearchParams()
+            if (params.guru) queryParams.append('guru', params.guru)
+            if (params.tahun_ajaran) queryParams.append('tahun_ajaran', params.tahun_ajaran)
+            if (params.semester) queryParams.append('semester', params.semester)
+            if (params.page) queryParams.append('page', params.page.toString())
+            if (params.page_size) queryParams.append('page_size', params.page_size.toString())
+
+            const url = `evaluasi/rekap/?${queryParams.toString()}`
+            const data = await apiAuthGet(url)
+            
+            // DRF PageNumberPagination returns { count, next, previous, results }
+            if (data && data.results) {
+                rekapEvaluasi.value = data.results
+                totalRekap.value = data.count
+            } else {
+                rekapEvaluasi.value = data || []
+                totalRekap.value = data?.length || 0
+            }
+        } catch (error: any) {
+            console.error('Gagal mengambil rekap evaluasi:', error.message)
+            rekapEvaluasi.value = []
+            totalRekap.value = 0
+            throw error
+        }
+    }
+
     function reset() {
         daftarGuru.value = []
         daftarIndikator.value = []
@@ -94,10 +131,13 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
         daftarGuru,
         daftarIndikator,
         riwayatEvaluasi,
+        rekapEvaluasi,
+        totalRekap,
         isLoaded,
         fetchDaftarGuru,
         fetchDaftarIndikator,
         submitEvaluasi,
+        fetchRekapEvaluasi,
         reset
     }
 })

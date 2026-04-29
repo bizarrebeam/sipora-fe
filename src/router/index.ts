@@ -29,6 +29,7 @@ import KirimEvaluasiView from '@/views/KirimEvaluasiView.vue'
 import DetailAspirasiView from '@/views/DetailAspirasiView.vue'
 import DashboardBullyingView from '@/views/DashboardBullyingView.vue'
 import DashboardKerusakanAspirasi from '@/views/DashboardKerusakanAspirasi.vue'
+import DaftarEvaluasiView from '@/views/DaftarEvaluasiView.vue'
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ForgotPasswordGuruView from '../views/ForgotPasswordGuruView.vue'
@@ -236,6 +237,12 @@ const router = createRouter({
       name: 'dashboardBullying',
       component: DashboardBullyingView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'], keepAlive: true },
+    },
+    {
+      path: '/daftar-evaluasi',
+      name: 'daftarEvaluasi',
+      component: DaftarEvaluasiView,
+      meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru'], keepAlive: true },
     },
         {
       path: '/dashboard-kerusakan-aspirasi',
