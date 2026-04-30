@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SNavbar from '@/components/SNavbar.vue'
+import SSidebar from '@/components/SSidebar.vue'
 import SLoading from '@/components/SLoading.vue'
 import SDialog from '@/components/SDialog.vue'
 import SAlert from '@/components/SAlert.vue'
@@ -17,6 +18,7 @@ const router = useRouter()
 const route = useRoute()
 
 const isGuestRoute = computed(() => route.meta.guest === true)
+const isAdmin = computed(() => authStore.user?.role === 'kemahasiswaan')
 
 function handleSessionExpired() {
   authStore.setSessionExpired(false)
@@ -57,15 +59,21 @@ onMounted(async () => {
 </script>
 
 <template>
-  <SNavbar />
-  <main class="main-layout">
-    <router-view v-slot="{ Component, route }">
-      <keep-alive v-if="route.meta.keepAlive">
-        <component :is="Component" />
-      </keep-alive>
-      <component v-else :is="Component" />
-    </router-view>
-  </main>
+  <div class="app-wrapper" :class="{ 'admin-layout': isAdmin && !isGuestRoute }">
+    <template v-if="!isGuestRoute">
+      <SNavbar v-if="!isAdmin" />
+      <SSidebar v-if="isAdmin" />
+    </template>
+    
+    <main class="main-layout" :class="{ 'admin-main': isAdmin && !isGuestRoute }">
+      <router-view v-slot="{ Component, route }">
+        <keep-alive v-if="route.meta.keepAlive">
+          <component :is="Component" />
+        </keep-alive>
+        <component v-else :is="Component" />
+      </router-view>
+    </main>
+  </div>
 
   <SDialog
     :visible="authStore.isSessionExpired"
@@ -101,6 +109,24 @@ onMounted(async () => {
   padding-top: 64px;
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.admin-layout {
+  display: flex;
+}
+
+.admin-main {
+  padding-top: 24px;
+  padding-left: 260px; /* Width of the sidebar */
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .admin-main {
+    padding-left: 0;
+    padding-top: 64px; /* Back to top navbar space */
+  }
 }
 
 body {

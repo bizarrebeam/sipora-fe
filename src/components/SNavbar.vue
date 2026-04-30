@@ -17,9 +17,9 @@ const isLoggedIn = computed(() => auth.isAuthenticated)
 const namaDepan = computed(() => auth.namaDepan)
 const roleBadge = computed(() => auth.roleBadge)
 const isVerified = computed(() => auth.isVerified)
-const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
-const canManageAkun = computed(() => isAdmin.value || auth.user?.role === 'guru_bk')
+const canManageAkun = computed(() => auth.user?.role === 'guru_bk')
 const isSiswa = computed(() => auth.user?.role === 'siswa')
+const isGuru = computed(() => auth.user?.role === 'guru')
 const isGuruBK = computed(() => auth.user?.role === 'guru_bk')
 const showKonsultasiBK = computed(() => isSiswa.value || isGuruBK.value)
 
@@ -34,17 +34,7 @@ const konsultasiBKPath = computed(() => {
 })
 
 const artikelLabel = computed(() => {
-  if (!isLoggedIn.value) return 'Baca Artikel'
-  return isAdmin.value ? 'Kelola Artikel' : 'Baca Artikel'
-})
-
-const selectedDashboard = ref<string | null>(null)
-
-const mobileDashboardOpen = ref(false)
-const dashboardOpen = ref(false)
-
-const isDashboardRoute = computed(() => {
-  return route.path.startsWith('/dashboard-')
+  return 'Baca Artikel'
 })
 
 function toggleMobile() {
@@ -65,9 +55,6 @@ function handleDashboardNavigate(val: string | number) {
   if (val) {
     router.push(String(val))
     closeMobile()
-    setTimeout(() => {
-      selectedDashboard.value = null
-    }, 200)
   }
 }
 
@@ -97,23 +84,11 @@ async function confirmLogout() {
         <RouterLink to="/" class="nav-link">Beranda</RouterLink>
         <template v-if="isLoggedIn">
           <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
-          <RouterLink v-if="isAdmin" to="/log-aktivitas" class="nav-link">Log Aktivitas</RouterLink>
 
-          <div v-if="isAdmin" class="py-2 dashboard-dropdown" @mouseleave="dashboardOpen = false">
-            <button class="nav-link flex items-center gap-1" :class="{ active: dashboardOpen || isDashboardRoute }" @click="dashboardOpen = !dashboardOpen" >Dashboard
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown-chevron transition-transform duration-200" :class="{'chevron-up': dashboardOpen}">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <div v-show="dashboardOpen" class="dashboard-dropdown-menu">
-              <RouterLink to="/dashboard-bullying" class="dropdown-item" @click="dashboardOpen = false">Dashboard Bullying</RouterLink>
-              <RouterLink to="/dashboard-kerusakan-aspirasi" class="dropdown-item" @click="dashboardOpen = false">Dashboard Kerusakan & Aspirasi</RouterLink>
-              <RouterLink to="/dashboard-konsultasi" class="dropdown-item" @click="dashboardOpen = false">Dashboard Konsultasi</RouterLink>
-            </div>
-          </div>
           <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
-          <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
+          <RouterLink v-if="isGuru || isSiswa" to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
           <RouterLink v-if="isSiswa" to="/kirim-evaluasi" class="nav-link">Evaluasi Guru</RouterLink>
+          <RouterLink v-if="isGuru" to="/daftar-evaluasi" class="nav-link">Daftar Evaluasi</RouterLink>
           <RouterLink v-if="showKonsultasiBK" :to="konsultasiBKPath" class="nav-link">{{ konsultasiBKLabel }}</RouterLink>
           <RouterLink to="/aspirasi" class="nav-link">Aspirasi</RouterLink>
         </template>
@@ -188,19 +163,9 @@ async function confirmLogout() {
         <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
         <template v-if="isLoggedIn">
           <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
-          <RouterLink v-if="isAdmin" to="/log-aktivitas" class="mobile-link" @click="closeMobile">Log Aktivitas</RouterLink>
-          <div v-if="isAdmin" class="mobile-dashboard">
-            <button class="mobile-link" @click="mobileDashboardOpen = !mobileDashboardOpen"> Dashboard
-              <span class="mobile-chevron  ml-3" :class="{ 'open': mobileDashboardOpen }"></span>
-            </button>
-            <div v-show="mobileDashboardOpen" class="mobile-sublinks">
-              <RouterLink to="/dashboard-bullying" class="mobile-link" @click="closeMobile">Dashboard Bullying</RouterLink>
-              <RouterLink to="/dashboard-kerusakan-aspirasi" class="mobile-link" @click="closeMobile">Dashboard Kerusakan & Aspirasi</RouterLink>
-              <RouterLink to="/dashboard-konsultasi" class="mobile-link" @click="closeMobile">Dashboard Konsultasi</RouterLink>
-            </div>
-          </div>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
-          <RouterLink v-if="isAdmin || auth.user?.role === 'guru' || auth.user?.role === 'siswa'" to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
+          <RouterLink v-if="isGuru || isSiswa" to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
+          <RouterLink v-if="isGuru" to="/daftar-evaluasi" class="mobile-link">Daftar Evaluasi</RouterLink>
           <RouterLink v-if="isSiswa" to="/kirim-evaluasi" class="mobile-link" @click="closeMobile">Evaluasi Guru</RouterLink>
           <RouterLink v-if="showKonsultasiBK" :to="konsultasiBKPath" class="mobile-link" @click="closeMobile">{{ konsultasiBKLabel }}</RouterLink>
           <RouterLink to="/aspirasi" class="mobile-link" @click="closeMobile">Aspirasi</RouterLink>
