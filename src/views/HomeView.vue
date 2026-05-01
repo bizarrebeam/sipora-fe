@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import SCard from '@/components/SCard.vue'
+import SButton from '@/components/SButton.vue'
+import SFlowchart from '@/components/SFlowchart.vue'
+import type { FlowItem } from '@/components/SFlowchart.vue'
 import SiporaLogo from '@/assets/sipora-logo.svg'
 import SekolahSvg from '@/assets/sekolah.svg'
 import { useRevealOnScroll } from '@/components/ARevealOnScroll'
@@ -15,17 +18,120 @@ const { el: faqRevealEl, isVisible: isFaqVisible } = useRevealOnScroll()
 const auth = useAuthStore()
 const isLoggedIn = computed(() => auth.isAuthenticated)
 
-// Staggered card visibility tracking
 const visibleCards = ref<boolean[]>([])
 const visibleFaqs = ref<boolean[]>([])
 
 const features = ref([
-  { id: 1, text: 'Laporkan Bullying', icon: new URL('@/assets/laporan-bully.svg', import.meta.url).href },
-  { id: 2, text: 'Laporkan Kerusakan Fasilitas Sekolah', icon: new URL('@/assets/laporan-kerusakan.svg', import.meta.url).href },
-  { id: 3, text: 'Sampaikan Aspirasi', icon: new URL('@/assets/aspirasi.svg', import.meta.url).href },
-  { id: 4, text: 'Konsultasi ke Guru BK', icon: new URL('@/assets/konsultasi.svg', import.meta.url).href },
-  { id: 5, text: 'Evaluasi Guru', icon: new URL('@/assets/evaluasi.svg', import.meta.url).href },
+  { id: 1, key: 'bullying', text: 'Laporan Bullying', desc: 'Laporkan tindakan perundungan secara aman dan rahasia', icon: new URL('@/assets/laporan-bully.svg', import.meta.url).href },
+  { id: 2, key: 'kerusakan', text: 'Laporan Kerusakan', desc: 'Laporkan kerusakan fasilitas sekolah untuk ditindaklanjuti', icon: new URL('@/assets/laporan-kerusakan.svg', import.meta.url).href },
+  { id: 3, key: 'aspirasi', text: 'Aspirasi', desc: 'Sampaikan saran dan masukan untuk kemajuan sekolah', icon: new URL('@/assets/aspirasi.svg', import.meta.url).href },
+  { id: 4, key: 'konsultasi', text: 'Konsultasi BK', desc: 'Jadwalkan sesi konsultasi dengan Guru BK', icon: new URL('@/assets/konsultasi.svg', import.meta.url).href },
+  { id: 5, key: 'evaluasi', text: 'Evaluasi Guru', desc: 'Berikan penilaian terhadap kinerja pengajaran guru', icon: new URL('@/assets/evaluasi.svg', import.meta.url).href },
 ])
+
+const activeFeature = ref('bullying')
+const flowchartKey = ref(0)
+
+const scrollToSection = (id: string) => {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+watch(activeFeature, () => { flowchartKey.value++ })
+
+const flowcharts: Record<string, FlowItem[]> = {
+  bullying: [
+    { kind: 'step', step: { id: 'b1', label: 'Buat laporan bullying', type: 'default' } },
+    { kind: 'branches', merge: true, branches: [
+      { arrowLabel: 'Anonim', steps: [{ id: 'b2a', label: 'Identitas disembunyikan', type: 'default' }] },
+      { arrowLabel: 'Non-Anonim', steps: [{ id: 'b2b', label: 'Identitas terlihat', type: 'default' }] },
+    ]},
+    { kind: 'step', step: { id: 'b3', label: 'Isi deskripsi & unggah bukti', type: 'default' } },
+    { kind: 'step', step: { id: 'b4', label: 'Kirim laporan', type: 'default' } },
+    { kind: 'step', step: { id: 'b5', label: 'Status: Menunggu konfirmasi', type: 'default' } },
+    { kind: 'branches', merge: false, branches: [
+      { arrowLabel: 'Diverifikasi', steps: [
+        { id: 'b6a', label: 'Status: Diproses', type: 'default' },
+        { id: 'b6b', label: 'Status: Selesai', type: 'success' },
+      ]},
+      { arrowLabel: 'Dibatalkan siswa', steps: [
+        { id: 'b7a', label: 'Tulis alasan pembatalan', type: 'default' },
+        { id: 'b7b', label: 'Laporan dibatalkan', type: 'cancel' },
+      ]},
+      { arrowLabel: 'Ditolak SIPORA', steps: [
+        { id: 'b8a', label: 'Terima alasan penolakan', type: 'default' },
+        { id: 'b8b', label: 'Laporan ditolak', type: 'cancel' },
+      ]},
+    ]},
+  ],
+  kerusakan: [
+    { kind: 'step', step: { id: 'k1', label: 'Buat laporan kerusakan', type: 'default' } },
+    { kind: 'step', step: { id: 'k2', label: 'Isi deskripsi & lokasi', type: 'default' } },
+    { kind: 'step', step: { id: 'k3', label: 'Unggah foto kerusakan', type: 'default' } },
+    { kind: 'step', step: { id: 'k4', label: 'Kirim laporan', type: 'default' } },
+    { kind: 'step', step: { id: 'k5', label: 'Status: Menunggu konfirmasi', type: 'default' } },
+    { kind: 'branches', merge: false, branches: [
+      { arrowLabel: 'Diverifikasi', steps: [
+        { id: 'k6a', label: 'Status: Diproses', type: 'default' },
+        { id: 'k6b', label: 'Status: Selesai', type: 'success' },
+      ]},
+      { arrowLabel: 'Dibatalkan siswa', steps: [
+        { id: 'k7a', label: 'Tulis alasan pembatalan', type: 'default' },
+        { id: 'k7b', label: 'Laporan dibatalkan', type: 'cancel' },
+      ]},
+      { arrowLabel: 'Ditolak SIPORA', steps: [
+        { id: 'k8a', label: 'Terima alasan penolakan', type: 'default' },
+        { id: 'k8b', label: 'Laporan ditolak', type: 'cancel' },
+      ]},
+    ]},
+  ],
+  aspirasi: [
+    { kind: 'step', step: { id: 'a1', label: 'Tulis aspirasi', type: 'default' } },
+    { kind: 'branches', merge: true, branches: [
+      { arrowLabel: 'Anonim', steps: [{ id: 'a2a', label: 'Identitas disembunyikan', type: 'default' }] },
+      { arrowLabel: 'Non-Anonim', steps: [{ id: 'a2b', label: 'Identitas terlihat', type: 'default' }] },
+    ]},
+    { kind: 'step', step: { id: 'a3', label: 'Kirim aspirasi', type: 'default' } },
+    { kind: 'step', step: { id: 'a4', label: 'Status: Diterima', type: 'default' } },
+    { kind: 'branches', merge: false, branches: [
+      { arrowLabel: 'Ditindaklanjuti', steps: [
+        { id: 'a5a', label: 'Aspirasi ditindaklanjuti', type: 'success' },
+      ]},
+      { arrowLabel: 'Dibatalkan siswa', steps: [
+        { id: 'a5b', label: 'Tulis alasan pembatalan', type: 'default' },
+        { id: 'a5c', label: 'Aspirasi dibatalkan', type: 'cancel' },
+      ]},
+    ]},
+  ],
+  konsultasi: [
+    { kind: 'step', step: { id: 'c1', label: 'Pilih jadwal konsultasi', type: 'default' } },
+    { kind: 'step', step: { id: 'c2', label: 'Isi alasan konsultasi', type: 'default' } },
+    { kind: 'step', step: { id: 'c3', label: 'Kirim permintaan', type: 'default' } },
+    { kind: 'step', step: { id: 'c4', label: 'Status: Menunggu', type: 'default' } },
+    { kind: 'branches', merge: false, branches: [
+      { arrowLabel: 'Dikonfirmasi', steps: [
+        { id: 'c5a', label: 'Sesi berlangsung', type: 'default' },
+        { id: 'c5b', label: 'Konsultasi selesai', type: 'success' },
+      ]},
+      { arrowLabel: 'Dibatalkan siswa', steps: [
+        { id: 'c6a', label: 'Tulis alasan pembatalan', type: 'default' },
+        { id: 'c6b', label: 'Booking dibatalkan', type: 'cancel' },
+      ]},
+      { arrowLabel: 'Ditolak Guru BK', steps: [
+        { id: 'c7a', label: 'Terima alasan penolakan', type: 'default' },
+        { id: 'c7b', label: 'Booking ditolak', type: 'cancel' },
+      ]},
+    ]},
+  ],
+  evaluasi: [
+    { kind: 'step', step: { id: 'e1', label: 'Periode evaluasi dibuka', type: 'default' } },
+    { kind: 'step', step: { id: 'e2', label: 'Pilih guru', type: 'default' } },
+    { kind: 'step', step: { id: 'e3', label: 'Isi rating & komentar', type: 'default' } },
+    { kind: 'step', step: { id: 'e4', label: 'Kirim evaluasi anonim', type: 'default' } },
+    { kind: 'step', step: { id: 'e5', label: 'Evaluasi tercatat', type: 'success' } },
+  ],
+}
+
 
 const faqs = ref([
   {
@@ -121,12 +227,10 @@ const toggleFaq = (index: number) => {
   }
 }
 
-// Trigger staggered card animations when fitur section is visible
 onMounted(() => {
   visibleCards.value = new Array(features.value.length).fill(false)
   visibleFaqs.value = new Array(faqs.value.length).fill(false)
 
-  // Watch fiturReveal and stagger card entrance
   const cardsObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -176,82 +280,114 @@ onMounted(() => {
       <section
         ref="heroRevealEl"
         :class="[
-          'w-full p-8 md:p-12 border border-general-border rounded-lg bg-blue-50 relative overflow-hidden flex flex-col items-center gap-10 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out',
-        isHeroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-      ]"
-      :style="{ backgroundImage: `url(${SekolahSvg})` }"
-    >
-        <!-- Floating decorative orbs inside hero -->
+          'w-full p-8 border border-general-border rounded-lg bg-blue-50 relative overflow-hidden flex flex-col items-center gap-6 transition-all duration-700 ease-out',
+          isHeroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        ]"
+      >
+        <img
+          :src="SekolahSvg"
+          alt=""
+          aria-hidden="true"
+          class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+          style="opacity: 0.45; transform: scale(1.5);"
+        />
+
         <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
         <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
 
-        <div class="w-full max-w-[800px] h-[250px] rounded-lg flex flex-col items-center justify-center p-8 z-10 gap-4">
+        <div class="w-full max-w-[1200px] rounded-lg flex flex-col items-center justify-center pt-8 px-4 pb-2 z-10 gap-4">
           <img
             src="@/assets/sipora-logo.svg"
             alt="Sipora Logo"
-            class="hero-logo h-48 w-auto object-contain drop-shadow-md"
+            class="hero-logo h-48 w-auto object-contain drop-shadow-md mb-2"
           />
-          <h1 class="text-heading-h2 text-blue-600 font-extrabold text-center max-w-4xl leading-snug drop-shadow-md">
-            Sistem Pelaporan dan Aspirasi SMP Budi Mulia Desa Putera
-          </h1>
+          <div class="flex flex-col items-center w-full gap-0">
+            <h1 class="text-[20px] sm:text-[24px] md:text-[28px] text-[#2E3094] font-extrabold text-center w-full whitespace-nowrap overflow-visible">
+              Sistem Pelaporan dan Aspirasi SMP Budi Mulia Desa Putera
+            </h1>
+            <p class="text-body-b4 text-gray-700 text-center w-full whitespace-nowrap overflow-visible mt-1">
+              Kirim laporan dan aspirasi secara aman. Diproses oleh pihak sekolah dengan alur yang dapat dipantau.
+            </p>
+          </div>
         </div>
-      </section>
 
-      <!-- FITUR SIPORA SECTION -->
-      <section
-        ref="fiturRevealEl"
-        :class="[
-          'flex flex-col gap-8 w-full transition-all duration-700 ease-out',
-          isFiturVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        ]"
-      >
-        <h2 class="text-heading-h3 text-blue-600 font-extrabold">Fitur SIPORA</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          <SCard
-            v-for="(feature, index) in features"
-            :key="feature.id"
-            :class="[
-              'feature-card flex flex-col items-center justify-center text-center p-6 h-[250px] shadow-sm hover:shadow-md transition-all relative overflow-hidden bg-white',
-              visibleCards[index] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            ]"
-            :style="{ transitionDelay: visibleCards[index] ? '0ms' : `${index * 100}ms`, transitionDuration: '500ms' }"
-          >
-            <div class="feature-icon-wrap h-24 mb-4 flex items-center justify-center">
-              <img :src="feature.icon" :alt="feature.text" class="h-full w-auto object-contain" />
-            </div>
-            <p class="text-body-b5 font-semibold text-general-black">{{ feature.text }}</p>
-          </SCard>
+        <!-- Hero Nav Buttons -->
+        <div class="hero-actions mt-4 mb-4 flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+          <SButton variant="primary" class="px-8 py-3 text-base" @click="scrollToSection('tentang-sipora')">Tentang Sipora</SButton>
+          <SButton variant="primary" class="px-8 py-3 text-base" @click="scrollToSection('fitur-sipora')">Fitur SIPORA</SButton>
+          <SButton variant="primary" class="px-8 py-3 text-base" @click="scrollToSection('faq')">FAQ</SButton>
         </div>
       </section>
 
       <!-- TENTANG SIPORA SECTION -->
       <section
-        ref="tentangRevealEl"
-        :class="[
-          'max-w-[1389px] border border-general-border w-full flex-col md:flex-row flex gap-10 items-stretch bg-blue-50 p-8 md:p-12 rounded-2xl transition-all duration-700 ease-out',
-          isTentangVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        ]"
+        id="tentang-sipora"
+        class="max-w-[1389px] border border-general-border w-full flex-col md:flex-row flex gap-8 items-center bg-blue-50 py-4 px-6 md:py-6 md:px-8 rounded-2xl"
       >
-        <div class="w-full md:w-1/3 bg-white p-6 rounded-lg shadow-sm border border-general-border flex justify-center items-center h-[300px]">
-          <img src="@/assets/priwitan-whistle.svg" alt="Sipora Logo" class="tentang-mascot h-56 w-auto object-contain" />
+        <div class="bg-white rounded-xl shadow-sm border border-general-border flex justify-center items-center shrink-0 aspect-square h-[200px] md:h-[260px]">
+          <img src="@/assets/priwitan-whistle.svg" alt="Sipora Logo" class="tentang-mascot h-[120px] md:h-[160px] w-auto object-contain" />
         </div>
-        <div class="w-full md:w-2/3 flex flex-col gap-6 justify-center">
-          <h2 class="text-heading-h2 text-blue-500 font-extrabold max-w-[933px]">Tentang Sipora</h2>
-          <p class="text-body-b4 text-blue-800 leading-relaxed max-w-[933px]">
+        <div class="flex-1 flex flex-col gap-2 justify-center">
+          <h2 class="stf-page-title text-[#2E3094] mb-1 mt-0">Tentang SIPORA</h2>
+          <p class="text-body-b4 text-blue-800 leading-relaxed max-w-[933px] mb-0">
             Sipora merupakan sistem informasi pelaporan dan evaluasi sekolah yang dirancang untuk mendukung terciptanya lingkungan pendidikan yang aman, transparan, dan responsif. Aplikasi ini memfasilitasi pelaporan bullying, pengelolaan konseling, publikasi artikel kesehatan mental, serta evaluasi guru dan staff secara terintegrasi dalam satu platform.
           </p>
         </div>
       </section>
 
+      <!-- FITUR SIPORA SECTION -->
+      <section
+        id="fitur-sipora"
+        :class="[
+          'flex flex-col gap-6 w-full transition-all duration-700 ease-out',
+        ]"
+      >
+        <div class="text-left mb-2 relative z-10" ref="fiturRevealEl" :class="{'reveal-active': isFiturVisible, 'reveal-hidden': !isFiturVisible}">
+          <h2 class="stf-page-title text-[#2E3094] mb-2">Fitur SIPORA</h2>
+          <p class="stf-page-subtitle text-gray-500 max-w-2xl">Klik fitur untuk melihat alur proses dari awal hingga akhir.</p>
+        </div>
+        
+        <div class="fitur-explorer">
+          <!-- Left: Feature Selector -->
+          <div class="fitur-selector">
+            <button
+              v-for="feature in features"
+              :key="feature.id"
+              :class="['fitur-selector-btn', activeFeature === feature.key && 'fitur-selector-btn--active']"
+              @click="activeFeature = feature.key"
+            >
+              <img :src="feature.icon" :alt="feature.text" class="fitur-selector-icon" />
+              <div class="fitur-selector-text">
+                <span class="fitur-selector-title">{{ feature.text }}</span>
+                <span class="fitur-selector-desc">{{ feature.desc }}</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Right: Flowchart Panel -->
+          <div class="fitur-flowchart-panel">
+            <Transition name="fc-fade" mode="out-in">
+              <div :key="flowchartKey" class="fitur-flowchart-inner">
+                <SFlowchart :flow="flowcharts[activeFeature]" />
+              </div>
+            </Transition>
+          </div>
+        </div>
+      </section>
+
       <!-- FAQ SECTION -->
       <section
+        id="faq"
         ref="faqRevealEl"
         :class="[
-          'flex flex-col gap-8 w-full mb-16 max-w-[1389px] transition-all duration-700 ease-out',
+          'flex flex-col gap-6 w-full mb-16 max-w-[1389px] transition-all duration-700 ease-out',
           isFaqVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         ]"
       >
-        <h2 class="text-heading-h3 text-blue-600 font-extrabold">FAQ (Frequently Asked Questions)</h2>
+        <div class="text-left mb-2">
+          <h2 class="stf-page-title text-[#2E3094] mb-2">FAQ (Frequently Asked Questions)</h2>
+          <p class="stf-page-subtitle text-gray-500">Temukan jawaban untuk pertanyaan yang sering diajukan.</p>
+        </div>
 
         <div class="flex flex-col gap-6">
           <div
@@ -340,31 +476,177 @@ onMounted(() => {
 
 /* Floating animation for the SIPORA logo in hero */
 .hero-logo {
-  animation: logoFloat 5s ease-in-out infinite;
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
 }
 
 /* ─────────────────────────────────────────
-   FEATURE CARDS
+   FITUR EXPLORER (2-panel layout)
 ───────────────────────────────────────── */
-.feature-card {
-  transition-property: opacity, transform, box-shadow;
-  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+.fitur-explorer {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
 }
 
-/* Icon levitates on card hover */
-.feature-card:hover .feature-icon-wrap {
-  animation: iconHoverFloat 1.8s ease-in-out infinite;
+/* Left: Feature selector list */
+.fitur-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 260px;
+  max-width: 300px;
+  flex-shrink: 0;
 }
 
-@keyframes iconHoverFloat {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-6px); }
+.fitur-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1.5px solid #d9d9d9;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  flex: 1;
+}
+
+.fitur-selector-btn:hover {
+  background: #eaeaf4;
+  border-color: #bebfde;
+}
+
+.fitur-selector-btn--active {
+  background: #2e3094;
+  border-color: #2e3094;
+}
+
+.fitur-selector-btn--active .fitur-selector-title,
+.fitur-selector-btn--active .fitur-selector-desc {
+  color: white;
+}
+.fitur-selector-btn--active .fitur-selector-desc {
+  opacity: 0.75;
+}
+
+.fitur-selector-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.fitur-selector-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fitur-selector-title {
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  line-height: 1.3;
+}
+
+.fitur-selector-desc {
+  font-family: "Be Vietnam Pro", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #7a7a7a;
+  line-height: 1.4;
+}
+
+/* Right: Flowchart panel */
+.fitur-flowchart-panel {
+  flex: 1;
+  min-width: 0;
+  background: white;
+  border: 1.5px solid #d9d9d9;
+  border-radius: 16px;
+  padding: 32px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.fitur-flowchart-inner {
+  width: 100%;
+  padding-bottom: 24px;
+}
+
+/* Flowchart fade transition */
+.fc-fade-enter-active,
+.fc-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.fc-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fc-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .fitur-explorer {
+    flex-direction: column;
+  }
+
+  .fitur-selector {
+    flex-direction: row;
+    overflow-x: auto;
+    max-width: 100%;
+    min-width: unset;
+    gap: 6px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .fitur-selector-btn {
+    flex-shrink: 0;
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+
+  .fitur-selector-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .fitur-selector-desc {
+    display: none;
+  }
+
+  .fitur-selector-title {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .fitur-flowchart-panel {
+    padding: 20px 12px;
+  }
 }
 
 /* ─────────────────────────────────────────
    TENTANG MASCOT
 ───────────────────────────────────────── */
-/* Mascot gently bobs */
 .tentang-mascot {
   animation: mascotFloat 4s ease-in-out infinite;
 }
@@ -407,12 +689,5 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ─────────────────────────────────────────
-   RESPONSIVE
-───────────────────────────────────────── */
-@media (min-width: 480px) {
-  /* removed landing class styles */
 }
 </style>
