@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { apiAuthGet } from '@/services/api'
+import { apiAuthGet, apiAuthDelete } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useArtikelStore } from '@/stores/artikel'
 import SLoading from '@/components/SLoading.vue'
 import SButton from '@/components/SButton.vue'
 import SImage from '@/components/SImage.vue'
+import SAlert from '@/components/SAlert.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,8 +23,11 @@ interface Artikel {
 }
 
 const auth = useAuthStore()
+const artikelStore = useArtikelStore()
 const artikel = ref<Artikel | null>(null)
 const isLoading = ref(true)
+const isDeleting = ref(false)
+const showDeleteAlert = ref(false)
 const isAdmin = computed(() => auth.user?.role === 'kemahasiswaan')
 
 async function fetchArtikelDetail(id: string | string[]) {
@@ -106,6 +111,33 @@ const decodeHtmlEntities = (text: string) => {
   // Convert newlines to <br> tags
   return decoded.replace(/\n/g, '<br>')
 }
+
+const openDeleteModal = () => {
+  showDeleteAlert.value = true
+}
+
+const confirmDelete = async () => {
+  if (!artikel.value) return
+  
+  isDeleting.value = true
+  try {
+    await apiAuthDelete(`artikel/${artikel.value.id}/`)
+    showDeleteAlert.value = false
+    
+    // Clear artikel store cache to force refetch on next view
+    artikelStore.daftarArtikel = []
+    
+    // Redirect back to artikel list (will trigger refetch via onActivated)
+    setTimeout(() => {
+      router.push('/artikel')
+    }, 500)
+  } catch (error) {
+    console.error("Gagal menghapus artikel:", error)
+    showDeleteAlert.value = false
+  } finally {
+    isDeleting.value = false
+  }
+}
 </script>
 
 <template>
@@ -133,12 +165,26 @@ const decodeHtmlEntities = (text: string) => {
             @click="router.push(`/edit-artikel/${artikel.id}`)"
           />
           <button
-            class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 sm:px-5 sm:py-4 text-sm sm:text-base transition-all duration-200 cursor-pointer font-semibold bg-red-500 text-white hover:bg-red-600 active:bg-red-700"
+            @click="openDeleteModal"
+            class="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 sm:px-5 sm:py-4 text-sm sm:text-base transition-all duration-200 cursor-pointer font-semibold bg-red-500 text-white hover:bg-red-600 active:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isDeleting"
           >
-            Hapus
+            {{ isDeleting ? 'Menghapus...' : 'Hapus' }}
           </button>
         </div>
       </div>
+
+      <!-- Delete Confirmation Alert -->
+      <SAlert
+        :visible="showDeleteAlert"
+        type="warning"
+        title="Hapus Artikel?"
+        description="Tindakan ini menghapus artikel secara permanen dari portal. Data dan konten tidak dapat dikembalikan setelah dikonfirmasi."
+        :primary-button-text="isDeleting ? 'Menghapus...' : 'Yakin, hapus'"
+        secondary-button-text="Batal"
+        @update:visible="showDeleteAlert = $event"
+        @primary-click="confirmDelete"
+      />
 
       <!-- Article Container -->
       <article class="bg-white rounded-2xl overflow-hidden border border-[#d9d9d9] shadow-sm">

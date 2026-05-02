@@ -363,3 +363,56 @@ export async function apiAuthPut(endpoint: string, payload: object) {
     handleNetworkError(err)
   }
 }
+
+/**
+ * Executes an authenticated DELETE request, silently attaching HTTP-Only session cookies.
+ * Globally intercepts 401 Unauthorized errors to attempt a 'Silent Refresh' before failing.
+ * 
+ * @param endpoint The protected API URI to request.
+ * @throws {Error} Extracted standard error message if the response is not OK.
+ * @returns {Promise<any>} The unwrapped `data` payload.
+ */
+export async function apiAuthDelete(endpoint: string) {
+  try {
+    const token = localStorage.getItem('access_token')
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers
+    })
+
+    if (response.status === 401) {
+      const refreshed = await handleRefresh()
+      if (refreshed) {
+        return await apiAuthDelete(endpoint)
+      }
+      
+      const authStore = useAuthStore()
+      authStore.setSessionExpired(true)
+      throw new Error('Sesi telah berakhir. Silakan login kembali.')
+    }
+
+    checkServerError(response.status)
+
+    const json = await response.json()
+    if (!response.ok || json.status === 'error') {
+      if (response.status === 403) {
+        const notFoundStore = useNotFoundStore()
+        notFoundStore.show()
+        throw new Error('Anda tidak memiliki akses.')
+      }
+      if (response.status === 404) {
+        const notFoundStore = useNotFoundStore()
+        notFoundStore.show()
+        throw new Error('Artikel tidak ditemukan.')
+      }
+      throw new Error(parseError(json, response.status))
+    }
+    return json.data
+  } catch (err) {
+    handleNetworkError(err)
+  }
+}
