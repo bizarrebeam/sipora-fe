@@ -60,10 +60,8 @@ onMounted(async () => {
 
 <template>
   <div class="app-wrapper" :class="{ 'admin-layout': isAdmin && !isGuestRoute }">
-    <template v-if="!isGuestRoute">
-      <SNavbar v-if="!isAdmin" />
-      <SSidebar v-if="isAdmin" />
-    </template>
+    <SNavbar v-if="!isAdmin || isGuestRoute" />
+    <SSidebar v-if="isAdmin && !isGuestRoute" />
     
     <main class="main-layout" :class="{ 'admin-main': isAdmin && !isGuestRoute }">
       <router-view v-slot="{ Component, route }">

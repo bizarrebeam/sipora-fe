@@ -13,6 +13,7 @@ import { useRevealOnScroll } from '@/components/ARevealOnScroll'
 const { el: heroRevealEl, isVisible: isHeroVisible } = useRevealOnScroll()
 const { el: fiturRevealEl, isVisible: isFiturVisible } = useRevealOnScroll()
 const { el: tentangRevealEl, isVisible: isTentangVisible } = useRevealOnScroll()
+const { el: keamananRevealEl, isVisible: isKeamananVisible } = useRevealOnScroll()
 const { el: faqRevealEl, isVisible: isFaqVisible } = useRevealOnScroll()
 
 const auth = useAuthStore()
@@ -35,7 +36,7 @@ const flowchartKey = ref(0)
 const scrollToSection = (id: string) => {
   const el = document.getElementById(id)
   if (el) {
-    const y = el.getBoundingClientRect().top + window.scrollY - 100; // Offset for sticky navbar
+    const y = el.getBoundingClientRect().top + window.scrollY - 100; 
     window.scrollTo({ top: y, behavior: 'smooth' })
   }
 }
@@ -44,6 +45,7 @@ watch(activeFeature, () => { flowchartKey.value++ })
 
 const flowcharts: Record<string, FlowItem[]> = {
   bullying: [
+    { kind: 'step', step: { id: 'start', label: 'Masuk ke akun', type: 'success' } },
     { kind: 'step', step: { id: 'b1', label: 'Buat laporan bullying', type: 'default' } },
     { kind: 'branches', merge: true, branches: [
       { arrowLabel: 'Anonim', steps: [{ id: 'b2a', label: 'Identitas disembunyikan', type: 'default' }] },
@@ -68,6 +70,7 @@ const flowcharts: Record<string, FlowItem[]> = {
     ]},
   ],
   kerusakan: [
+    { kind: 'step', step: { id: 'start', label: 'Masuk ke akun', type: 'success' } },
     { kind: 'step', step: { id: 'k1', label: 'Buat laporan kerusakan', type: 'default' } },
     { kind: 'step', step: { id: 'k2', label: 'Isi deskripsi & lokasi', type: 'default' } },
     { kind: 'step', step: { id: 'k3', label: 'Unggah foto kerusakan', type: 'default' } },
@@ -89,6 +92,7 @@ const flowcharts: Record<string, FlowItem[]> = {
     ]},
   ],
   aspirasi: [
+    { kind: 'step', step: { id: 'start', label: 'Masuk ke akun', type: 'success' } },
     { kind: 'step', step: { id: 'a1', label: 'Tulis aspirasi', type: 'default' } },
     { kind: 'branches', merge: true, branches: [
       { arrowLabel: 'Anonim', steps: [{ id: 'a2a', label: 'Identitas disembunyikan', type: 'default' }] },
@@ -107,6 +111,7 @@ const flowcharts: Record<string, FlowItem[]> = {
     ]},
   ],
   konsultasi: [
+    { kind: 'step', step: { id: 'start', label: 'Masuk ke akun', type: 'success' } },
     { kind: 'step', step: { id: 'c1', label: 'Pilih jadwal konsultasi', type: 'default' } },
     { kind: 'step', step: { id: 'c2', label: 'Isi alasan konsultasi', type: 'default' } },
     { kind: 'step', step: { id: 'c3', label: 'Kirim permintaan', type: 'default' } },
@@ -127,7 +132,8 @@ const flowcharts: Record<string, FlowItem[]> = {
     ]},
   ],
   evaluasi: [
-    { kind: 'step', step: { id: 'e1', label: 'Periode evaluasi dibuka', type: 'default' } },
+    { kind: 'step', step: { id: 'start', label: 'Masuk ke akun', type: 'success' } },
+    { kind: 'step', step: { id: 'e1', label: 'Periode evaluasi semester genap/ganjil dibuka', type: 'default' } },
     { kind: 'step', step: { id: 'e2', label: 'Pilih guru', type: 'default' } },
     { kind: 'step', step: { id: 'e3', label: 'Isi rating & komentar', type: 'default' } },
     { kind: 'step', step: { id: 'e4', label: 'Kirim evaluasi anonim', type: 'default' } },
@@ -276,7 +282,7 @@ onMounted(() => {
 
 <template>
   <!-- ========== HOMEPAGE ========== -->
-  <div class="min-h-screen bg-general-frame p-8">
+  <div class="min-h-screen bg-general-frame p-8 overflow-x-hidden">
     <div class="max-w-5xl mx-auto flex flex-col gap-16 md:gap-24">
 
       <!-- HERO SECTION -->
@@ -325,16 +331,85 @@ onMounted(() => {
       <!-- TENTANG SIPORA SECTION -->
       <section
         id="tentang-sipora"
-        class="max-w-[1389px] border border-general-border w-full flex-col md:flex-row flex gap-8 items-center bg-blue-50 py-4 px-6 md:py-6 md:px-8 rounded-2xl"
+        ref="tentangRevealEl"
+        :class="[
+          'max-w-[1389px] border border-general-border w-full flex-col md:flex-row flex gap-8 items-center bg-blue-50 py-4 px-6 md:py-6 md:px-8 rounded-2xl transition-all duration-700 ease-out',
+          isTentangVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        ]"
       >
-        <div class="bg-white rounded-xl shadow-sm border border-general-border flex justify-center items-center shrink-0 aspect-square h-[200px] md:h-[260px]">
-          <img src="@/assets/priwitan-whistle.svg" alt="Sipora Logo" class="tentang-mascot h-[120px] md:h-[160px] w-auto object-contain" />
+        <div class="bg-white rounded-xl shadow-sm border border-general-border flex justify-center items-center shrink-0 aspect-square h-[200px] md:h-[260px] relative overflow-hidden">
+          <div class="relative flex items-center justify-center w-full h-full">
+            <div class="absolute w-[100px] h-[100px] md:w-[130px] md:h-[130px] rounded-full border-4 border-[#2E3094] animate-circle-ping"></div>
+            <img src="@/assets/priwitan-whistle.svg" alt="Sipora Logo" class="h-[120px] md:h-[160px] w-auto object-contain animate-whistle-pop relative z-10" />
+          </div>
         </div>
         <div class="flex-1 flex flex-col gap-2 justify-center">
           <h2 class="stf-page-title text-[#2E3094] mb-1 mt-0">Tentang SIPORA</h2>
           <p class="text-body-b4 text-blue-800 leading-relaxed max-w-[933px] mb-0 text-justify">
-            Sipora merupakan sistem informasi pelaporan dan evaluasi sekolah yang dirancang untuk mendukung terciptanya lingkungan pendidikan yang aman, transparan, dan responsif. Aplikasi ini memfasilitasi pelaporan bullying, pengelolaan konseling, publikasi artikel kesehatan mental, serta evaluasi guru dan staff secara terintegrasi dalam satu platform.
+            Sipora merupakan sistem informasi pelaporan dan evaluasi sekolah yang dirancang untuk mendukung terciptanya lingkungan pendidikan yang aman, transparan, dan responsif. Aplikasi ini memfasilitasi pelaporan bullying, pengelolaan konseling, publikasi artikel kesehatan mental, serta evaluasi guru dan staff <strong>secara terintegrasi dalam satu platform.</strong>
           </p>
+        </div>
+      </section>
+
+      <!-- KEAMANAN DATA SECTION -->
+      <section
+        ref="keamananRevealEl"
+        :class="[
+          'max-w-[1389px] border border-general-border w-full bg-[#ECECFA] rounded-2xl relative transition-all duration-700 ease-out',
+          isKeamananVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        ]"
+      >
+        <!-- Blob Background Wrapper -->
+        <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none z-0">
+          <svg class="absolute bottom-[-15%] right-[-15%] md:right-[-5%] w-[350px] md:w-[600px] text-[#DCE4FA] opacity-80" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path fill="currentColor" d="M42.7,-74.5C54.5,-68.8,62.8,-55.8,70.9,-42.6C79,-29.4,87,-14.7,87.9,0.5C88.8,15.7,82.5,31.4,72.6,44.1C62.8,56.8,49.4,66.4,34.8,73.5C20.2,80.5,4.3,85.1,-11.2,84.1C-26.6,83.1,-41.7,76.5,-54.6,66.8C-67.5,57.2,-78.2,44.4,-84.4,29.3C-90.6,14.2,-92.3,-3.1,-87.3,-18.7C-82.3,-34.2,-70.6,-48,-56.9,-54.9C-43.2,-61.8,-27.6,-61.8,-13.6,-66.1C0.3,-70.4,14.3,-79,28.8,-80C33.5,-80.3,38.2,-77.3,42.7,-74.5Z" transform="translate(100 100)" />
+          </svg>
+        </div>
+
+        <!-- MOBILE LAYOUT -->
+        <div class="md:hidden pt-6 pb-8 px-5 relative z-10 w-full rounded-2xl" style="clip-path: inset(-200px -200px 0 -200px);">
+          <h2 class="stf-page-title text-[#2E3094] mb-3 mt-0 text-left">Apakah dengan SIPORA, laporan saya aman?</h2>
+          
+          <div class="text-body-b4 text-blue-800 leading-relaxed text-left flex flex-col gap-3 relative z-10">
+            <p>
+              Tentu saja! Pembuatan akun di SIPORA bertujuan untuk memverifikasi identitas bahwa kamu adalah siswa resmi SMP Desa Putera, tetapi <strong>seluruh identitas dan laporanmu dijamin kerahasiaannya dan tidak bisa dilihat oleh siswa lain</strong>.
+            </p>
+            
+            <div class="flex flex-col">
+              <p class="mb-0">
+                SIPORA memastikan bahwa data aduan, aspirasi, maupun evaluasi guru <strong>hanya diakses eksklusif oleh Guru BK dan Tim Kemahasiswaan</strong> yang bertugas menangani laporan tersebut.
+              </p>
+              <div class="relative w-full mt-2">
+                <p class="pr-[150px] mb-0 pt-2">
+                  Sekolah menjamin akan mendengar keluhan setiap siswa dengan adil, rahasia, dan tanpa diskriminasi.
+                </p>
+                <img 
+                  src="@/assets/Siswa.svg" 
+                  alt="Ilustrasi Siswa" 
+                  class="absolute top-[-30px] right-[-120px] w-[280px] h-[320px] object-cover object-top pointer-events-none z-10 animate-mascot-float" 
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESKTOP LAYOUT  -->
+        <div class="hidden md:flex flex-row items-stretch w-full relative z-10">
+          <div class="flex-1 flex flex-col gap-2 justify-center py-12 pl-10 pr-4 z-10 relative">
+            <h2 class="stf-page-title text-[#2E3094] mb-2 mt-0">Apakah dengan SIPORA, laporan saya aman?</h2>
+            <div class="text-body-b4 text-blue-800 leading-relaxed max-w-[750px] mb-0 text-left flex flex-col gap-3 pr-4">
+              <p>
+                Tentu saja! Pembuatan akun di SIPORA bertujuan untuk memverifikasi identitas bahwa kamu adalah siswa resmi SMP Desa Putera, tetapi <strong>seluruh identitas dan laporanmu dijamin kerahasiaannya dan tidak bisa dilihat oleh siswa lain</strong>.
+              </p>
+              <p>
+                SIPORA memastikan bahwa data aduan, aspirasi, maupun evaluasi guru <strong>hanya diakses eksklusif oleh Guru BK dan Tim Kemahasiswaan</strong> yang bertugas menangani laporan tersebut. Sekolah menjamin akan mendengar keluhan setiap siswa dengan adil, rahasia, dan tanpa diskriminasi.
+              </p>
+            </div>
+          </div>
+
+          <div class="relative shrink-0 flex items-end justify-end md:w-[260px] lg:w-[320px] pointer-events-none z-10 h-auto rounded-br-2xl" style="clip-path: inset(-100px 0 0 -100px round 0 0 1rem 0);">
+            <img src="@/assets/Siswa.svg" alt="Ilustrasi Siswa" class="absolute bottom-[-40px] right-[-60px] z-10 w-[340px] lg:w-[400px] md:h-[calc(100%+90px)] max-w-none object-cover object-top animate-mascot-float" />
+          </div>
         </div>
       </section>
 
@@ -523,7 +598,7 @@ onMounted(() => {
   flex: 1;
 }
 
-.fitur-selector-btn:hover {
+.fitur-selector-btn:not(.fitur-selector-btn--active):hover {
   background: #eaeaf4;
   border-color: #bebfde;
 }
@@ -580,14 +655,13 @@ onMounted(() => {
   border-radius: 16px;
   padding: 32px 24px;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
   height: 600px;
   overflow-y: auto;
   overflow-x: auto;
 }
 
 .fitur-flowchart-inner {
+  margin: auto;
   width: 100%;
   padding-bottom: 24px;
 }
@@ -650,9 +724,9 @@ onMounted(() => {
 }
 
 /* ─────────────────────────────────────────
-   TENTANG MASCOT
+   MASCOT FLOAT ANIMATION
 ───────────────────────────────────────── */
-.tentang-mascot {
+.animate-mascot-float {
   animation: mascotFloat 4s ease-in-out infinite;
 }
 
@@ -694,5 +768,46 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ─────────────────────────────────────────
+   WHISTLE POP, FLOAT & PING ANIMATION
+───────────────────────────────────────── */
+@keyframes whistlePopFloat {
+  /* Pop In */
+  0%   { transform: scale(0) translateY(0); opacity: 0; }
+  5%   { transform: scale(1.2) translateY(0); opacity: 1; }
+  10%  { transform: scale(1) translateY(0); opacity: 1; }
+  
+  /* Float Phase (Bobbing up and down) */
+  25%  { transform: scale(1) translateY(-10px) rotate(2deg); opacity: 1; }
+  40%  { transform: scale(1) translateY(0px) rotate(-1deg); opacity: 1; }
+  55%  { transform: scale(1) translateY(-10px) rotate(2deg); opacity: 1; }
+  70%  { transform: scale(1) translateY(0px) rotate(-1deg); opacity: 1; }
+  
+  /* Prepare to Pop Out */
+  75%  { transform: scale(1) translateY(0px); opacity: 1; }
+  
+  /* Pop Out */
+  80%  { transform: scale(1.2) translateY(0px); opacity: 1; }
+  85%  { transform: scale(0) translateY(0px); opacity: 0; }
+  
+  /* Hidden Delay */
+  100% { transform: scale(0) translateY(0px); opacity: 0; }
+}
+
+@keyframes circlePing {
+  0%   { transform: scale(0.5); opacity: 0; }
+  5%   { transform: scale(1); opacity: 1; }
+  25%  { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.animate-whistle-pop {
+  animation: whistlePopFloat 8s infinite ease-in-out;
+}
+
+.animate-circle-ping {
+  animation: circlePing 8s infinite ease-out;
 }
 </style>
