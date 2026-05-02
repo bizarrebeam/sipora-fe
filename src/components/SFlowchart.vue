@@ -42,11 +42,9 @@ defineProps<{ flow: FlowItem[] }>()
               </div>
            </template>
            <template v-else-if="item.branches.length === 3">
-              <div class="fc-bridge-wrapper">
-                 <div class="fc-bridge-left-inner"></div>
-              </div>
-              <div class="fc-bridge-wrapper">
-                 <div class="fc-bridge-right-inner"></div>
+              <div class="fc-bridge-wrapper" style="flex: 2;">
+                 <div class="fc-bridge-full-inner"></div>
+                 <div class="fc-bridge-middle-line"></div>
               </div>
            </template>
            <div class="fc-split-spacer"></div>
@@ -55,9 +53,9 @@ defineProps<{ flow: FlowItem[] }>()
         <div class="fc-branches-row">
           <div v-for="(branch, bi) in item.branches" :key="bi" class="fc-branch-col">
             <div class="fc-arrow-down fc-arrow-branch">
-              <div class="fc-arrow-line fc-arrow-line-long"></div>
+              <div class="fc-arrow-line fc-arrow-line-long" :class="{ 'fc-arrow-line-stagger': item.branches.length === 3 && bi !== 1 }"></div>
               <div class="fc-arrow-head"></div>
-              <div class="fc-branch-arrow-label">{{ branch.arrowLabel }}</div>
+              <div class="fc-branch-arrow-label" :class="{ 'fc-branch-arrow-label-stagger': item.branches.length === 3 && bi !== 1 }">{{ branch.arrowLabel }}</div>
             </div>
             
             <template v-for="(bStep, si) in branch.steps" :key="si">
@@ -70,7 +68,7 @@ defineProps<{ flow: FlowItem[] }>()
               </div>
             </template>
             
-            <div v-if="item.merge" class="fc-line-vertical"></div>
+            <div v-if="item.merge" class="fc-line-vertical" style="flex-grow: 1;"></div>
           </div>
         </div>
 
@@ -82,11 +80,9 @@ defineProps<{ flow: FlowItem[] }>()
               </div>
            </template>
            <template v-else-if="item.branches.length === 3">
-              <div class="fc-bridge-wrapper">
-                 <div class="fc-merge-left-inner"></div>
-              </div>
-              <div class="fc-bridge-wrapper">
-                 <div class="fc-merge-right-inner"></div>
+              <div class="fc-bridge-wrapper" style="flex: 2;">
+                 <div class="fc-merge-full-inner"></div>
+                 <div class="fc-bridge-middle-line"></div>
               </div>
            </template>
            <div class="fc-merge-spacer"></div>
@@ -123,8 +119,11 @@ defineProps<{ flow: FlowItem[] }>()
 .fc-line-vertical { width: 2px; height: 24px; background: #bebfde; margin: 0 auto; }
 
 .fc-node {
-  width: 180px;
-  height: 56px;
+  width: calc(100% - 16px);
+  max-width: 180px;
+  min-width: 60px;
+  height: auto;
+  min-height: 56px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -132,12 +131,14 @@ defineProps<{ flow: FlowItem[] }>()
   font-family: "Be Vietnam Pro", sans-serif;
   font-size: 12px;
   font-weight: 600;
-  padding: 0 16px;
+  padding: 8px 12px;
   text-align: center;
   margin: 0 auto;
-  line-height: 1.35;
+  line-height: 1.2;
   border: none; 
   box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+  flex-shrink: 1;
+  word-break: break-word;
 }
 .fc-node-default { background: #eaeaf4; color: #2e3094; }
 .fc-node-success { background: #2e3094; color: white; }
@@ -166,19 +167,9 @@ defineProps<{ flow: FlowItem[] }>()
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
-.fc-bridge-left-inner {
-  position: absolute; top: 0; bottom: 0; left: -1px; right: 0;
-  border-top: 2px solid #bebfde;
-  border-left: 2px solid #bebfde;
-  border-right: 1px solid #bebfde;
-  border-top-left-radius: 12px;
-}
-.fc-bridge-right-inner {
-  position: absolute; top: 0; bottom: 0; left: 0; right: -1px;
-  border-top: 2px solid #bebfde;
-  border-right: 2px solid #bebfde;
-  border-left: 1px solid #bebfde;
-  border-top-right-radius: 12px;
+
+.fc-bridge-middle-line {
+  position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #bebfde; transform: translateX(-50%);
 }
 
 .fc-merge-full-inner {
@@ -187,20 +178,6 @@ defineProps<{ flow: FlowItem[] }>()
   border-left: 2px solid #bebfde;
   border-right: 2px solid #bebfde;
   border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-.fc-merge-left-inner {
-  position: absolute; top: 0; bottom: 0; left: -1px; right: 0;
-  border-bottom: 2px solid #bebfde;
-  border-left: 2px solid #bebfde;
-  border-right: 1px solid #bebfde;
-  border-bottom-left-radius: 12px;
-}
-.fc-merge-right-inner {
-  position: absolute; top: 0; bottom: 0; left: 0; right: -1px;
-  border-bottom: 2px solid #bebfde;
-  border-right: 2px solid #bebfde;
-  border-left: 1px solid #bebfde;
   border-bottom-right-radius: 12px;
 }
 
@@ -233,8 +210,21 @@ defineProps<{ flow: FlowItem[] }>()
 }
 
 @media (max-width: 768px) {
-  .s-flowchart {
-    min-width: 600px;
+  .fc-node {
+    min-height: 48px;
+    padding: 6px 4px;
+    font-size: 10px;
+    border-radius: 6px;
+  }
+  .fc-branch-arrow-label {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+  .fc-arrow-line-stagger {
+    height: 100px;
+  }
+  .fc-branch-arrow-label-stagger {
+    top: 60%;
   }
 }
 </style>

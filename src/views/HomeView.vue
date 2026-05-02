@@ -34,7 +34,10 @@ const flowchartKey = ref(0)
 
 const scrollToSection = (id: string) => {
   const el = document.getElementById(id)
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (el) {
+    const y = el.getBoundingClientRect().top + window.scrollY - 100; // Offset for sticky navbar
+    window.scrollTo({ top: y, behavior: 'smooth' })
+  }
 }
 
 watch(activeFeature, () => { flowchartKey.value++ })
@@ -289,33 +292,33 @@ onMounted(() => {
           alt=""
           aria-hidden="true"
           class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-          style="opacity: 0.45; transform: scale(1.5);"
+          style="opacity: 0.45; transform: scale(1.6);"
         />
 
         <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
         <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
 
-        <div class="w-full max-w-[1200px] rounded-lg flex flex-col items-center justify-center pt-8 px-4 pb-2 z-10 gap-4">
+        <div class="w-full max-w-[1200px] rounded-lg flex flex-col items-center justify-center pt-8 px-2 pb-2 z-10 gap-2 md:gap-4">
           <img
             src="@/assets/sipora-logo.svg"
             alt="Sipora Logo"
-            class="hero-logo h-48 w-auto object-contain drop-shadow-md mb-2"
+            class="hero-logo h-36 md:h-48 w-auto object-contain drop-shadow-md mb-2"
           />
-          <div class="flex flex-col items-center w-full gap-0">
-            <h1 class="text-[20px] sm:text-[24px] md:text-[28px] text-[#2E3094] font-extrabold text-center w-full whitespace-nowrap overflow-visible">
+          <div class="flex flex-col items-center w-full gap-1">
+            <h1 class="text-[20px] sm:text-[24px] md:text-[28px] text-[#2E3094] font-extrabold text-center w-full whitespace-normal md:whitespace-nowrap overflow-visible">
               Sistem Pelaporan dan Aspirasi SMP Budi Mulia Desa Putera
             </h1>
-            <p class="text-body-b4 text-gray-700 text-center w-full whitespace-nowrap overflow-visible mt-1">
+            <p class="text-body-b4 text-gray-700 text-center w-full whitespace-normal md:whitespace-nowrap overflow-visible mt-1 px-4 md:px-0">
               Kirim laporan dan aspirasi secara aman. Diproses oleh pihak sekolah dengan alur yang dapat dipantau.
             </p>
           </div>
         </div>
 
         <!-- Hero Nav Buttons -->
-        <div class="hero-actions mt-4 mb-4 flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-          <SButton variant="primary" class="px-8 py-3 text-base" @click="scrollToSection('tentang-sipora')">Tentang Sipora</SButton>
-          <SButton variant="primary" class="px-8 py-3 text-base" @click="scrollToSection('fitur-sipora')">Fitur SIPORA</SButton>
-          <SButton variant="primary" class="px-8 py-3 text-base" @click="scrollToSection('faq')">FAQ</SButton>
+        <div class="hero-actions mt-4 mb-4 flex flex-wrap justify-center gap-3 relative z-10">
+          <SButton variant="primary" class="px-6 py-2 md:px-8 md:py-3 text-sm md:text-base" @click="scrollToSection('tentang-sipora')">Tentang Sipora</SButton>
+          <SButton variant="primary" class="px-6 py-2 md:px-8 md:py-3 text-sm md:text-base" @click="scrollToSection('fitur-sipora')">Fitur SIPORA</SButton>
+          <SButton variant="primary" class="px-6 py-2 md:px-8 md:py-3 text-sm md:text-base" @click="scrollToSection('faq')">FAQ</SButton>
         </div>
       </section>
 
@@ -329,7 +332,7 @@ onMounted(() => {
         </div>
         <div class="flex-1 flex flex-col gap-2 justify-center">
           <h2 class="stf-page-title text-[#2E3094] mb-1 mt-0">Tentang SIPORA</h2>
-          <p class="text-body-b4 text-blue-800 leading-relaxed max-w-[933px] mb-0">
+          <p class="text-body-b4 text-blue-800 leading-relaxed max-w-[933px] mb-0 text-justify">
             Sipora merupakan sistem informasi pelaporan dan evaluasi sekolah yang dirancang untuk mendukung terciptanya lingkungan pendidikan yang aman, transparan, dan responsif. Aplikasi ini memfasilitasi pelaporan bullying, pengelolaan konseling, publikasi artikel kesehatan mental, serta evaluasi guru dan staff secara terintegrasi dalam satu platform.
           </p>
         </div>
@@ -338,11 +341,13 @@ onMounted(() => {
       <!-- FITUR SIPORA SECTION -->
       <section
         id="fitur-sipora"
+        ref="fiturRevealEl"
         :class="[
           'flex flex-col gap-6 w-full transition-all duration-700 ease-out',
+          isFiturVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         ]"
       >
-        <div class="text-left mb-2 relative z-10" ref="fiturRevealEl" :class="{'reveal-active': isFiturVisible, 'reveal-hidden': !isFiturVisible}">
+        <div class="text-left mb-2 relative z-10">
           <h2 class="stf-page-title text-[#2E3094] mb-2">Fitur SIPORA</h2>
           <p class="stf-page-subtitle text-gray-500 max-w-2xl">Klik fitur untuk melihat alur proses dari awal hingga akhir.</p>
         </div>
@@ -400,12 +405,12 @@ onMounted(() => {
             :style="{ transitionDelay: `${index * 60}ms` }"
           >
             <SCard
-              padding="32px 49px"
               class="cursor-pointer hover:bg-neutral-50 transition-colors z-10 w-full"
+              style="padding: 20px 24px;"
               @click="toggleFaq(index)"
             >
               <div class="flex justify-between items-center w-full gap-4">
-                <h4 class="text-heading-h5 text-blue-500 flex-1">{{ faq.question }}</h4>
+                <h4 class="text-base md:text-heading-h5 text-blue-500 flex-1">{{ faq.question }}</h4>
                 <div
                   class="text-blue-500 transform transition-transform duration-300 w-[24px] h-[24px] flex items-center justify-center font-bold"
                   :class="{ 'rotate-180': faq.open }"
