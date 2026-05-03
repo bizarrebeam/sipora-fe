@@ -115,7 +115,7 @@ onMounted(async () => {
 }
 
 .admin-main {
-  padding-top: 24px;
+  padding-top: 0;
   padding-left: 260px; /* Width of the sidebar */
   width: 100%;
 }

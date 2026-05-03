@@ -501,7 +501,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -524,6 +524,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	flex-direction: column;
 	height: 100%;
 	min-height: 450px;
+	min-width: 0;
 }
 
 .article-card:hover {
@@ -631,6 +632,8 @@ watch(searchQuery, () => { currentPage.value = 1 })
 	line-clamp: 2;
 	-webkit-box-orient: vertical;
 	overflow: hidden;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
 .article-card__desc {
@@ -646,6 +649,7 @@ watch(searchQuery, () => { currentPage.value = 1 })
   margin: 0 0 20px 0;
   text-align: justify;
   word-wrap: break-word;
+  word-break: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
 }
