@@ -14,6 +14,7 @@ const showLogoutModal = ref(false)
 
 const namaDepan = computed(() => auth.namaDepan)
 const roleBadge = computed(() => auth.roleBadge)
+const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 
 const dashboardOpen = ref(false)
 const mobileDashboardOpen = ref(false)
@@ -69,6 +70,7 @@ async function confirmLogout() {
 
         <RouterLink to="/manajemen-akun" class="sidebar-link" active-class="sidebar-link-active">Manajemen Akun</RouterLink>
         <RouterLink to="/log-aktivitas" class="sidebar-link" active-class="sidebar-link-active">Log Aktivitas</RouterLink>
+        <RouterLink v-if="isKemahasiswaan" to="/laporan-periodik" class="sidebar-link" active-class="sidebar-link-active">Laporan Periodik</RouterLink>
         <RouterLink to="/laporan-bullying" class="sidebar-link" active-class="sidebar-link-active">Laporan Bullying</RouterLink>
         <RouterLink to="/laporan-kerusakan" class="sidebar-link" active-class="sidebar-link-active">Laporan Kerusakan</RouterLink>
         <RouterLink to="/daftar-evaluasi" class="sidebar-link" active-class="sidebar-link-active">Daftar Evaluasi</RouterLink>
@@ -132,6 +134,7 @@ async function confirmLogout() {
           </div>
         </div>
 
+        <RouterLink v-if="isKemahasiswaan" to="/laporan-periodik" class="mobile-link" @click="closeMobile">Laporan Periodik</RouterLink>
         <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
         <RouterLink to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
         <RouterLink to="/daftar-evaluasi" class="mobile-link" @click="closeMobile">Daftar Evaluasi</RouterLink>
