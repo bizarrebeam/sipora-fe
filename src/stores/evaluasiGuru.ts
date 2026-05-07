@@ -13,7 +13,7 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
     const daftarGuru = ref<any[]>([])
     const daftarIndikator = ref<any[]>([])
     const riwayatEvaluasi = ref<any[]>([])
-    
+
     const rekapEvaluasi = ref<any[]>([])
     const totalRekap = ref(0)
 
@@ -33,6 +33,18 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
             isLoaded.value.guru = true
         } catch (error: any) {
             console.error('Gagal mengambil daftar guru:', error.message)
+        }
+    }
+
+    async function fetchSemuaGuru(force = false) {
+        if (!force && isLoaded.value.guru) return
+
+        try {
+            const data = await apiAuthGet('admin/daftar/')
+            daftarGuru.value = data || []
+            isLoaded.value.guru = true
+        } catch (error: any) {
+            console.error('Gagal mengambil daftar semua guru:', error.message)
         }
     }
 
@@ -71,6 +83,9 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
             const data = await apiAuthPost('evaluasi/', payload)
 
             isLoaded.value.riwayat = false
+            
+            // Hapus guru yang baru saja dievaluasi dari daftarGuru agar tidak muncul lagi di dropdown
+            daftarGuru.value = daftarGuru.value.filter(g => g.id !== payload.staff_id)
 
             return data
         } catch (error: any) {
@@ -98,7 +113,7 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
 
             const url = `evaluasi/rekap/?${queryParams.toString()}`
             const data = await apiAuthGet(url)
-            
+
             // DRF PageNumberPagination returns { count, next, previous, results }
             if (data && data.results) {
                 rekapEvaluasi.value = data.results

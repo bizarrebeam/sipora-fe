@@ -22,12 +22,29 @@ const pageSize = ref(10)
 
 const loading = ref(false)
 
-const tahunAjaranOptions = [
-    { label: 'Semua Tahun', value: '' },
-    { label: '2023/2024', value: '2023/2024' },
-    { label: '2024/2025', value: '2024/2025' },
-    { label: '2025/2026', value: '2025/2026' }
-]
+import { apiAuthGet } from '@/services/api'
+
+const tahunAjaranOptions = ref([
+    { label: 'Semua Tahun', value: '' }
+])
+
+onMounted(async () => {
+    try {
+        const data = await apiAuthGet('evaluasi/tahun-ajaran/')
+        if (data && Array.isArray(data)) {
+            const dynamicOptions = data.map((tahun: string) => ({
+                label: tahun,
+                value: tahun
+            }))
+            tahunAjaranOptions.value = [
+                { label: 'Semua Tahun', value: '' },
+                ...dynamicOptions
+            ]
+        }
+    } catch (e) {
+        console.error('Gagal memuat daftar tahun ajaran:', e)
+    }
+})
 
 const semesterOptions = [
     { label: 'Semua Semester', value: '' },
