@@ -150,6 +150,7 @@ export const useEvaluasiGuruStore = defineStore('evaluasiGuru', () => {
         totalRekap,
         isLoaded,
         fetchDaftarGuru,
+        fetchSemuaGuru,
         fetchDaftarIndikator,
         submitEvaluasi,
         fetchRekapEvaluasi,

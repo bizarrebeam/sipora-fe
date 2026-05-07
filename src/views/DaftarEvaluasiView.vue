@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useEvaluasiGuruStore } from '@/stores/evaluasiGuru'
 import SCard from '@/components/SCard.vue'
 import SDropDown from '@/components/SDropDown.vue'
-import STextField from '@/components/STextField.vue'
 import SPagination from '@/components/SPagination.vue'
 import SButton from '@/components/SButton.vue'
 
@@ -24,11 +23,25 @@ const loading = ref(false)
 
 import { apiAuthGet } from '@/services/api'
 
+const guruOptions = computed(() => {
+    const options = [
+        { label: 'Semua Guru', value: '' }
+    ]
+    evaluasiStore.daftarGuru.forEach((guru: any) => {
+        const nama = guru.nama_lengkap || guru.nama || 'Guru Tidak Diketahui'
+        options.push({ label: nama, value: nama })
+    })
+    return options
+})
+
 const tahunAjaranOptions = ref([
     { label: 'Semua Tahun', value: '' }
 ])
 
 onMounted(async () => {
+    if (isKemahasiswaan.value) {
+        evaluasiStore.fetchDaftarGuru(true)
+    }
     try {
         const data = await apiAuthGet('evaluasi/tahun-ajaran/')
         if (data && Array.isArray(data)) {
@@ -107,9 +120,10 @@ const totalPages = computed(() => Math.ceil(evaluasiStore.totalRekap / pageSize.
 
             <div class="filter-section flex flex-col md:flex-row gap-4 mb-6">
                 <div v-if="isKemahasiswaan" class="w-full md:w-1/3">
-                    <STextField 
+                    <SDropDown 
                         v-model="searchGuru" 
-                        placeholder="Cari nama guru..." 
+                        :options="guruOptions" 
+                        placeholder="Semua Guru" 
                     />
                 </div>
                 <div class="w-full md:w-1/4">
