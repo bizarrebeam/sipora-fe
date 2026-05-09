@@ -118,6 +118,8 @@ onMounted(async () => {
   padding-top: 0;
   padding-left: 260px; /* Width of the sidebar */
   width: 100%;
+  min-height: 100vh;
+  background: var(--color-general-frame);
 }
 
 @media (max-width: 1024px) {
