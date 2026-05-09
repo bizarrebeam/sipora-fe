@@ -564,6 +564,7 @@ onActivated(() => {
 	cursor: pointer;
 	border: none;
 }
+ 
 
 .tab-btn--active {
 	color: white;
