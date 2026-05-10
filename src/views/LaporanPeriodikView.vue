@@ -213,9 +213,16 @@ async function exportPDF(): Promise<void> {
     let filename = 'Laporan_Bulanan.pdf'
     
     if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
-      if (filenameMatch && filenameMatch[1]) {
-        filename = filenameMatch[1]
+      // Try RFC 5987 format first (filename*=UTF-8''...)
+      const rfc5987Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/)
+      if (rfc5987Match && rfc5987Match[1]) {
+        filename = decodeURIComponent(rfc5987Match[1])
+      } else {
+        // Fallback to standard format (filename="...")
+        const standardMatch = contentDisposition.match(/filename="?([^";\r\n]+)"?/)
+        if (standardMatch && standardMatch[1]) {
+          filename = standardMatch[1]
+        }
       }
     }
 
