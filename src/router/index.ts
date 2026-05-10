@@ -188,7 +188,7 @@ const router = createRouter({
       path: '/create-aspirasi',
       name: 'createAspirasi',
       component: CreateAspirasiView,
-      meta: { requiresAuth: true, allowedRoles: ['siswa', 'guru'] },
+      meta: { requiresAuth: true },
     },
     {
       path: '/detail-aspirasi/:id',
@@ -206,12 +206,14 @@ const router = createRouter({
       path: '/artikel/:id',
       name: 'detailArtikel',
       component: DetailArtikelView,
+      // No auth required - anyone can read articles
     },
     {
       path: '/artikel',
       name: 'kelolaArtikel',
       component: KelolaArtikelView,
       meta: { keepAlive: true },
+      // No auth required - guests can read articles, admins can manage
     },
     {
       path: '/create-artikel',
@@ -256,6 +258,7 @@ const router = createRouter({
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'], keepAlive: true },
     },
 
+    // Catch-all 404
     {
       path: '/:pathMatch(.*)*',
       name: 'notFound',
@@ -280,6 +283,7 @@ router.beforeEach((to, from, next) => {
 
   const allowedRoles = to.meta.allowedRoles as string[] | undefined
 
+  // Catch-all 404 handler
   if (to.name === 'notFound') {
     const notFoundStore = useNotFoundStore()
     notFoundStore.show()
@@ -294,8 +298,10 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isUserLoggedIn) {
     next('/login')
   } else if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
+    // Show 404 popup instead of revealing the page
     const notFoundStore = useNotFoundStore()
     notFoundStore.show()
+    // Stay on current page if possible, otherwise go home
     if (from.name) {
       next(false)
     } else {
