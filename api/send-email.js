@@ -7,8 +7,12 @@ export default async function handler(req, res) {
 
   const { secret, to, subject, html } = req.body;
 
-  const serverSecret = process.env.VERCEL_EMAIL_SECRET || 'supersekret';
+  const serverSecret = process.env.VERCEL_EMAIL_SECRET;
   
+  if (!serverSecret) {
+    return res.status(500).json({ error: 'Server Configuration Error: VERCEL_EMAIL_SECRET not set' });
+  }
+
   if (secret !== serverSecret) {
     return res.status(401).json({ message: 'Unauthorized proxy request' });
   }
