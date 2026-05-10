@@ -277,6 +277,10 @@ export async function apiAuthPost(endpoint: string, payload: object) {
     })
 
     if (response.status === 401) {
+      if (endpoint === 'akun/logout/') {
+        throw new Error('Sesi telah berakhir. Silakan login kembali.')
+      }
+
       const refreshed = await handleRefresh()
       if (refreshed) {
         return await apiAuthPost(endpoint, payload)

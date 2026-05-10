@@ -249,6 +249,7 @@ export const useAuthStore = defineStore('auth', () => {
       } catch {
       }
       clearAuth()
+      isSessionExpired.value = false
     } finally {
       loader.hide()
     }

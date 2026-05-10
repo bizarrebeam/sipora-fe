@@ -65,10 +65,10 @@ onMounted(async () => {
     
     <main class="main-layout" :class="{ 'admin-main': isAdmin && !isGuestRoute }">
       <router-view v-slot="{ Component, route }">
-        <keep-alive v-if="route.meta.keepAlive">
-          <component :is="Component" />
+        <keep-alive>
+          <component :is="Component" :key="route.name" v-if="route.meta.keepAlive" />
         </keep-alive>
-        <component v-else :is="Component" />
+        <component :is="Component" :key="route.name" v-if="!route.meta.keepAlive" />
       </router-view>
     </main>
   </div>
