@@ -9,14 +9,14 @@ import { useLoadingStore } from '@/stores/loading'
  * Main responsibilities:
  * - Manage consultation schedule and booking state.
  * - Provide CRUD actions for schedules and booking creation.
+ * - PBI-40: konfirmasi / tolak booking (Guru BK)
+ * - PBI-41: batalkan booking (Siswa & Guru BK)
+ * - PBI-42: reschedule booking (Siswa)
  * - Provide centralized success/error messages for UI display.
  */
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-/**
- * Representation of a single consultation schedule slot from the API.
- */
 export interface JadwalKonsultasi {
   id: string
   guru_bk: string
@@ -26,16 +26,13 @@ export interface JadwalKonsultasi {
   tanggal: string
   waktu_mulai: string
   waktu_selesai: string
-  status: 'tersedia' | 'menunggu_konfirmasi' | 'dikonfirmasi' | 'ditolak' | 'dibatalkan_siswa' | 'dibatalkan_guru_bk'
+  status: 'tersedia' | 'menunggu_konfirmasi' | 'dikonfirmasi' | 'ditolak' | 'dibatalkan_siswa' | 'dibatalkan_guru_bk' | 'tidak_hadir' | 'selesai'
   catatan: string | null
   is_booked: boolean
   dibuat_pada: string
   updated_at: string
 }
 
-/**
- * Representation of a single consultation booking item from the API.
- */
 export interface BookingKonsultasi {
   id: string
   nama_siswa: string
@@ -45,9 +42,10 @@ export interface BookingKonsultasi {
   waktu_mulai: string
   waktu_selesai: string
   deskripsi: string
-  status: 'menunggu_konfirmasi' | 'dikonfirmasi' | 'ditolak' | 'dibatalkan_siswa' | 'dibatalkan_guru_bk' | 'selesai'
+  status: 'menunggu_konfirmasi' | 'dikonfirmasi' | 'ditolak' | 'dibatalkan_siswa' | 'dibatalkan_guru_bk' | 'tidak_hadir' | 'selesai'
   alasan_penolakan: string | null
   alasan_pembatalan: string | null
+  catatan_hasil: string | null
   dibuat_pada: string
   updated_at: string
 }
@@ -55,26 +53,15 @@ export interface BookingKonsultasi {
 // ─── Store ───────────────────────────────────────────────────────────────────
 
 export const useKonsultasiStore = defineStore('konsultasi', () => {
-  // Global loader used as an async process indicator in the UI.
   const loader = useLoadingStore()
 
-  // Fallback base URL when env is not defined.
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/'
 
-  /**
-   * Normalizes errors so the UI always gets a safe message to display.
-   */
   function getErrorMessage(err: unknown, fallback: string) {
     if (err instanceof Error && err.message) return err.message
     return fallback
   }
 
-  /**
-    * Unifies API response format.
-   *
-    * Some endpoints return raw data, while others return `{ data: ... }`.
-    * This helper keeps data consumption consistent across store actions.
-   */
   function unwrapResponseData(result: unknown) {
     if (result && typeof result === 'object' && 'data' in result) {
       const boxed = result as { data?: unknown }
@@ -83,9 +70,6 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     return result
   }
 
-  /**
-    * DELETE helper with cookie credentials and backend error normalization.
-   */
   async function deleteAuth(endpoint: string) {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
@@ -114,32 +98,59 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     return json
   }
 
-  // State
-  // Consultation schedule slots (used by calendar/schedule pages).
+  /**
+   * PATCH helper dengan JWT Authorization header.
+   * Digunakan untuk endpoint confirm, cancel, reschedule.
+   */
+  async function patchAuth(endpoint: string, payload: object) {
+    const token = localStorage.getItem('access_token')
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify(payload),
+    })
+
+    let json: unknown = null
+    try {
+      json = await response.json()
+    } catch {
+      json = null
+    }
+
+    if (!response.ok) {
+      if (json && typeof json === 'object') {
+        const data = json as Record<string, unknown>
+        const message =
+          (typeof data.error === 'string' && data.error) ||
+          (typeof data.message === 'string' && data.message) ||
+          'Permintaan gagal.'
+        throw new Error(message)
+      }
+      throw new Error('Permintaan gagal.')
+    }
+
+    return json
+  }
+
+  // ─── State ───────────────────────────────────────────────────────────────
+
   const daftarJadwal = ref<JadwalKonsultasi[]>([])
-  // Consultation bookings list (used by student/counselor booking pages).
   const daftarBooking = ref<BookingKonsultasi[]>([])
-  // Currently opened booking detail.
   const detailBooking = ref<BookingKonsultasi | null>(null)
-  // Latest error message from store actions.
   const errorMessage = ref<string | null>(null)
-  // Latest success message from store actions.
   const successMessage = ref<string | null>(null)
 
-  /**
-   * Clears success/error messages so they do not leak between actions.
-   */
   function clearMessages() {
     errorMessage.value = null
     successMessage.value = null
   }
 
-  // ── PBI-38: Jadwal ──────────────────────────────────────────────────────────
+  // ── PBI-38: Jadwal ──────────────────────────────────────────────────────
 
-  /**
-    * Fetches consultation schedules.
-    * @param tanggal Optional date filter in YYYY-MM-DD format.
-   */
   async function ambilJadwal(tanggal?: string) {
     loader.show('Mengambil jadwal konsultasi...')
     try {
@@ -153,9 +164,6 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     }
   }
 
-  /**
-    * Creates a new schedule slot, then refreshes schedules for the target date.
-   */
   async function buatJadwal(payload: { tanggal: string; waktu_mulai: string; waktu_selesai: string; catatan?: string }) {
     clearMessages()
     loader.show('Menyimpan jadwal...')
@@ -172,9 +180,6 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     }
   }
 
-  /**
-    * Updates a schedule slot by id, then refreshes schedules for the active date.
-   */
   async function editJadwal(id: string, payload: { waktu_mulai?: string; waktu_selesai?: string; catatan?: string }, tanggal: string) {
     clearMessages()
     loader.show('Menyimpan perubahan...')
@@ -191,9 +196,6 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     }
   }
 
-  /**
-    * Deletes a schedule slot by id, then refreshes schedules for the active date.
-   */
   async function hapusJadwal(id: string, tanggal: string) {
     clearMessages()
     loader.show('Menghapus jadwal...')
@@ -210,11 +212,8 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     }
   }
 
-  // ── PBI-39 + PBI-43: Booking ────────────────────────────────────────────────
+  // ── PBI-39 + PBI-43: Booking ────────────────────────────────────────────
 
-  /**
-    * Fetches bookings with optional date/status filters.
-   */
   async function ambilBooking(params?: { tanggal?: string; status?: string }) {
     loader.show('Mengambil daftar booking...')
     try {
@@ -231,9 +230,6 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     }
   }
 
-  /**
-    * Fetches booking detail by booking id.
-   */
   async function ambilDetailBooking(id: string) {
     loader.show('Mengambil detail booking...')
     try {
@@ -246,10 +242,6 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     }
   }
 
-  /**
-    * Creates a new booking for a student.
-    * After success, the store refreshes the booking list to keep the UI in sync.
-   */
   async function buatBooking(payload: { jadwal: string; deskripsi: string }) {
     clearMessages()
     loader.show('Memproses booking...')
@@ -266,6 +258,161 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     }
   }
 
+  // ── PBI-40: Konfirmasi Booking (Guru BK) ────────────────────────────────
+
+  /**
+   * Guru BK menyetujui booking siswa.
+   * PATCH /konsultasi/booking/{id}/confirm/ — { aksi: 'setujui' }
+   */
+  async function setujuiBooking(id: string) {
+    clearMessages()
+    loader.show('Memproses konfirmasi...')
+    try {
+      const result = await patchAuth(`konsultasi/booking/${id}/confirm/`, { aksi: 'setujui' })
+      successMessage.value = 'Booking berhasil dikonfirmasi.'
+      // Perbarui detailBooking jika sedang ditampilkan
+      if (detailBooking.value?.id === id) {
+        const data = (result as { data?: BookingKonsultasi })?.data
+        if (data) detailBooking.value = data
+      }
+      await ambilBooking()
+      return true
+    } catch (err: unknown) {
+      errorMessage.value = getErrorMessage(err, 'Gagal mengonfirmasi booking.')
+      return false
+    } finally {
+      loader.hide()
+    }
+  }
+
+  /**
+   * Guru BK menolak booking siswa.
+   * PATCH /konsultasi/booking/{id}/confirm/ — { aksi: 'tolak', alasan: string }
+   */
+  async function tolakBooking(id: string, alasan: string) {
+    clearMessages()
+    loader.show('Memproses penolakan...')
+    try {
+      const result = await patchAuth(`konsultasi/booking/${id}/confirm/`, { aksi: 'tolak', alasan })
+      successMessage.value = 'Booking berhasil ditolak.'
+      if (detailBooking.value?.id === id) {
+        const data = (result as { data?: BookingKonsultasi })?.data
+        if (data) detailBooking.value = data
+      }
+      await ambilBooking()
+      return true
+    } catch (err: unknown) {
+      errorMessage.value = getErrorMessage(err, 'Gagal menolak booking.')
+      return false
+    } finally {
+      loader.hide()
+    }
+  }
+
+  // ── PBI-41: Batalkan Booking (Siswa & Guru BK) ──────────────────────────
+
+  /**
+   * Siswa atau Guru BK membatalkan booking.
+   * PATCH /konsultasi/booking/{id}/cancel/ — { alasan: string }
+   */
+  async function batalkanBooking(id: string, alasan: string) {
+    clearMessages()
+    loader.show('Memproses pembatalan...')
+    try {
+      const result = await patchAuth(`konsultasi/booking/${id}/cancel/`, { alasan })
+      successMessage.value = 'Booking berhasil dibatalkan.'
+      if (detailBooking.value?.id === id) {
+        const data = (result as { data?: BookingKonsultasi })?.data
+        if (data) detailBooking.value = data
+      }
+      await ambilBooking()
+      return true
+    } catch (err: unknown) {
+      errorMessage.value = getErrorMessage(err, 'Gagal membatalkan booking.')
+      return false
+    } finally {
+      loader.hide()
+    }
+  }
+
+  // ── PBI-42: Reschedule Booking (Siswa) ──────────────────────────────────
+
+  /**
+   * Siswa mengganti slot booking ke slot lain yang masih tersedia.
+   * PATCH /konsultasi/booking/{id}/reschedule/ — { jadwal_baru: UUID }
+   */
+  async function rescheduleBooking(id: string, jadwalBaruId: string) {
+    clearMessages()
+    loader.show('Memproses reschedule...')
+    try {
+      const result = await patchAuth(`konsultasi/booking/${id}/reschedule/`, { jadwal_baru: jadwalBaruId })
+      successMessage.value = 'Booking berhasil dijadwalkan ulang.'
+      if (detailBooking.value?.id === id) {
+        const data = (result as { data?: BookingKonsultasi })?.data
+        if (data) detailBooking.value = data
+      }
+      await ambilBooking()
+      return true
+    } catch (err: unknown) {
+      errorMessage.value = getErrorMessage(err, 'Gagal melakukan reschedule.')
+      return false
+    } finally {
+      loader.hide()
+    }
+  }
+
+  // add: Tandai Selesai (Guru BK) ────────────────────────────────────
+
+  /**
+   * Guru BK menandai sesi selesai + mengisi catatan hasil konsultasi.
+   * PATCH /konsultasi/booking/{id}/selesai/ — { catatan_hasil: string }
+   */
+  async function selesaiKonsultasi(id: string, catatan_hasil: string) {
+    clearMessages()
+    loader.show('Menyimpan catatan hasil...')
+    try {
+      const result = await patchAuth(`konsultasi/booking/${id}/selesai/`, { catatan_hasil })
+      successMessage.value = 'Konsultasi berhasil ditandai selesai.'
+      if (detailBooking.value?.id === id) {
+        const data = (result as { data?: BookingKonsultasi })?.data
+        if (data) detailBooking.value = data
+      }
+      await ambilBooking()
+      return true
+    } catch (err: unknown) {
+      errorMessage.value = getErrorMessage(err, 'Gagal menandai konsultasi selesai.')
+      return false
+    } finally {
+      loader.hide()
+    }
+  }
+
+  // ── PBI-XX: Tandai Tidak Hadir (Guru BK) ────────────────────────────────
+
+  /**
+   * Guru BK menandai siswa tidak hadir.
+   * PATCH /konsultasi/booking/{id}/tidak-hadir/
+   */
+  async function tandaiTidakHadir(id: string) {
+    clearMessages()
+    loader.show('Memproses...')
+    try {
+      const result = await patchAuth(`konsultasi/booking/${id}/tidak-hadir/`, {})
+      successMessage.value = 'Siswa berhasil ditandai tidak hadir.'
+      if (detailBooking.value?.id === id) {
+        const data = (result as { data?: BookingKonsultasi })?.data
+        if (data) detailBooking.value = data
+      }
+      await ambilBooking()
+      return true
+    } catch (err: unknown) {
+      errorMessage.value = getErrorMessage(err, 'Gagal menandai tidak hadir.')
+      return false
+    } finally {
+      loader.hide()
+    }
+  }
+
   return {
     daftarJadwal,
     daftarBooking,
@@ -273,12 +420,24 @@ export const useKonsultasiStore = defineStore('konsultasi', () => {
     errorMessage,
     successMessage,
     clearMessages,
+    // PBI-38
     ambilJadwal,
     buatJadwal,
     editJadwal,
     hapusJadwal,
+    // PBI-39 & PBI-43
     ambilBooking,
     ambilDetailBooking,
     buatBooking,
+    // PBI-40
+    setujuiBooking,
+    tolakBooking,
+    // PBI-41
+    batalkanBooking,
+    // PBI-42
+    rescheduleBooking,
+    //add
+    selesaiKonsultasi,
+    tandaiTidakHadir,
   }
 })
