@@ -86,3 +86,49 @@ export const useDashboarKerusakanAspirasidStore = defineStore('dashboardKerusaka
     fetchOverview,
   }
 })
+
+export const useDashboardKonsultasiStore = defineStore('dashboardKonsultasi', () => {
+  const metrics = ref({ selesai: 0, menunggu_konsultasi: 0, konsultasi_terkonfirmasi: 0, slot_tersedia: 0 })
+  const differences = ref({ selesai: 0, menunggu: 0, terkonfirmasi: 0, tersedia: 0 })
+  const byStatus = ref<Record<string, number>>({})
+  const trend = ref({ labels: [], series: [] as any[] })
+  const statusDistribution = ref({ status: [], counts: [] })
+  const topStudents = ref<Array<{ label: string; count: number }>>([])
+  const topDays = ref<Array<{ label: string; count: number }>>([])
+  const loading = ref(false)
+
+  async function fetchKonsultasi(params: Record<string, any> = {}) {
+    loading.value = true
+    try {
+      const qs = new URLSearchParams()
+      for (const k in params) {
+        if (params[k] !== undefined && params[k] !== null) qs.set(k, String(params[k]))
+      }
+      const endpoint = `dashboard/dashboard-konsultasi/?${qs.toString()}`
+      const data = await apiAuthGet(endpoint)
+      if (data) {
+        metrics.value = data.metrics || metrics.value
+        differences.value = data.differences || differences.value
+        byStatus.value = data.by_status || {}
+        trend.value = data.trend || { labels: [], series: [] }
+        statusDistribution.value = data.status_distribution || { status: [], counts: [] }
+        topStudents.value = data.top_students || []
+        topDays.value = data.top_days || []
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  return {
+    metrics,
+    differences,
+    byStatus,
+    trend,
+    statusDistribution,
+    topStudents,
+    topDays,
+    loading,
+    fetchKonsultasi,
+  }
+})

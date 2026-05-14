@@ -31,6 +31,7 @@ import DashboardBullyingView from '@/views/DashboardBullyingView.vue'
 import DashboardKerusakanAspirasi from '@/views/DashboardKerusakanAspirasi.vue'
 import DaftarEvaluasiView from '@/views/DaftarEvaluasiView.vue'
 import LaporanPeriodikView from '@/views/LaporanPeriodikView.vue'
+import DashboardKonsultasiView from '@/views/DashboardKonsultasiView.vue'
 
 import ForgotPasswordView from '../views/ForgotPasswordView.vue'
 import ForgotPasswordGuruView from '../views/ForgotPasswordGuruView.vue'
@@ -245,7 +246,7 @@ const router = createRouter({
       component: DaftarEvaluasiView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan', 'guru'], keepAlive: true },
     },
-        {
+    {
       path: '/dashboard-kerusakan-aspirasi',
       name: 'dashboardKerusakanAspirasi',
       component: DashboardKerusakanAspirasi,
@@ -256,6 +257,12 @@ const router = createRouter({
       name: 'laporanPeriodik',
       component: LaporanPeriodikView,
       meta: { requiresAuth: true, allowedRoles: ['kemahasiswaan'], keepAlive: true },
+    },
+    {
+      path: '/dashboard-konsultasi',
+      name: 'dashboardKonsultasi',
+      component: DashboardKonsultasiView,
+      meta: { requiresAuth: true, allowedRoles: ['guru_bk', 'kemahasiswaan'], keepAlive: true },
     },
 
     // Catch-all 404

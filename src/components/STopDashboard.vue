@@ -32,7 +32,7 @@ const list = computed(() => {
                 </div>
                 <div class="text-sm font-semibold text-gray-800">{{ it.count }}</div>
             </li>
-            <li v-if="(props.items || []).length === 0" class="text-sm text-gray-500">Tidak ada data</li>
+            <li v-if="(props.items || []).length === 0" class="text-sm text-gray-500">Belum ada data</li>
         </ul>
     </div>
 </template>

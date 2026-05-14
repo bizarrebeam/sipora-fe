@@ -85,12 +85,14 @@ async function confirmLogout() {
         <template v-if="isLoggedIn">
           <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="nav-link">Manajemen Akun</RouterLink>
 
+          <RouterLink v-if="isGuruBK" to="/dashboard-konsultasi" class="nav-link">Dashboard Konsultasi</RouterLink>
           <RouterLink to="/laporan-bullying" class="nav-link">Laporan Bullying</RouterLink>
           <RouterLink v-if="isGuru || isSiswa" to="/laporan-kerusakan" class="nav-link">Laporan Kerusakan</RouterLink>
           <RouterLink v-if="isSiswa" to="/kirim-evaluasi" class="nav-link">Evaluasi Guru</RouterLink>
           <RouterLink v-if="isGuru" to="/daftar-evaluasi" class="nav-link">Daftar Evaluasi</RouterLink>
           <RouterLink v-if="showKonsultasiBK" :to="konsultasiBKPath" class="nav-link">{{ konsultasiBKLabel }}</RouterLink>
           <RouterLink to="/aspirasi" class="nav-link">Aspirasi</RouterLink>
+
         </template>
         <RouterLink to="/artikel" class="nav-link">{{ artikelLabel }}</RouterLink>
       </div>
@@ -163,6 +165,7 @@ async function confirmLogout() {
         <RouterLink to="/" class="mobile-link" @click="closeMobile">Beranda</RouterLink>
         <template v-if="isLoggedIn">
           <RouterLink v-if="canManageAkun" to="/manajemen-akun" class="mobile-link" @click="closeMobile">Manajemen Akun</RouterLink>
+          <RouterLink v-if="isGuruBK" to="/dashboard-konsultasi" class="mobile-link" @click="closeMobile">Dashboard Konsultasi</RouterLink>
           <RouterLink to="/laporan-bullying" class="mobile-link" @click="closeMobile">Laporan Bullying</RouterLink>
           <RouterLink v-if="isGuru || isSiswa" to="/laporan-kerusakan" class="mobile-link" @click="closeMobile">Laporan Kerusakan</RouterLink>
           <RouterLink v-if="isGuru" to="/daftar-evaluasi" class="mobile-link">Daftar Evaluasi</RouterLink>

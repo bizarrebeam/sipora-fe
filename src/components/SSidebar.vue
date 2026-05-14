@@ -63,7 +63,7 @@ async function confirmLogout() {
           </button>
           <div v-show="dashboardOpen" class="sidebar-subnav">
             <RouterLink to="/dashboard-bullying" class="sidebar-sublink" active-class="sidebar-sublink-active">Dashboard Bullying</RouterLink>
-            <RouterLink to="/dashboard-kerusakan-aspirasi" class="sidebar-sublink" active-class="sidebar-sublink-active">Kerusakan & Aspirasi</RouterLink>
+            <RouterLink to="/dashboard-kerusakan-aspirasi" class="sidebar-sublink" active-class="sidebar-sublink-active"> Dashboard Kerusakan & Aspirasi</RouterLink>
             <RouterLink to="/dashboard-konsultasi" class="sidebar-sublink" active-class="sidebar-sublink-active">Dashboard Konsultasi</RouterLink>
           </div>
         </div>
@@ -125,7 +125,6 @@ async function confirmLogout() {
         <div class="mobile-dashboard">
           <button class="mobile-link w-full flex justify-between items-center" @click="mobileDashboardOpen = !mobileDashboardOpen">
             Dashboard
-            <span class="mobile-chevron" :class="{ 'open': mobileDashboardOpen }"></span>
           </button>
           <div v-show="mobileDashboardOpen" class="mobile-sublinks">
             <RouterLink to="/dashboard-bullying" class="mobile-link" @click="closeMobile">Dashboard Bullying</RouterLink>

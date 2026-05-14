@@ -114,7 +114,7 @@ watch([filterPeriod, filterYear, filterSemester, filterMonth, filterStartDate], 
 			<div class="stf-header">
 				<div class="stf-header-text">
 					<h1 class="stf-page-title">Dashboard Kerusakan dan Aspirasi</h1>
-					<p class="stf-page-subtitle">Kelola dan pantau seluruh laporan kerusakan dan aspirasi terkini tahun ajaran Semester {{ auth.user?.semester }} {{ auth.user?.tahun_ajaran }}.</p>
+					<p class="stf-page-subtitle">Kelola dan pantau seluruh laporan kerusakan dan aspirasi terkini di tahun ajaran Semester {{ auth.user?.semester }} {{ auth.user?.tahun_ajaran }}.</p>
 				</div>
 			</div>
 

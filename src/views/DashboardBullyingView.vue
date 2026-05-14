@@ -93,7 +93,7 @@ watch([filterPeriod, filterYear, filterSemester, filterMonth, filterStartDate], 
 			<div class="stf-header">
 				<div class="stf-header-text">
 					<h1 class="stf-page-title">Dashboard Bullying</h1>
-					<p class="stf-page-subtitle"> Kelola dan pantau seluruh laporan bullying terkini tahun ajaran Semester {{ auth.user?.semester }} {{ auth.user?.tahun_ajaran }}.</p>
+					<p class="stf-page-subtitle"> Kelola dan pantau seluruh laporan bullying terkini di tahun ajaran Semester {{ auth.user?.semester }} {{ auth.user?.tahun_ajaran }}.</p>
 				</div>
 			</div>
 
