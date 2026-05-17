@@ -163,9 +163,17 @@ onMounted(async () => {
 })
 
 const isFormValid = computed(() => {
+    let isTanggalValid = false
+    if (tanggalKejadian.value) {
+        const selectedDate = new Date(tanggalKejadian.value)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        isTanggalValid = selectedDate <= today
+    }
+
     return (
         judul.value.trim() &&
-        tanggalKejadian.value &&
+        isTanggalValid &&
         lokasi.value.trim() &&
         jenisBullying.value &&
         deskripsi.value.trim().length >= 50 &&
@@ -189,7 +197,20 @@ const isFormDirty = computed(() => {
 
 function validate() {
     errors.value.judul = !judul.value.trim() ? 'Judul wajib diisi' : ''
-    errors.value.tanggalKejadian = !tanggalKejadian.value ? 'Tanggal wajib diisi' : ''
+    
+    if (!tanggalKejadian.value) {
+        errors.value.tanggalKejadian = 'Tanggal wajib diisi'
+    } else {
+        const selectedDate = new Date(tanggalKejadian.value)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (selectedDate > today) {
+            errors.value.tanggalKejadian = 'Tanggal kejadian tidak boleh di masa depan'
+        } else {
+            errors.value.tanggalKejadian = ''
+        }
+    }
+
     errors.value.lokasi = !lokasi.value.trim() ? 'Lokasi wajib diisi' : ''
     errors.value.jenisBullying = !jenisBullying.value ? 'Jenis bullying wajib dipilih' : ''
     

@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useEvaluasiGuruStore } from '@/stores/evaluasiGuru'
 import SCard from '@/components/SCard.vue'
 import SDropDown from '@/components/SDropDown.vue'
 import SPagination from '@/components/SPagination.vue'
 import SButton from '@/components/SButton.vue'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 
 const auth = useAuthStore()
 const evaluasiStore = useEvaluasiGuruStore()
+const router = useRouter()
 
 const isKemahasiswaan = computed(() => auth.user?.role === 'kemahasiswaan')
 const isGuru = computed(() => auth.user?.role === 'guru')
@@ -101,6 +104,11 @@ async function fetchData() {
 
 onMounted(() => {
     fetchData()
+})
+
+useAutoRefresh(() => fetchData(), {
+    intervalMs: 10_000,
+    refetchOnVisible: true,
 })
 
 const totalPages = computed(() => Math.ceil(evaluasiStore.totalRekap / pageSize.value))
@@ -225,12 +233,24 @@ const totalPages = computed(() => Math.ceil(evaluasiStore.totalRekap / pageSize.
                         <div v-if="rekap.komentar.length === 0" class="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-lg border border-gray-100">
                             Tidak ada komentar untuk periode ini.
                         </div>
-                        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div v-for="(kom, kIdx) in rekap.komentar" :key="kIdx" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-md">Kelas: {{ kom.kelas }}</span>
+                        <div v-else class="flex flex-col gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div v-for="(kom, kIdx) in rekap.komentar.slice(0, 3)" :key="kIdx" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-md">Kelas: {{ kom.kelas }}</span>
+                                    </div>
+                                    <p class="text-gray-700 text-sm">"{{ kom.komentar }}"</p>
                                 </div>
-                                <p class="text-gray-700 text-sm">"{{ kom.komentar }}"</p>
+                            </div>
+                            <div v-if="rekap.komentar.length > 3" class="mt-2 flex justify-start">
+                                <SButton 
+                                    label="Lihat Semua Komentar" 
+                                    variant="secondary" 
+                                    @click="router.push({ 
+                                        name: 'detailKomentarEvaluasi', 
+                                        query: { guru: rekap.guru_nama, semester: rekap.semester, tahun_ajaran: rekap.tahun_ajaran } 
+                                    })" 
+                                />
                             </div>
                         </div>
                     </div>
