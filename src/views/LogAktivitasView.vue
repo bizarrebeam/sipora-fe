@@ -74,11 +74,11 @@ watch(currentPage, (newVal) => {
 })
 
 const columns = [
-  { key: 'waktu', label: 'Waktu', sortable: true },
-  { key: 'pengguna', label: 'Pengguna', sortable: true, tdClass: 'min-w-[200px]' },
-  { key: 'role', label: 'Role', sortable: true },
-  { key: 'aksi', label: 'Aksi / Modul', sortable: true },
-  { key: 'deskripsi', label: 'Detail Deskripsi', sortable: true },
+  { key: 'waktu', label: 'Waktu', sortable: true, tdClass: 'w-[180px] min-w-[180px]' },
+  { key: 'pengguna', label: 'Pengguna', sortable: true, tdClass: 'w-[220px] min-w-[220px]' },
+  { key: 'role', label: 'Role', sortable: true, tdClass: 'w-[140px] min-w-[140px]' },
+  { key: 'aksi', label: 'Aksi / Modul', sortable: true, tdClass: 'w-[240px] min-w-[240px]' },
+  { key: 'deskripsi', label: 'Detail Deskripsi', sortable: true, tdClass: 'min-w-[350px]' },
 ]
 
 const moduleTabs = [
