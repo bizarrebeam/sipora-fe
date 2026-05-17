@@ -230,7 +230,6 @@ async function handleSubmit() {
     }
 
     try {
-        // build payload with only changed fields
         const payload: any = {}
         if (judul.value.trim() !== originalData.value.judul) payload.judul = judul.value.trim()
         if (kategori.value !== originalData.value.kategori) payload.kategori = kategori.value

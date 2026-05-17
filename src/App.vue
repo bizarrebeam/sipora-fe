@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SNavbar from '@/components/SNavbar.vue'
 import SSidebar from '@/components/SSidebar.vue'
+import SFooter from '@/components/SFooter.vue'
 import SLoading from '@/components/SLoading.vue'
 import SDialog from '@/components/SDialog.vue'
 import SAlert from '@/components/SAlert.vue'
@@ -25,15 +26,9 @@ function handleSessionExpired() {
   router.push('/login')
 }
 
-// Proactive health check and session verification on app initialization
 onMounted(async () => {
   try {
-    // 1. Basic connectivity check
     await getApiStatus()
-    
-    // 2. Session verification (Self-Healing)
-    // If we think we are logged in, try to fetch the profile.
-    // This will trigger the new Silent Refresh logic if the token is base-expired.
     if (authStore.isAuthenticated) {
       try {
         await authStore.fetchProfile()
@@ -42,17 +37,12 @@ onMounted(async () => {
       console.error('[App] Request failed (handled globally):', err.message);
       return;
     }
-        // If fetchProfile fails even after refresh attempt, 
-        // we might have inconsistent state (e.g. old versions).
         if (err.message?.includes('401') || err.message?.includes('Sesi')) {
           authStore.clearLocalSession()
         }
       }
     }
   } catch {
-    // Note: error object omitted, assuming could be ServerHandledError
-
-    // Basic connectivity error is handled globally in api.ts
   }
 })
 
@@ -70,6 +60,7 @@ onMounted(async () => {
         </keep-alive>
         <component :is="Component" :key="route.name" v-if="!route.meta.keepAlive" />
       </router-view>
+      <SFooter v-if="!isAdmin || isGuestRoute" />
     </main>
   </div>
 
@@ -116,7 +107,7 @@ onMounted(async () => {
 
 .admin-main {
   padding-top: 0;
-  padding-left: 260px; /* Width of the sidebar */
+  padding-left: 260px; 
   width: 100%;
   min-height: 100vh;
   background: var(--color-general-frame);
@@ -125,7 +116,7 @@ onMounted(async () => {
 @media (max-width: 1024px) {
   .admin-main {
     padding-left: 0;
-    padding-top: 64px; /* Back to top navbar space */
+    padding-top: 64px; 
   }
 }
 
