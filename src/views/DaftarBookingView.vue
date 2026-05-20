@@ -236,13 +236,13 @@ const tableColumns = computed(() => {
   const cols = [
     { key: 'tanggal_konsultasi', label: 'Tanggal' },
     { key: 'waktu', label: 'Waktu' },
-    { key: 'deskripsi', label: 'Alasan Konsultasi' },
     { key: 'dibuat_pada', label: 'Dibuat Pada' },
     { key: 'status', label: 'Status' },
     { key: 'aksi', label: '' },
   ]
   if (isGuruBK.value) {
-    cols.splice(1, 0, { key: 'nama_siswa', label: 'Nama Siswa' })
+      cols.splice(1, 0, { key: 'nama_siswa', label: 'Nama Siswa' })
+      cols.splice(2, 0, { key: 'kelas', label: 'Kelas' }) // <-- Tambahkan baris ini
   }
   return cols
 })
@@ -534,12 +534,12 @@ onMounted(() => {
                   <span class="body-b7 text-general-black">{{ booking.nama_siswa }}</span>
                 </td>
 
-                <td class="px-5 py-4">
-                  <span class="body-b7 text-general-black">{{ booking.waktu_mulai }} – {{ booking.waktu_selesai }}</span>
+                <td v-if="isGuruBK" class="px-5 py-4">
+                  <span class="body-b7 text-general-black">{{ booking.kelas_siswa || '-' }}</span>
                 </td>
 
-                <td class="px-5 py-4 max-w-[200px]">
-                  <p class="body-b8 text-neutral-600 truncate">{{ booking.deskripsi }}</p>
+                <td class="px-5 py-4">
+                  <span class="body-b7 text-general-black">{{ booking.waktu_mulai }} – {{ booking.waktu_selesai }}</span>
                 </td>
 
                 <td class="px-5 py-4">
@@ -581,6 +581,11 @@ onMounted(() => {
             <div v-if="isGuruBK" class="flex gap-4 py-2 border-b border-general-border">
               <span class="text-neutral-500 w-32 shrink-0">Nama Siswa</span>
               <span class="text-general-black font-semibold">{{ selectedBooking.nama_siswa }}</span>
+            </div>
+
+            <div v-if="isGuruBK" class="flex gap-4 py-2 border-b border-general-border">
+              <span class="text-neutral-500 w-32 shrink-0">Kelas Siswa</span>
+              <span class="text-general-black font-semibold">{{ selectedBooking.kelas_siswa || '-' }}</span>
             </div>
 
             <div class="flex gap-4 py-2 border-b border-general-border">
@@ -696,7 +701,10 @@ onMounted(() => {
             placeholder="Contoh: Jadwal berbenturan dengan kegiatan lain..."
             required
           />
-          <p v-if="alasanTolak.trim().length === 0" class="body-b8 text-red-500 -mt-2">
+          <p v-if="alasanTolak.trim().length > 0 && (alasanTolak.trim().length < 20 || alasanTolak.trim().length > 150)" class="body-b8 text-red-500 -mt-2">
+            Alasan penolakan harus 20 - 150 karakter.
+          </p>
+          <p v-else-if="alasanTolak.trim().length === 0" class="body-b8 text-red-500 -mt-2">
             Alasan penolakan wajib diisi.
           </p>
         </div>
@@ -706,7 +714,7 @@ onMounted(() => {
             label="Ya, Tolak Booking"
             variant="danger"
             size="medium"
-            :disabled="!alasanTolak.trim()"
+            :disabled="!alasanTolak.trim() || alasanTolak.trim().length < 20 || alasanTolak.trim().length > 150"
             @click="confirmTolak"
           />
         </template>
@@ -728,7 +736,10 @@ onMounted(() => {
             placeholder="Ceritakan alasan pembatalan booking ini..."
             required
           />
-          <p v-if="alasanBatal.trim().length === 0" class="body-b8 text-red-500 -mt-2">
+          <p v-if="alasanBatal.trim().length > 0 && (alasanBatal.trim().length < 20 || alasanBatal.trim().length > 150)" class="body-b8 text-red-500 -mt-2">
+            Alasan pembatalan harus 20 - 150 karakter.
+          </p>
+          <p v-else-if="alasanBatal.trim().length === 0" class="body-b8 text-red-500 -mt-2">
             Alasan pembatalan wajib diisi.
           </p>
           <p class="body-b8 text-neutral-500">Setelah dibatalkan, slot jadwal akan tersedia kembali untuk siswa lain.</p>
@@ -739,7 +750,7 @@ onMounted(() => {
             label="Ya, Batalkan"
             variant="danger"
             size="medium"
-            :disabled="!alasanBatal.trim()"
+            :disabled="!alasanBatal.trim() || alasanBatal.trim().length < 20 || alasanBatal.trim().length > 150"
             @click="confirmBatal"
           />
         </template>
@@ -854,11 +865,11 @@ onMounted(() => {
             required
           />
           <div class="flex justify-between items-start -mt-2">
-            <p v-if="catatanHasil.trim().length > 0 && catatanHasil.trim().length < 10" class="body-b8 text-red-500">
-              Catatan minimal 10 karakter.
+            <p v-if="catatanHasil.trim().length > 0 && (catatanHasil.trim().length < 10 || catatanHasil.trim().length > 500)" class="body-b8 text-red-500">
+              Catatan harus 10-500 karakter.
             </p>
             <div v-else></div>
-            <p class="body-b8 text-neutral-500">{{ catatanHasil.length }} karakter</p>
+            <p class="body-b8 text-neutral-500" :class="{ 'text-red-500': catatanHasil.length > 500 }">{{ catatanHasil.length }}/500</p>
           </div>
         </div>
         <template #actions>
@@ -867,7 +878,7 @@ onMounted(() => {
             label="Simpan & Tandai Selesai"
             variant="primary"
             size="medium"
-            :disabled="catatanHasil.trim().length < 10"
+            :disabled="catatanHasil.trim().length < 10 || catatanHasil.trim().length > 500"
             @click="confirmSelesai"
           />
         </template>

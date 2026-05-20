@@ -36,6 +36,7 @@ export interface JadwalKonsultasi {
 export interface BookingKonsultasi {
   id: string
   nama_siswa: string
+  kelas_siswa?: string | null
   jadwal: string
   jadwal_detail?: JadwalKonsultasi
   tanggal_konsultasi: string

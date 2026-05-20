@@ -11,6 +11,7 @@ import { useKonsultasiStore, type JadwalKonsultasi } from '@/stores/konsultasi'
 import { apiAuthGet } from '@/services/api'
 import { useNotFoundStore } from '@/stores/notFound'
 
+// nitip
 const store = useKonsultasiStore()
 const notFoundStore = useNotFoundStore()
 const DAILY_BOOKING_LIMIT = 2
@@ -88,6 +89,10 @@ function isSelected(d: number) {
   return fmtDate(viewYear.value, viewMonth.value, d) === selectedDate.value
 }
 
+function isSunday(d: number) {
+  return new Date(viewYear.value, viewMonth.value, d).getDay() === 0
+}
+
 /**
  * Determines whether a slot is expired based on the slot start time.
  */
@@ -160,7 +165,7 @@ function nextMonth() {
 }
 
 async function selectDate(d: number) {
-  if (isPast(d) || isFutureLimit(d)) return
+  if (isPast(d) || isFutureLimit(d) || isSunday(d)) return
   selectedDate.value = fmtDate(viewYear.value, viewMonth.value, d)
   await loadSlotsForDate(selectedDate.value)
   await store.ambilBooking()
@@ -306,14 +311,15 @@ onBeforeUnmount(() => {
           <template v-for="(d, i) in calendarDays" :key="i">
             <div
               class="relative flex items-center justify-center h-9 rounded-lg text-sm cursor-pointer transition-colors select-none"
+              :title="d && isSunday(d) ? 'Jadwal tidak tersedia pada hari Minggu' : ''"
               :class="{
                 'opacity-0 pointer-events-none': d === null,
-                'text-neutral-300 cursor-default': d && (isPast(d) || isFutureLimit(d)),
+                'text-neutral-300 cursor-default': d && (isPast(d) || isFutureLimit(d) || isSunday(d)),
                 'bg-blue-500 text-white font-semibold': d && isSelected(d),
-                'text-general-black hover:bg-general-frame': d && !isPast(d) && !isFutureLimit(d) && !isSelected(d),
+                'text-general-black hover:bg-general-frame': d && !isPast(d) && !isFutureLimit(d) && !isSunday(d) && !isSelected(d),
                 'font-semibold': d && isToday(d),
               }"
-              @click="d && !isPast(d) && !isFutureLimit(d) && selectDate(d)"
+              @click="d && !isPast(d) && !isFutureLimit(d) && !isSunday(d) && selectDate(d)"
             >
               {{ d }}
               <span v-if="d && isToday(d)" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" :class="isSelected(d) ? 'bg-white' : 'bg-blue-500'" />
