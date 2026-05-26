@@ -19,10 +19,20 @@ const konfirmasiPassword = ref('')
 const errorMsg = ref('')
 const successMsg = ref('')
 const loading = ref(false)
+const userRole = ref('')
 
 const isPasswordLengthValid = computed(() => password.value.length >= 8)
 const isPasswordAlphanumeric = computed(() => /[a-zA-Z]/.test(password.value) && /[0-9]/.test(password.value))
 const isPasswordValid = computed(() => isPasswordLengthValid.value && isPasswordAlphanumeric.value)
+
+const loginRoute = computed(() => {
+  const roleMap: Record<string, string> = {
+    guru: '/internal/login-guru',
+    guru_bk: '/internal/login-bk',
+    kemahasiswaan: '/internal/login-admin',
+  }
+  return roleMap[userRole.value] || '/login'
+})
 
 async function handleReset() {
   errorMsg.value = ''
@@ -45,10 +55,11 @@ async function handleReset() {
 
   loading.value = true
   try {
-    await auth.resetPassword(uid.value, token.value, password.value, konfirmasiPassword.value)
+    const data = await auth.resetPassword(uid.value, token.value, password.value, konfirmasiPassword.value)
+    if (data?.role) userRole.value = data.role
     successMsg.value = 'Password berhasil diubah! Kamu akan diarahkan ke halaman login...'
     setTimeout(() => {
-      router.push('/login')
+      router.push(loginRoute.value)
     }, 3000)
   } catch (err: any) {
     if (err?.name === 'ServerHandledError') {
@@ -131,7 +142,7 @@ async function handleReset() {
       <div class="reset-footer">
         <p class="footer-text">
           Kembali ke
-          <RouterLink to="/login" class="footer-link">halaman login</RouterLink>
+          <RouterLink :to="loginRoute" class="footer-link">halaman login</RouterLink>
         </p>
       </div>
     </div>
