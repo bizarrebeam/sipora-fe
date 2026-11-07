@@ -46,3 +46,19 @@ _screenshots_/
 
 # Ignore README for Dev Branch
 README.md
+# Environment files
+.env*
+!.env.example
+
+# AI and local editor files
+.claude/
+.codex/
+.cursor/
+.serena/
+.agents/
+.mcp.json
+AGENTS.md
+CLAUDE.md
+copilot-instructions.md
+.idea/
+.vscode/

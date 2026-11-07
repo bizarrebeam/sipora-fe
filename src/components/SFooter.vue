@@ -43,7 +43,7 @@ const currentYear = computed(() => new Date().getFullYear())
           </div>
           <div class="footer-contact-item">
             <p class="font-bold">Hubungi bantuan konseling segera pada</p>
-            <p><a href="https://wa.me/[REDACTED]" target="_blank" rel="noopener noreferrer" class="footer-link">082138832891</a> (school administrator)</p>
+            <p>Hubungi administrator sekolah untuk bantuan.</p>
           </div>
         </div>
       </div>
