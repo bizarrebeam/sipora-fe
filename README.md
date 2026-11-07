@@ -53,4 +53,4 @@ Developed to fulfill the Proyek Pengembangan Sistem Informasi course at Universi
 ## Project documents
 
 - [Product requirements document](https://github.com/bizarrebeam/sipora-be/blob/main/docs/PRD_SIPORA.pdf)
-- [Pitch deck](https://github.com/bizarrebeam/sipora-be/blob/main/docs/SIPORA_Pitch_Deck.pdf)
+- [Pitch deck](https://github.com/bizarrebeam/sipora-be/blob/main/docs/Pitch%20Deck_SIPORA.pdf)
